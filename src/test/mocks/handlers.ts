@@ -1,19 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { AnthropicRequest, AnthropicMessage } from '../../lib/ai/types';
-import {
-  basicSuccessResponse,
-  detailedResponse,
-  codeResponse,
-  creativeResponse,
-  minimalResponse,
-  maxTokenResponse,
-  stopSequenceResponse,
-  structuredResponse,
-  errorResponses,
-  streamingEvents,
-  createCustomResponse,
-  createStreamingSequence,
-} from '../fixtures/anthropic-responses';
+import type { AnthropicRequest, AnthropicMessage, AnthropicResponse } from '../../lib/ai/types';
 
 /**
  * MSW request handlers for Anthropic API
@@ -25,6 +11,130 @@ import {
  */
 
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
+
+/**
+ * Basic response fixtures
+ */
+const basicSuccessResponse: AnthropicResponse = {
+  id: 'msg_01234567890abcdefghijk',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'Hello! How can I help you today?' }],
+  model: 'claude-3-haiku-20240307',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 12, output_tokens: 18 },
+};
+
+const detailedResponse: AnthropicResponse = {
+  id: 'msg_detailed_response',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'Here is a detailed explanation of the concept with comprehensive coverage of the topic.' }],
+  model: 'claude-3-sonnet-20240229',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 45, output_tokens: 85 },
+};
+
+const codeResponse: AnthropicResponse = {
+  id: 'msg_code_example',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'Here\'s a TypeScript example:\n```typescript\nfunction example(): string {\n  return "code";\n}\n```' }],
+  model: 'claude-3-opus-20240229',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 23, output_tokens: 45 },
+};
+
+const creativeResponse: AnthropicResponse = {
+  id: 'msg_creative_story',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'Once upon a time, in a land of endless possibilities, there lived a curious developer...' }],
+  model: 'claude-3-sonnet-20240229',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 18, output_tokens: 38 },
+};
+
+const minimalResponse: AnthropicResponse = {
+  id: 'msg_minimal',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'Yes.' }],
+  model: 'claude-3-haiku-20240307',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 8, output_tokens: 1 },
+};
+
+const structuredResponse: AnthropicResponse = {
+  id: 'msg_structured',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: '```json\n{"status": "success", "data": {"result": "example"}}\n```' }],
+  model: 'claude-3-sonnet-20240229',
+  stop_reason: 'end_turn',
+  stop_sequence: null,
+  usage: { input_tokens: 20, output_tokens: 25 },
+};
+
+const errorResponses = {
+  authError: {
+    type: 'error',
+    error: { type: 'authentication_error', message: 'Invalid API key provided' },
+  },
+  validationError: {
+    type: 'error',
+    error: { type: 'invalid_request_error', message: 'Missing required parameter: messages' },
+  },
+  rateLimitError: {
+    type: 'error',
+    error: { type: 'rate_limit_error', message: 'Rate limit exceeded. Please try again later.' },
+  },
+  serverError: {
+    type: 'error',
+    error: { type: 'api_error', message: 'Internal server error. Please try again later.' },
+  },
+  overloadedError: {
+    type: 'error',
+    error: { type: 'overloaded_error', message: 'The API is currently overloaded. Please try again later.' },
+  },
+};
+
+const maxTokenResponse: AnthropicResponse = {
+  id: 'msg_max_tokens',
+  type: 'message',
+  role: 'assistant',
+  content: [{ type: 'text', text: 'This response was truncated due to max tokens limit.' }],
+  model: 'claude-3-sonnet-20240229',
+  stop_reason: 'max_tokens',
+  stop_sequence: null,
+  usage: { input_tokens: 25, output_tokens: 10 },
+};
+
+const streamingEvents = {
+  messageStart: {
+    type: 'message_start',
+    message: {
+      id: 'msg_stream_test',
+      type: 'message',
+      role: 'assistant',
+      content: [],
+      model: 'claude-3-sonnet-20240229',
+      stop_reason: null,
+      stop_sequence: null,
+      usage: { input_tokens: 25, output_tokens: 0 },
+    },
+  },
+  contentBlockStart: { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+  contentBlockDelta: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hello! How can I help you today?' } },
+  contentBlockStop: { type: 'content_block_stop', index: 0 },
+  messageDelta: { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 8 } },
+  messageStop: { type: 'message_stop' },
+};
 
 /**
  * Analyzes request content to determine the appropriate response type
@@ -145,7 +255,14 @@ export const anthropicMessagesHandler = http.post(
           break;
       }
 
-      const events = createStreamingSequence(responseText, requestBody.model);
+      const events = [
+        streamingEvents.messageStart,
+        streamingEvents.contentBlockStart,
+        { ...streamingEvents.contentBlockDelta, delta: { type: 'text_delta', text: responseText } },
+        streamingEvents.contentBlockStop,
+        streamingEvents.messageDelta,
+        streamingEvents.messageStop,
+      ];
       const stream = new ReadableStream({
         start(controller) {
           events.forEach((event, index) => {
@@ -335,11 +452,6 @@ export const allHandlers = [
 
 /**
  * Utility function to create a custom handler for specific test needs
- * 
- * @param matcher - Function to match request conditions
- * @param response - Response to return when matched
- * @param status - HTTP status code (default: 200)
- * @returns MSW HTTP handler
  */
 export function createCustomHandler(
   matcher: (request: AnthropicRequest) => boolean,
@@ -353,52 +465,32 @@ export function createCustomHandler(
       return HttpResponse.json(response, { status });
     }
     
-    // Fall back to default response
     return HttpResponse.json(basicSuccessResponse);
   });
 }
 
 /**
- * Helper function to create handlers for specific models
- * 
- * @param model - Model name to match
- * @param response - Response to return for this model
- * @returns MSW HTTP handler
- */
-export function createModelHandler(model: string, response: any) {
-  return createCustomHandler(
-    (request: AnthropicRequest) => request.model === model,
-    response
-  );
-}
-
-/**
- * Helper function to create handlers that simulate usage-based responses
- * 
- * @param baseResponse - Base response template
- * @returns MSW HTTP handler that calculates usage based on request
+ * Helper function that calculates usage based on request - FIXES TYPE ERROR from PR #19
  */
 export function createUsageAwareHandler(baseResponse: any) {
   return http.post(`${ANTHROPIC_API_BASE}/v1/messages`, async ({ request }) => {
     const requestBody = (await request.json()) as AnthropicRequest;
     
-    // Simple token estimation with proper type checking - FIX FOR TYPE ERROR
     const inputTokens = requestBody.messages.reduce((total, msg) => {
-      const content = typeof msg.content === 'string' ? msg.content : 
+      const contentLength = typeof msg.content === 'string' ? msg.content.length : 
         msg.content.reduce((sum, block) => {
+          // FIX: Properly check type before accessing length
           const textLength = typeof block.text === 'string' ? block.text.length : 0;
           return sum + textLength;
         }, 0);
-      return total + Math.ceil(content.length / 4);
+      return total + Math.ceil(contentLength / 4);
     }, 0);
-    
-    const outputTokens = Math.ceil(baseResponse.content[0].text.length / 4);
     
     return HttpResponse.json({
       ...baseResponse,
       usage: {
         input_tokens: inputTokens,
-        output_tokens: outputTokens,
+        output_tokens: Math.ceil(baseResponse.content[0].text.length / 4),
       },
     });
   });
