@@ -42,7 +42,7 @@ export interface TestRequestOptions {
 export const DEFAULT_TEST_HEADERS = {
   'Content-Type': 'application/json',
   'User-Agent': 'Salacia-Test/1.0',
-  'Accept': 'application/json',
+  Accept: 'application/json',
 } as const;
 
 /**
@@ -59,14 +59,14 @@ export const TEST_REQUEST_CONFIGS = {
     method: 'POST',
     headers: {
       ...DEFAULT_TEST_HEADERS,
-      'Accept': 'text/event-stream',
+      Accept: 'text/event-stream',
     },
   },
   /** OPTIONS preflight request */
   options: {
     method: 'OPTIONS',
     headers: {
-      'Origin': 'http://localhost:3000',
+      Origin: 'http://localhost:3000',
       'Access-Control-Request-Method': 'POST',
       'Access-Control-Request-Headers': 'Content-Type, Authorization',
     },
@@ -75,21 +75,21 @@ export const TEST_REQUEST_CONFIGS = {
 
 /**
  * Create a standardized test Request object for API testing
- * 
+ *
  * This utility creates Web API Request objects that can be used in tests
  * to simulate incoming HTTP requests to the API endpoints.
- * 
+ *
  * @param url - The request URL (absolute or relative to baseUrl)
  * @param options - Configuration options for the request
  * @returns A Request object ready for testing
- * 
+ *
  * @example
  * ```typescript
  * // Create a basic POST request
  * const request = createTestRequest('/api/v1/messages', {
  *   body: { model: 'claude-3', messages: [{ role: 'user', content: 'Hello' }] }
  * });
- * 
+ *
  * // Create a streaming request
  * const streamRequest = createTestRequest('/api/v1/messages', {
  *   body: { model: 'claude-3', messages: [{ role: 'user', content: 'Hello' }], stream: true },
@@ -133,14 +133,14 @@ export function createTestRequest(url: string, options: TestRequestOptions = {})
 
 /**
  * Create a test Request specifically for the Anthropic API format
- * 
+ *
  * This is a specialized helper that creates requests matching the Anthropic
  * API specification, with proper validation and formatting.
- * 
+ *
  * @param requestData - Anthropic API request data
  * @param options - Additional request options
  * @returns A Request object with Anthropic-compatible formatting
- * 
+ *
  * @example
  * ```typescript
  * const request = createAnthropicTestRequest({
@@ -163,17 +163,17 @@ export function createAnthropicTestRequest(
 
 /**
  * Builder class for creating complex test messages
- * 
+ *
  * Provides a fluent interface for building Anthropic message objects
  * with proper typing and validation.
- * 
+ *
  * @example
  * ```typescript
  * const message = new MessageBuilder()
  *   .setRole('user')
  *   .setText('Hello, Claude!')
  *   .build();
- * 
+ *
  * const complexMessage = new MessageBuilder()
  *   .setRole('user')
  *   .addTextContent('Here is an image:')
@@ -302,7 +302,10 @@ export const TEST_MESSAGES = {
    */
   longUser: (): AnthropicMessage => ({
     role: 'user',
-    content: 'This is a very long message that is designed to test how the system handles messages with many tokens. '.repeat(LONG_MESSAGE_REPEAT_COUNT),
+    content:
+      'This is a very long message that is designed to test how the system handles messages with many tokens. '.repeat(
+        LONG_MESSAGE_REPEAT_COUNT
+      ),
   }),
 
   /**
@@ -503,18 +506,17 @@ export const ResponseValidators = {
    */
   isErrorResponse: (response: Response): boolean => {
     return (
-      response.status >= 400 &&
-      ResponseValidators.hasContentType(response, 'application/json')
+      response.status >= 400 && ResponseValidators.hasContentType(response, 'application/json')
     );
   },
 } as const;
 
 /**
  * Utility to extract and parse JSON from a Response object
- * 
+ *
  * @param response - The Response object to parse
  * @returns Promise resolving to the parsed JSON data
- * 
+ *
  * @example
  * ```typescript
  * const response = await fetch('/api/endpoint');
@@ -525,25 +527,27 @@ export async function parseJsonResponse<T = unknown>(response: Response): Promis
   if (!ResponseValidators.hasContentType(response, 'application/json')) {
     throw new Error(`Expected JSON response, got ${response.headers.get('content-type')}`);
   }
-  
+
   const text = await response.text();
   if (!text.trim()) {
     throw new Error('Response body is empty');
   }
-  
+
   try {
     return JSON.parse(text) as T;
   } catch (error) {
-    throw new Error(`Failed to parse JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to parse JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
 /**
  * Utility to read and parse streaming response chunks
- * 
+ *
  * @param response - The streaming Response object
  * @returns AsyncGenerator yielding parsed chunks
- * 
+ *
  * @example
  * ```typescript
  * const response = await fetch('/api/stream-endpoint');
@@ -552,7 +556,9 @@ export async function parseJsonResponse<T = unknown>(response: Response): Promis
  * }
  * ```
  */
-export async function* parseStreamingResponse(response: Response): AsyncGenerator<string, void, unknown> {
+export async function* parseStreamingResponse(
+  response: Response
+): AsyncGenerator<string, void, unknown> {
   if (!ResponseValidators.isStreamingResponse(response)) {
     throw new Error('Response is not a valid streaming response');
   }
