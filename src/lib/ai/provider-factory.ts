@@ -17,20 +17,20 @@ export class ProviderFactory {
           baseURL: config.settings?.baseUrl,
           organization: config.settings?.organization,
         });
-      
+
       case 'anthropic':
         return createAnthropic({
           apiKey: config.apiKey,
           baseURL: config.settings?.baseUrl,
         });
-      
+
       case 'groq':
         // Groq uses OpenAI-compatible API
         return createOpenAI({
           apiKey: config.apiKey,
           baseURL: config.settings?.baseUrl || 'https://api.groq.com/openai/v1',
         });
-      
+
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
@@ -58,13 +58,8 @@ export class ProviderFactory {
   static getAvailableModels(type: AIProviderType): string[] {
     switch (type) {
       case 'openai':
-        return [
-          'gpt-4-turbo-preview',
-          'gpt-4',
-          'gpt-3.5-turbo',
-          'gpt-3.5-turbo-16k',
-        ];
-      
+        return ['gpt-4-turbo-preview', 'gpt-4', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+
       case 'anthropic':
         return [
           'claude-3-opus-20240229',
@@ -73,14 +68,10 @@ export class ProviderFactory {
           'claude-2.1',
           'claude-2.0',
         ];
-      
+
       case 'groq':
-        return [
-          'mixtral-8x7b-32768',
-          'llama2-70b-4096',
-          'gemma-7b-it',
-        ];
-      
+        return ['mixtral-8x7b-32768', 'llama2-70b-4096', 'gemma-7b-it'];
+
       default:
         return [];
     }
