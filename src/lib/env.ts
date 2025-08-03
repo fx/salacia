@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { loadEnv } from 'vite';
+
+const viteEnv = loadEnv('development', process.cwd(), '');
 
 /**
  * Environment variables schema definition.
@@ -27,7 +30,7 @@ const envSchema = z.object({
  * Validated environment variables.
  * Throws an error if any required variables are missing or invalid.
  */
-export const env = envSchema.parse(process.env);
+export const env = envSchema.parse({ ...process.env, ...viteEnv });
 
 /**
  * Type definition for environment variables.
