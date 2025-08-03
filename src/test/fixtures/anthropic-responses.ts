@@ -195,7 +195,7 @@ export const conversationResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: 'Building on your previous question about TypeScript generics, here\'s how you can use them with arrays:\n\n```typescript\nfunction processArray<T>(items: T[], processor: (item: T) => T): T[] {\n  return items.map(processor);\n}\n\n// Usage examples:\nconst numbers = processArray([1, 2, 3], x => x * 2);\nconst strings = processArray([\"hello\", \"world\"], s => s.toUpperCase());\n```\n\nThe key advantage is that the function works with any array type while preserving type safety. The return type automatically matches the input type.',
+      text: 'Building on your previous question about TypeScript generics, here\'s how you can use them with arrays:\n\n```typescript\nfunction processArray<T>(items: T[], processor: (item: T) => T): T[] {\n  return items.map(processor);\n}\n\n// Usage examples:\nconst numbers = processArray([1, 2, 3], x => x * 2);\nconst strings = processArray(["hello", "world"], s => s.toUpperCase());\n```\n\nThe key advantage is that the function works with any array type while preserving type safety. The return type automatically matches the input type.',
     },
   ],
   model: 'claude-3-sonnet-20240229',
@@ -217,7 +217,7 @@ export const structuredResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: '# REST API Best Practices\n\n## 1. Use HTTP Methods Correctly\n- **GET**: Retrieve data (idempotent)\n- **POST**: Create new resources\n- **PUT**: Update entire resources (idempotent)\n- **PATCH**: Partial updates\n- **DELETE**: Remove resources (idempotent)\n\n## 2. Design Consistent URLs\n- Use nouns, not verbs: `/users/123` not `/getUser/123`\n- Use plural nouns: `/users` not `/user`\n- Maintain logical hierarchy: `/users/123/posts/456`\n\n## 3. Status Codes\n- **200**: Success\n- **201**: Created\n- **400**: Bad Request\n- **401**: Unauthorized\n- **404**: Not Found\n- **500**: Internal Server Error\n\n## 4. Content Type and Accept Headers\nAlways specify `Content-Type: application/json` for JSON APIs.\n\n## 5. Error Handling\nReturn consistent error response format:\n```json\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid email format\",\n    \"details\": {...}\n  }\n}\n```',
+      text: '# REST API Best Practices\n\n## 1. Use HTTP Methods Correctly\n- **GET**: Retrieve data (idempotent)\n- **POST**: Create new resources\n- **PUT**: Update entire resources (idempotent)\n- **PATCH**: Partial updates\n- **DELETE**: Remove resources (idempotent)\n\n## 2. Design Consistent URLs\n- Use nouns, not verbs: `/users/123` not `/getUser/123`\n- Use plural nouns: `/users` not `/user`\n- Maintain logical hierarchy: `/users/123/posts/456`\n\n## 3. Status Codes\n- **200**: Success\n- **201**: Created\n- **400**: Bad Request\n- **401**: Unauthorized\n- **404**: Not Found\n- **500**: Internal Server Error\n\n## 4. Content Type and Accept Headers\nAlways specify `Content-Type: application/json` for JSON APIs.\n\n## 5. Error Handling\nReturn consistent error response format:\n```json\n{\n  "error": {\n    "code": "VALIDATION_ERROR",\n    "message": "Invalid email format",\n    "details": {...}\n  }\n}\n```',
     },
   ],
   model: 'claude-3-sonnet-20240229',
