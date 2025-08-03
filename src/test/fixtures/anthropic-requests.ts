@@ -2,7 +2,7 @@ import type { AnthropicRequest, AnthropicMessage } from '../../lib/ai/types';
 
 /**
  * Test fixtures for Anthropic API request formats
- * 
+ *
  * This module provides comprehensive test fixtures for various Anthropic API request
  * scenarios including simple text messages, multimodal content, streaming requests,
  * and edge cases. These fixtures are used across the test suite to ensure consistent
@@ -101,7 +101,8 @@ export const conversationHistory: AnthropicMessage[] = [
   },
   {
     role: 'assistant',
-    content: 'TypeScript generics allow you to create reusable components that work with multiple types. They provide a way to create functions, classes, and interfaces that work with a variety of data types while maintaining type safety.',
+    content:
+      'TypeScript generics allow you to create reusable components that work with multiple types. They provide a way to create functions, classes, and interfaces that work with a variety of data types while maintaining type safety.',
   },
   {
     role: 'user',
@@ -109,7 +110,8 @@ export const conversationHistory: AnthropicMessage[] = [
   },
   {
     role: 'assistant',
-    content: 'Here\'s a simple example:\n\n```typescript\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\n// Usage\nconst stringResult = identity<string>("hello");\nconst numberResult = identity<number>(42);\n```\n\nThe `<T>` is a type parameter that acts as a placeholder for the actual type.',
+    content:
+      'Here\'s a simple example:\n\n```typescript\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\n// Usage\nconst stringResult = identity<string>("hello");\nconst numberResult = identity<number>(42);\n```\n\nThe `<T>` is a type parameter that acts as a placeholder for the actual type.',
   },
   {
     role: 'user',
@@ -232,7 +234,8 @@ export const longFormRequest: AnthropicRequest = {
   messages: [
     {
       role: 'user',
-      content: 'Write a comprehensive guide to setting up a full-stack TypeScript application with modern tooling.',
+      content:
+        'Write a comprehensive guide to setting up a full-stack TypeScript application with modern tooling.',
     },
   ],
   max_tokens: 4000,
@@ -264,7 +267,8 @@ export const maximalRequest: AnthropicRequest = {
   top_p: 1.0,
   top_k: 100,
   stream: false,
-  system: 'You are an expert in all fields of knowledge and provide comprehensive, accurate responses.',
+  system:
+    'You are an expert in all fields of knowledge and provide comprehensive, accurate responses.',
   metadata: {
     user_id: 'power-user-999',
     conversation_id: 'extended-session-789',
@@ -336,7 +340,7 @@ export const modelConfigurations = {
 
 /**
  * Helper function to create a request with specific overrides
- * 
+ *
  * @param overrides - Partial request object to merge with defaults
  * @returns Complete AnthropicRequest object
  */
@@ -351,7 +355,7 @@ export function createTestRequest(overrides: Partial<AnthropicRequest> = {}): An
 
 /**
  * Helper function to create a message with specific content
- * 
+ *
  * @param role - Message role (user, assistant, system)
  * @param content - Message content (string or structured)
  * @returns Complete AnthropicMessage object
