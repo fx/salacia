@@ -1,6 +1,26 @@
 import type { AnthropicRequest, AnthropicMessage } from '../../lib/ai/types';
 
 /**
+ * Content block types for multimodal messages
+ */
+type TextContentBlock = {
+  type: 'text';
+  text: string;
+};
+
+type ImageContentBlock = {
+  type: 'image';
+  source: {
+    type: 'base64';
+    media_type: string;
+    data: string;
+  };
+};
+
+type ContentBlock = TextContentBlock | ImageContentBlock;
+type MultimodalContent = ContentBlock[];
+
+/**
  * Configuration options for creating test requests
  */
 export interface TestRequestOptions {
@@ -195,7 +215,8 @@ export class MessageBuilder {
     if (!Array.isArray(this.message.content)) {
       this.initMultimodalContent();
     }
-    (this.message.content as any[]).push({
+    const content = this.message.content as MultimodalContent;
+    content.push({
       type: 'text',
       text,
     });
@@ -209,7 +230,8 @@ export class MessageBuilder {
     if (!Array.isArray(this.message.content)) {
       this.initMultimodalContent();
     }
-    (this.message.content as any[]).push({
+    const content = this.message.content as MultimodalContent;
+    content.push({
       type: 'image',
       source: {
         type: 'base64',
@@ -241,6 +263,11 @@ export class MessageBuilder {
     return this;
   }
 }
+
+/**
+ * Repeat count for long message generation
+ */
+const LONG_MESSAGE_REPEAT_COUNT = 50;
 
 /**
  * Pre-built test message templates for common scenarios
@@ -275,7 +302,7 @@ export const TEST_MESSAGES = {
    */
   longUser: (): AnthropicMessage => ({
     role: 'user',
-    content: 'This is a very long message that is designed to test how the system handles messages with many tokens. '.repeat(50),
+    content: 'This is a very long message that is designed to test how the system handles messages with many tokens. '.repeat(LONG_MESSAGE_REPEAT_COUNT),
   }),
 
   /**
