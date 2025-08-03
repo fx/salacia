@@ -3,16 +3,16 @@ import { server } from './mocks/server';
 
 /**
  * Global test setup configuration for Vitest.
- * 
+ *
  * Sets up MSW (Mock Service Worker) server for intercepting HTTP requests
  * during tests. This allows us to mock external API calls and ensure
  * consistent, reliable test behavior.
- * 
+ *
  * The setup follows the standard MSW testing pattern:
  * - Start server before all tests
  * - Reset handlers after each test to ensure test isolation
  * - Close server after all tests complete
- * 
+ *
  * @see https://mswjs.io/docs/getting-started/integrate/node
  */
 
@@ -22,7 +22,7 @@ import { server } from './mocks/server';
  */
 beforeAll(() => {
   server.listen({
-    onUnhandledRequest: 'error'
+    onUnhandledRequest: 'error',
   });
 });
 
@@ -60,5 +60,5 @@ declare global {
 
 // Make the server available globally for tests that need direct access
 globalThis.TestUtils = {
-  mockServer: server
+  mockServer: server,
 };

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 /**
  * Basic setup verification tests.
- * 
+ *
  * These tests verify that the fundamental testing infrastructure is working
  * correctly, including Vitest configuration, MSW server setup, and TypeScript
  * compilation in the test environment.
@@ -23,7 +23,7 @@ describe('Basic Test Setup', () => {
     interface TestInterface {
       value: number;
     }
-    
+
     const testObj: TestInterface = { value: 42 };
     expect(testObj.value).toBe(42);
   });
