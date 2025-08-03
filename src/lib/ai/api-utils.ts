@@ -13,7 +13,7 @@ export const API_ERROR_TYPES = {
   OVERLOADED_ERROR: 'overloaded_error',
 } as const;
 
-export type ApiErrorType = typeof API_ERROR_TYPES[keyof typeof API_ERROR_TYPES];
+export type ApiErrorType = (typeof API_ERROR_TYPES)[keyof typeof API_ERROR_TYPES];
 
 /**
  * Standard error response format for Anthropic API
@@ -48,12 +48,12 @@ export function createErrorResponse(
 /**
  * Validate required headers for API requests
  */
-export function validateHeaders(request: Request): { 
-  isValid: boolean; 
-  error?: Response; 
+export function validateHeaders(request: Request): {
+  isValid: boolean;
+  error?: Response;
 } {
   const contentType = request.headers.get('content-type');
-  
+
   if (!contentType || !contentType.includes('application/json')) {
     return {
       isValid: false,
@@ -77,7 +77,7 @@ export async function parseRequestBody<T>(
 ): Promise<{ data?: T; error?: Response }> {
   try {
     const rawBody = await request.text();
-    
+
     if (!rawBody.trim()) {
       return {
         error: createErrorResponse(
@@ -117,11 +117,7 @@ export async function parseRequestBody<T>(
   } catch (error) {
     console.error('Request parsing error:', error);
     return {
-      error: createErrorResponse(
-        API_ERROR_TYPES.API_ERROR,
-        'Failed to process request',
-        500
-      ),
+      error: createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Failed to process request', 500),
     };
   }
 }
@@ -132,7 +128,7 @@ export async function parseRequestBody<T>(
  */
 export function estimateTokens(messages: AnthropicRequest['messages']): number {
   let totalTokens = 0;
-  
+
   for (const message of messages) {
     if (typeof message.content === 'string') {
       // Rough approximation: 1 token per 4 characters
@@ -150,7 +146,7 @@ export function estimateTokens(messages: AnthropicRequest['messages']): number {
       }
     }
   }
-  
+
   return totalTokens;
 }
 
@@ -166,10 +162,10 @@ export function generateMessageId(): string {
 /**
  * Rate limiting check (placeholder for future implementation)
  */
-export function checkRateLimit(_clientId: string): { 
-  allowed: boolean; 
-  resetTime?: number; 
-  remaining?: number; 
+export function checkRateLimit(_clientId: string): {
+  allowed: boolean;
+  resetTime?: number;
+  remaining?: number;
 } {
   // Placeholder - implement actual rate limiting logic here
   return { allowed: true };
@@ -178,9 +174,9 @@ export function checkRateLimit(_clientId: string): {
 /**
  * Authentication check (placeholder for future implementation)
  */
-export function validateApiKey(_apiKey?: string): { 
-  isValid: boolean; 
-  userId?: string; 
+export function validateApiKey(_apiKey?: string): {
+  isValid: boolean;
+  userId?: string;
 } {
   // Placeholder - implement actual API key validation here
   // For now, accept any request without authentication

@@ -16,17 +16,17 @@ import {
 
 /**
  * Anthropic-compatible API endpoint for chat completions
- * 
+ *
  * This endpoint provides compatibility with the Anthropic API format
  * while allowing the backend to route requests to different providers.
- * 
+ *
  * Handles both streaming and non-streaming requests.
  */
 export const OPTIONS: APIRoute = () => handleOptions();
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
-  
+
   try {
     // Validate headers
     const headerValidation = validateHeaders(request);
@@ -35,18 +35,17 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Parse and validate request body
-    const { data: requestData, error: parseError } = await parseRequestBody(
-      request,
-      (data) => AnthropicRequestSchema.parse(data)
+    const { data: requestData, error: parseError } = await parseRequestBody(request, data =>
+      AnthropicRequestSchema.parse(data)
     );
-    
+
     if (parseError) {
       return parseError;
     }
 
     // Check if streaming is requested
     const isStreaming = requestData!.stream === true;
-    
+
     // For now, return a mock response until provider integration is complete
     const mockResponse: AnthropicResponse = {
       id: generateMessageId(),
@@ -69,7 +68,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Validate response format
     const validatedResponse = AnthropicResponseSchema.parse(mockResponse);
-    
+
     // Log the interaction to database
     const responseTime = Date.now() - startTime;
     try {
@@ -105,7 +104,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
   } catch (error) {
     console.error('API endpoint error:', error);
-    
+
     // Log error to database
     const responseTime = Date.now() - startTime;
     try {
@@ -125,11 +124,7 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Failed to log error:', dbError);
     }
 
-    return createErrorResponse(
-      API_ERROR_TYPES.API_ERROR,
-      'Internal server error',
-      500
-    );
+    return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);
   }
 };
 
@@ -138,7 +133,7 @@ export const POST: APIRoute = async ({ request }) => {
  */
 function createStreamingResponse(response: AnthropicResponse): Response {
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     start(controller) {
       // Send message_start event
@@ -155,7 +150,9 @@ function createStreamingResponse(response: AnthropicResponse): Response {
           usage: { input_tokens: response.usage.input_tokens, output_tokens: 0 },
         },
       };
-      controller.enqueue(encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`));
+      controller.enqueue(
+        encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`)
+      );
 
       // Send content_block_start event
       const contentBlockStart = {
@@ -163,53 +160,65 @@ function createStreamingResponse(response: AnthropicResponse): Response {
         index: 0,
         content_block: { type: 'text', text: '' },
       };
-      controller.enqueue(encoder.encode(`event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`));
+      controller.enqueue(
+        encoder.encode(`event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`)
+      );
 
       // Send content_block_delta events (simulate streaming text)
       const text = response.content[0].text;
       const words = text.split(' ');
-      
+
       // Process streaming with async delays
       let currentIndex = 0;
       const streamWords = () => {
         if (currentIndex >= words.length) return;
-        
+
         const word = words[currentIndex];
         const delta = {
           type: 'content_block_delta',
           index: 0,
-          delta: { type: 'text_delta', text: (currentIndex === 0 ? word : ` ${word}`) },
+          delta: { type: 'text_delta', text: currentIndex === 0 ? word : ` ${word}` },
         };
-        controller.enqueue(encoder.encode(`event: content_block_delta\ndata: ${JSON.stringify(delta)}\n\n`));
-        
+        controller.enqueue(
+          encoder.encode(`event: content_block_delta\ndata: ${JSON.stringify(delta)}\n\n`)
+        );
+
         currentIndex++;
-        
+
         if (currentIndex >= words.length) {
           // Send final events
           setTimeout(() => {
             // content_block_stop
             const contentBlockStop = { type: 'content_block_stop', index: 0 };
-            controller.enqueue(encoder.encode(`event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(
+                `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`
+              )
+            );
+
             // message_delta with usage
             const messageDelta = {
               type: 'message_delta',
               delta: { stop_reason: response.stop_reason, stop_sequence: response.stop_sequence },
               usage: { output_tokens: response.usage.output_tokens },
             };
-            controller.enqueue(encoder.encode(`event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(`event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`)
+            );
+
             // message_stop
             const messageStop = { type: 'message_stop' };
-            controller.enqueue(encoder.encode(`event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(`event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`)
+            );
+
             controller.close();
           }, 100);
         } else {
           setTimeout(streamWords, 100);
         }
       };
-      
+
       // Start the streaming process
       streamWords();
     },
@@ -220,7 +229,7 @@ function createStreamingResponse(response: AnthropicResponse): Response {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       ...CORS_HEADERS,
     },
   });
