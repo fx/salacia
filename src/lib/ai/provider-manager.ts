@@ -220,6 +220,5 @@ export class ProviderManager {
    */
   static clearCache(): void {
     this.providerCache.clear();
-    this.lastCacheUpdate = 0;
   }
 }
