@@ -3,7 +3,7 @@ import type { AnthropicRequest, AnthropicMessage, AnthropicResponse } from '../.
 
 /**
  * MSW request handlers for Anthropic API
- * 
+ *
  * This module provides intelligent request handlers that analyze request content
  * and parameters to return appropriate responses. Handlers include support for
  * streaming responses, error scenarios, and dynamic response generation based
@@ -30,7 +30,12 @@ const detailedResponse: AnthropicResponse = {
   id: 'msg_detailed_response',
   type: 'message',
   role: 'assistant',
-  content: [{ type: 'text', text: 'Here is a detailed explanation of the concept with comprehensive coverage of the topic.' }],
+  content: [
+    {
+      type: 'text',
+      text: 'Here is a detailed explanation of the concept with comprehensive coverage of the topic.',
+    },
+  ],
   model: 'claude-3-sonnet-20240229',
   stop_reason: 'end_turn',
   stop_sequence: null,
@@ -41,7 +46,12 @@ const codeResponse: AnthropicResponse = {
   id: 'msg_code_example',
   type: 'message',
   role: 'assistant',
-  content: [{ type: 'text', text: 'Here\'s a TypeScript example:\n```typescript\nfunction example(): string {\n  return "code";\n}\n```' }],
+  content: [
+    {
+      type: 'text',
+      text: 'Here\'s a TypeScript example:\n```typescript\nfunction example(): string {\n  return "code";\n}\n```',
+    },
+  ],
   model: 'claude-3-opus-20240229',
   stop_reason: 'end_turn',
   stop_sequence: null,
@@ -52,7 +62,12 @@ const creativeResponse: AnthropicResponse = {
   id: 'msg_creative_story',
   type: 'message',
   role: 'assistant',
-  content: [{ type: 'text', text: 'Once upon a time, in a land of endless possibilities, there lived a curious developer...' }],
+  content: [
+    {
+      type: 'text',
+      text: 'Once upon a time, in a land of endless possibilities, there lived a curious developer...',
+    },
+  ],
   model: 'claude-3-sonnet-20240229',
   stop_reason: 'end_turn',
   stop_sequence: null,
@@ -74,7 +89,9 @@ const structuredResponse: AnthropicResponse = {
   id: 'msg_structured',
   type: 'message',
   role: 'assistant',
-  content: [{ type: 'text', text: '```json\n{"status": "success", "data": {"result": "example"}}\n```' }],
+  content: [
+    { type: 'text', text: '```json\n{"status": "success", "data": {"result": "example"}}\n```' },
+  ],
   model: 'claude-3-sonnet-20240229',
   stop_reason: 'end_turn',
   stop_sequence: null,
@@ -100,7 +117,10 @@ const errorResponses = {
   },
   overloadedError: {
     type: 'error',
-    error: { type: 'overloaded_error', message: 'The API is currently overloaded. Please try again later.' },
+    error: {
+      type: 'overloaded_error',
+      message: 'The API is currently overloaded. Please try again later.',
+    },
   },
 };
 
@@ -129,16 +149,28 @@ const streamingEvents = {
       usage: { input_tokens: 25, output_tokens: 0 },
     },
   },
-  contentBlockStart: { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
-  contentBlockDelta: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hello! How can I help you today?' } },
+  contentBlockStart: {
+    type: 'content_block_start',
+    index: 0,
+    content_block: { type: 'text', text: '' },
+  },
+  contentBlockDelta: {
+    type: 'content_block_delta',
+    index: 0,
+    delta: { type: 'text_delta', text: 'Hello! How can I help you today?' },
+  },
   contentBlockStop: { type: 'content_block_stop', index: 0 },
-  messageDelta: { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 8 } },
+  messageDelta: {
+    type: 'message_delta',
+    delta: { stop_reason: 'end_turn', stop_sequence: null },
+    usage: { output_tokens: 8 },
+  },
   messageStop: { type: 'message_stop' },
 };
 
 /**
  * Analyzes request content to determine the appropriate response type
- * 
+ *
  * @param request - The Anthropic API request
  * @returns Response type classification
  */
@@ -213,7 +245,7 @@ function analyzeRequestContent(request: AnthropicRequest): string {
 
 /**
  * Extracts text content from an Anthropic message
- * 
+ *
  * @param message - The message to extract content from
  * @returns Combined text content
  */
@@ -269,7 +301,7 @@ export const anthropicMessagesHandler = http.post(
             setTimeout(() => {
               const data = `data: ${JSON.stringify(event)}\n\n`;
               controller.enqueue(new TextEncoder().encode(data));
-              
+
               if (index === events.length - 1) {
                 controller.close();
               }
@@ -282,7 +314,7 @@ export const anthropicMessagesHandler = http.post(
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
         },
       });
     }
@@ -294,7 +326,7 @@ export const anthropicMessagesHandler = http.post(
 
     // Analyze content and return appropriate response
     const contentType = analyzeRequestContent(requestBody);
-    
+
     switch (contentType) {
       case 'code':
         return HttpResponse.json(codeResponse);
@@ -339,7 +371,7 @@ export const anthropicStreamingHandler = http.post(
           setTimeout(() => {
             const data = `data: ${JSON.stringify(event)}\n\n`;
             controller.enqueue(new TextEncoder().encode(data));
-            
+
             if (index === events.length - 1) {
               controller.close();
             }
@@ -352,7 +384,7 @@ export const anthropicStreamingHandler = http.post(
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     });
   }
@@ -365,12 +397,9 @@ export const anthropicStreamingHandler = http.post(
 /**
  * Authentication error handler (401)
  */
-export const anthropicAuthErrorHandler = http.post(
-  `${ANTHROPIC_API_BASE}/v1/messages`,
-  () => {
-    return HttpResponse.json(errorResponses.authError, { status: 401 });
-  }
-);
+export const anthropicAuthErrorHandler = http.post(`${ANTHROPIC_API_BASE}/v1/messages`, () => {
+  return HttpResponse.json(errorResponses.authError, { status: 401 });
+});
 
 /**
  * Validation error handler (400)
@@ -385,32 +414,23 @@ export const anthropicValidationErrorHandler = http.post(
 /**
  * Rate limit error handler (429)
  */
-export const anthropicRateLimitHandler = http.post(
-  `${ANTHROPIC_API_BASE}/v1/messages`,
-  () => {
-    return HttpResponse.json(errorResponses.rateLimitError, { status: 429 });
-  }
-);
+export const anthropicRateLimitHandler = http.post(`${ANTHROPIC_API_BASE}/v1/messages`, () => {
+  return HttpResponse.json(errorResponses.rateLimitError, { status: 429 });
+});
 
 /**
  * Server error handler (500)
  */
-export const anthropicServerErrorHandler = http.post(
-  `${ANTHROPIC_API_BASE}/v1/messages`,
-  () => {
-    return HttpResponse.json(errorResponses.serverError, { status: 500 });
-  }
-);
+export const anthropicServerErrorHandler = http.post(`${ANTHROPIC_API_BASE}/v1/messages`, () => {
+  return HttpResponse.json(errorResponses.serverError, { status: 500 });
+});
 
 /**
  * Overloaded/timeout error handler (503)
  */
-export const anthropicTimeoutHandler = http.post(
-  `${ANTHROPIC_API_BASE}/v1/messages`,
-  () => {
-    return HttpResponse.json(errorResponses.overloadedError, { status: 503 });
-  }
-);
+export const anthropicTimeoutHandler = http.post(`${ANTHROPIC_API_BASE}/v1/messages`, () => {
+  return HttpResponse.json(errorResponses.overloadedError, { status: 503 });
+});
 
 /**
  * Handler collections for different testing scenarios
@@ -420,9 +440,7 @@ export const anthropicTimeoutHandler = http.post(
  * Default handlers for standard testing
  * These are the primary handlers used in most tests
  */
-export const defaultHandlers = [
-  anthropicMessagesHandler,
-];
+export const defaultHandlers = [anthropicMessagesHandler];
 
 /**
  * Error scenario handlers for testing error handling
@@ -438,33 +456,28 @@ export const errorHandlers = {
 /**
  * Streaming-specific handlers
  */
-export const streamingHandlers = [
-  anthropicStreamingHandler,
-];
+export const streamingHandlers = [anthropicStreamingHandler];
 
 /**
  * All handlers combined for comprehensive testing
  */
-export const allHandlers = [
-  ...defaultHandlers,
-  ...streamingHandlers,
-];
+export const allHandlers = [...defaultHandlers, ...streamingHandlers];
 
 /**
  * Utility function to create a custom handler for specific test needs
  */
 export function createCustomHandler(
-  matcher: (request: AnthropicRequest) => boolean,
-  response: any,
+  matcher: (_request: AnthropicRequest) => boolean,
+  response: AnthropicResponse,
   status: number = 200
 ) {
   return http.post(`${ANTHROPIC_API_BASE}/v1/messages`, async ({ request }) => {
     const requestBody = (await request.json()) as AnthropicRequest;
-    
+
     if (matcher(requestBody)) {
       return HttpResponse.json(response, { status });
     }
-    
+
     return HttpResponse.json(basicSuccessResponse);
   });
 }
@@ -472,20 +485,22 @@ export function createCustomHandler(
 /**
  * Helper function that calculates usage based on request - FIXES TYPE ERROR from PR #19
  */
-export function createUsageAwareHandler(baseResponse: any) {
+export function createUsageAwareHandler(baseResponse: AnthropicResponse) {
   return http.post(`${ANTHROPIC_API_BASE}/v1/messages`, async ({ request }) => {
     const requestBody = (await request.json()) as AnthropicRequest;
-    
+
     const inputTokens = requestBody.messages.reduce((total, msg) => {
-      const contentLength = typeof msg.content === 'string' ? msg.content.length : 
-        msg.content.reduce((sum, block) => {
-          // FIX: Properly check type before accessing length
-          const textLength = typeof block.text === 'string' ? block.text.length : 0;
-          return sum + textLength;
-        }, 0);
+      const contentLength =
+        typeof msg.content === 'string'
+          ? msg.content.length
+          : msg.content.reduce((sum, block) => {
+              // FIX: Properly check type before accessing length
+              const textLength = typeof block.text === 'string' ? block.text.length : 0;
+              return sum + textLength;
+            }, 0);
       return total + Math.ceil(contentLength / 4);
     }, 0);
-    
+
     return HttpResponse.json({
       ...baseResponse,
       usage: {
