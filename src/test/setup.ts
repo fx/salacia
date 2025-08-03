@@ -48,14 +48,14 @@ afterAll(() => {
  */
 declare global {
   /**
-   * Global test utilities namespace for shared test functionality
+   * Global test utilities interface for shared test functionality
    */
-  namespace TestUtils {
+  var TestUtils: {
     /**
      * Mock server instance for direct access in tests if needed
      */
-    const mockServer: typeof server;
-  }
+    mockServer: typeof server;
+  };
 }
 
 // Make the server available globally for tests that need direct access
