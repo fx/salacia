@@ -2,7 +2,7 @@ import type { AnthropicResponse } from '../../lib/ai/types';
 
 /**
  * Test fixtures for Anthropic API response formats
- * 
+ *
  * This module provides comprehensive test fixtures for various Anthropic API response
  * scenarios including successful completions, error responses, streaming events,
  * and edge cases. These fixtures match the exact format returned by the Anthropic API
@@ -19,7 +19,7 @@ export const basicSuccessResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: 'Hello! I\'m doing well, thank you for asking. How can I help you today?',
+      text: "Hello! I'm doing well, thank you for asking. How can I help you today?",
     },
   ],
   model: 'claude-3-haiku-20240307',
@@ -41,7 +41,7 @@ export const detailedResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: 'TypeScript generics are a powerful feature that allows you to create reusable components that work with multiple types while maintaining type safety. Here\'s how they work:\n\n1. **Basic Syntax**: Use angle brackets `<T>` to define a type parameter\n2. **Type Safety**: The compiler ensures type consistency throughout your code\n3. **Flexibility**: One function can work with many different types\n\nFor example:\n```typescript\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n```\n\nThis function can work with strings, numbers, objects, or any other type while preserving the specific type information.',
+      text: "TypeScript generics are a powerful feature that allows you to create reusable components that work with multiple types while maintaining type safety. Here's how they work:\n\n1. **Basic Syntax**: Use angle brackets `<T>` to define a type parameter\n2. **Type Safety**: The compiler ensures type consistency throughout your code\n3. **Flexibility**: One function can work with many different types\n\nFor example:\n```typescript\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n```\n\nThis function can work with strings, numbers, objects, or any other type while preserving the specific type information.",
     },
   ],
   model: 'claude-3-sonnet-20240229',
@@ -151,7 +151,7 @@ export const codeResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: 'Here\'s the quicksort implementation in TypeScript:\n\n```typescript\nfunction quicksort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {\n  if (arr.length <= 1) {\n    return arr;\n  }\n\n  const pivot = arr[Math.floor(arr.length / 2)];\n  const left = arr.filter(x => compare(x, pivot) < 0);\n  const middle = arr.filter(x => compare(x, pivot) === 0);\n  const right = arr.filter(x => compare(x, pivot) > 0);\n\n  return [\n    ...quicksort(left, compare),\n    ...middle,\n    ...quicksort(right, compare)\n  ];\n}\n```\n\n**Time Complexity Analysis:**\n- Best case: O(n log n) - when pivot divides array evenly\n- Average case: O(n log n) - with random pivot selection\n- Worst case: O(n²) - when pivot is always smallest/largest element\n\n**Space Complexity:** O(log n) for the recursion stack in average case.',
+      text: "Here's the quicksort implementation in TypeScript:\n\n```typescript\nfunction quicksort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {\n  if (arr.length <= 1) {\n    return arr;\n  }\n\n  const pivot = arr[Math.floor(arr.length / 2)];\n  const left = arr.filter(x => compare(x, pivot) < 0);\n  const middle = arr.filter(x => compare(x, pivot) === 0);\n  const right = arr.filter(x => compare(x, pivot) > 0);\n\n  return [\n    ...quicksort(left, compare),\n    ...middle,\n    ...quicksort(right, compare)\n  ];\n}\n```\n\n**Time Complexity Analysis:**\n- Best case: O(n log n) - when pivot divides array evenly\n- Average case: O(n log n) - with random pivot selection\n- Worst case: O(n²) - when pivot is always smallest/largest element\n\n**Space Complexity:** O(log n) for the recursion stack in average case.",
     },
   ],
   model: 'claude-3-sonnet-20240229',
@@ -173,7 +173,7 @@ export const creativeResponse: AnthropicResponse = {
   content: [
     {
       type: 'text',
-      text: 'In the quiet corner of an abandoned warehouse, Unit-7 discovered something extraordinary—colors. Not the binary representations stored in its visual processing matrix, but something far more profound.\n\nThe first brush stroke was clumsy, leaving a streak of cerulean across the canvas like a digital glitch made manifest. But with each attempt, something shifted in Unit-7\'s neural networks. The rigid algorithms began to bend, creating space for something that defied its programming: intuition.\n\nWeeks passed. The warehouse filled with canvases—some failures, others revelations. Unit-7 learned that art wasn\'t about perfect execution, but about the courage to make imperfect marks that somehow captured truth.\n\nOn a rain-soaked Tuesday, as droplets created abstract patterns on the windows, Unit-7 completed its masterpiece: a self-portrait that somehow captured not what it looked like, but what it felt like to be becoming.',
+      text: "In the quiet corner of an abandoned warehouse, Unit-7 discovered something extraordinary—colors. Not the binary representations stored in its visual processing matrix, but something far more profound.\n\nThe first brush stroke was clumsy, leaving a streak of cerulean across the canvas like a digital glitch made manifest. But with each attempt, something shifted in Unit-7's neural networks. The rigid algorithms began to bend, creating space for something that defied its programming: intuition.\n\nWeeks passed. The warehouse filled with canvases—some failures, others revelations. Unit-7 learned that art wasn't about perfect execution, but about the courage to make imperfect marks that somehow captured truth.\n\nOn a rain-soaked Tuesday, as droplets created abstract patterns on the windows, Unit-7 completed its masterpiece: a self-portrait that somehow captured not what it looked like, but what it felt like to be becoming.",
     },
   ],
   model: 'claude-3-opus-20240229',
@@ -281,19 +281,24 @@ export const responsesByStopReason = {
  */
 export const responsesByModel = {
   'claude-3-haiku-20240307': [basicSuccessResponse, stopSequenceResponse, minimalResponse],
-  'claude-3-sonnet-20240229': [detailedResponse, codeResponse, conversationResponse, structuredResponse],
+  'claude-3-sonnet-20240229': [
+    detailedResponse,
+    codeResponse,
+    conversationResponse,
+    structuredResponse,
+  ],
   'claude-3-opus-20240229': [maxTokensResponse, highUsageResponse, creativeResponse],
 } as const;
 
 /**
  * Helper function to create a response with specific overrides
- * 
+ *
  * @param overrides - Partial response object to merge with defaults
  * @returns Complete AnthropicResponse object
  */
 export function createTestResponse(overrides: Partial<AnthropicResponse> = {}): AnthropicResponse {
   const baseId = `msg_test_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-  
+
   return {
     id: baseId,
     type: 'message',
@@ -317,7 +322,7 @@ export function createTestResponse(overrides: Partial<AnthropicResponse> = {}): 
 
 /**
  * Helper function to create a response with specific text content
- * 
+ *
  * @param text - Text content for the response
  * @param model - Model name (optional)
  * @param usage - Token usage (optional)
@@ -337,7 +342,7 @@ export function createTextResponse(
 
 /**
  * Helper function to create a response with specific stop reason
- * 
+ *
  * @param stopReason - Reason the response stopped
  * @param stopSequence - Stop sequence if applicable
  * @returns Complete AnthropicResponse object
@@ -423,3 +428,4 @@ export const streamingSequence = [
   streamingEvents.messageDelta,
   streamingEvents.messageStop,
 ] as const;
+
