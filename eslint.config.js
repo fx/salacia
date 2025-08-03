@@ -17,14 +17,29 @@ export default [
         process: 'readonly',
         console: 'readonly',
         Response: 'readonly',
+        Request: 'readonly',
         Date: 'readonly',
+        TextEncoder: 'readonly',
+        ReadableStream: 'readonly',
+        setTimeout: 'readonly',
+        Math: 'readonly',
+        JSON: 'readonly',
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+      'no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
