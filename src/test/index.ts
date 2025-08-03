@@ -1,6 +1,6 @@
 /**
  * Test utilities and fixtures for Salacia API testing
- * 
+ *
  * This module provides a centralized export of all testing utilities,
  * fixtures, and mock services for the Salacia codebase.
  */
@@ -17,7 +17,7 @@ export {
   createMockRequest,
   parseJsonResponse,
   assertions,
-  DEFAULT_TEST_HEADERS
+  DEFAULT_TEST_HEADERS,
 } from './utils/request-helpers';
 
 // Anthropic request fixtures
@@ -28,7 +28,7 @@ export {
   createRequestWithSystem,
   createConversationRequest,
   createMultimodalRequest,
-  requestFixtures
+  requestFixtures,
 } from './fixtures/anthropic-requests';
 
 // Anthropic response fixtures
@@ -37,5 +37,5 @@ export {
   createAnthropicResponse,
   createStreamingResponse,
   createErrorResponse,
-  responseFixtures
+  responseFixtures,
 } from './fixtures/anthropic-responses';

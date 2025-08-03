@@ -3,7 +3,7 @@ import { server } from './mocks/server';
 
 /**
  * Global test setup file for Salacia test suite
- * 
+ *
  * Configures MSW (Mock Service Worker) for API mocking and
  * sets up global test environment configuration.
  */
@@ -13,7 +13,7 @@ import { server } from './mocks/server';
  */
 beforeAll(() => {
   server.listen({
-    onUnhandledRequest: 'warn'
+    onUnhandledRequest: 'warn',
   });
 });
 

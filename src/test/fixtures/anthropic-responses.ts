@@ -3,14 +3,14 @@ import type { AnthropicRequest, AnthropicResponse } from '../../lib/ai/types';
 
 /**
  * Test fixtures for Anthropic API responses
- * 
+ *
  * This module provides factory functions and pre-built fixtures
  * for creating realistic Anthropic API response payloads for testing.
  */
 
 /**
  * Generates a unique message ID for testing
- * 
+ *
  * @returns Unique message ID string
  */
 export function generateMessageId(): string {
@@ -19,7 +19,7 @@ export function generateMessageId(): string {
 
 /**
  * Creates a basic Anthropic API response
- * 
+ *
  * @param request - The original request (used to determine model, etc.)
  * @param overrides - Properties to override in the response
  * @returns Complete Anthropic response object
@@ -35,8 +35,8 @@ export function createAnthropicResponse(
     content: [
       {
         type: 'text',
-        text: 'This is a test response from the mocked Anthropic API.'
-      }
+        text: 'This is a test response from the mocked Anthropic API.',
+      },
     ],
     model: request.model,
     stop_reason: 'end_turn',
@@ -48,25 +48,25 @@ export function createAnthropicResponse(
         }
         return acc + 10; // Rough estimation for complex content
       }, 0),
-      output_tokens: 25 // Default output token count
-    }
+      output_tokens: 25, // Default output token count
+    },
   };
 
   return {
     ...defaultResponse,
-    ...overrides
+    ...overrides,
   };
 }
 
 /**
  * Creates a streaming response for Anthropic API
- * 
+ *
  * @param request - The original request
  * @returns HttpResponse with streaming data
  */
 export function createStreamingResponse(request: AnthropicRequest): Response {
   const messageId = generateMessageId();
-  
+
   // Create Server-Sent Events stream
   const events = [
     // Message start event
@@ -82,9 +82,9 @@ export function createStreamingResponse(request: AnthropicRequest): Response {
           model: request.model,
           stop_reason: null,
           stop_sequence: null,
-          usage: { input_tokens: 10, output_tokens: 0 }
-        }
-      }
+          usage: { input_tokens: 10, output_tokens: 0 },
+        },
+      },
     },
     // Content block start
     {
@@ -92,8 +92,8 @@ export function createStreamingResponse(request: AnthropicRequest): Response {
       data: {
         type: 'content_block_start',
         index: 0,
-        content_block: { type: 'text', text: '' }
-      }
+        content_block: { type: 'text', text: '' },
+      },
     },
     // Content deltas
     {
@@ -101,32 +101,32 @@ export function createStreamingResponse(request: AnthropicRequest): Response {
       data: {
         type: 'content_block_delta',
         index: 0,
-        delta: { type: 'text_delta', text: 'Hello! ' }
-      }
+        delta: { type: 'text_delta', text: 'Hello! ' },
+      },
     },
     {
       event: 'content_block_delta',
       data: {
         type: 'content_block_delta',
         index: 0,
-        delta: { type: 'text_delta', text: 'This is a ' }
-      }
+        delta: { type: 'text_delta', text: 'This is a ' },
+      },
     },
     {
       event: 'content_block_delta',
       data: {
         type: 'content_block_delta',
         index: 0,
-        delta: { type: 'text_delta', text: 'streaming response.' }
-      }
+        delta: { type: 'text_delta', text: 'streaming response.' },
+      },
     },
     // Content block stop
     {
       event: 'content_block_stop',
       data: {
         type: 'content_block_stop',
-        index: 0
-      }
+        index: 0,
+      },
     },
     // Message delta (final usage)
     {
@@ -134,16 +134,16 @@ export function createStreamingResponse(request: AnthropicRequest): Response {
       data: {
         type: 'message_delta',
         delta: { stop_reason: 'end_turn', stop_sequence: null },
-        usage: { output_tokens: 25 }
-      }
+        usage: { output_tokens: 25 },
+      },
     },
     // Message stop
     {
       event: 'message_stop',
       data: {
-        type: 'message_stop'
-      }
-    }
+        type: 'message_stop',
+      },
+    },
   ];
 
   // Convert events to SSE format
@@ -155,31 +155,27 @@ export function createStreamingResponse(request: AnthropicRequest): Response {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
-    }
+      Connection: 'keep-alive',
+    },
   });
 }
 
 /**
  * Creates an error response for various error scenarios
- * 
+ *
  * @param errorType - Type of error to simulate
  * @param message - Error message
  * @param status - HTTP status code
  * @returns Error response object
  */
-export function createErrorResponse(
-  errorType: string,
-  message: string,
-  status: number = 400
-) {
+export function createErrorResponse(errorType: string, message: string, status: number = 400) {
   return HttpResponse.json(
     {
       type: 'error',
       error: {
         type: errorType,
-        message
-      }
+        message,
+      },
     },
     { status }
   );
@@ -199,16 +195,16 @@ export const responseFixtures = {
     content: [
       {
         type: 'text' as const,
-        text: 'Hello! I am Claude, an AI assistant created by Anthropic.'
-      }
+        text: 'Hello! I am Claude, an AI assistant created by Anthropic.',
+      },
     ],
     model: 'claude-3-sonnet-20240229',
     stop_reason: 'end_turn' as const,
     stop_sequence: null,
     usage: {
       input_tokens: 12,
-      output_tokens: 18
-    }
+      output_tokens: 18,
+    },
   },
 
   /**
@@ -221,16 +217,16 @@ export const responseFixtures = {
     content: [
       {
         type: 'text' as const,
-        text: 'This is a response that was cut off due to reaching the maximum token limit...'
-      }
+        text: 'This is a response that was cut off due to reaching the maximum token limit...',
+      },
     ],
     model: 'claude-3-sonnet-20240229',
     stop_reason: 'max_tokens' as const,
     stop_sequence: null,
     usage: {
       input_tokens: 50,
-      output_tokens: 1000
-    }
+      output_tokens: 1000,
+    },
   },
 
   /**
@@ -243,16 +239,16 @@ export const responseFixtures = {
     content: [
       {
         type: 'text' as const,
-        text: 'This response was stopped by a stop sequence'
-      }
+        text: 'This response was stopped by a stop sequence',
+      },
     ],
     model: 'claude-3-sonnet-20240229',
     stop_reason: 'stop_sequence' as const,
     stop_sequence: '\n\n',
     usage: {
       input_tokens: 25,
-      output_tokens: 15
-    }
+      output_tokens: 15,
+    },
   },
 
   /**
@@ -265,15 +261,15 @@ export const responseFixtures = {
     content: [
       {
         type: 'text' as const,
-        text: 'This is a very long response that would contain a lot of detailed information, explanations, examples, and comprehensive coverage of the topic at hand. It represents the kind of response that would use a significant number of tokens and provide extensive value to the user through its depth and breadth of content.'
-      }
+        text: 'This is a very long response that would contain a lot of detailed information, explanations, examples, and comprehensive coverage of the topic at hand. It represents the kind of response that would use a significant number of tokens and provide extensive value to the user through its depth and breadth of content.',
+      },
     ],
     model: 'claude-3-sonnet-20240229',
     stop_reason: 'end_turn' as const,
     stop_sequence: null,
     usage: {
       input_tokens: 20,
-      output_tokens: 150
-    }
-  }
+      output_tokens: 150,
+    },
+  },
 };

@@ -2,14 +2,14 @@ import type { AnthropicRequest, AnthropicMessage } from '../../lib/ai/types';
 
 /**
  * Test fixtures for Anthropic API requests
- * 
+ *
  * This module provides factory functions and pre-built fixtures
  * for creating realistic Anthropic API request payloads for testing.
  */
 
 /**
  * Creates a basic Anthropic message object
- * 
+ *
  * @param role - Message role (system, user, or assistant)
  * @param content - Message content
  * @returns Anthropic message object
@@ -20,13 +20,13 @@ export function createMessage(
 ): AnthropicMessage {
   return {
     role,
-    content
+    content,
   };
 }
 
 /**
  * Creates a minimal valid Anthropic API request
- * 
+ *
  * @param overrides - Properties to override in the base request
  * @returns Complete Anthropic request object
  */
@@ -35,22 +35,20 @@ export function createAnthropicRequest(
 ): AnthropicRequest {
   const defaultRequest: AnthropicRequest = {
     model: 'claude-3-sonnet-20240229',
-    messages: [
-      createMessage('user', 'Hello, how are you?')
-    ],
+    messages: [createMessage('user', 'Hello, how are you?')],
     max_tokens: 1000,
-    temperature: 0.7
+    temperature: 0.7,
   };
 
   return {
     ...defaultRequest,
-    ...overrides
+    ...overrides,
   };
 }
 
 /**
  * Creates an Anthropic request with streaming enabled
- * 
+ *
  * @param overrides - Properties to override in the base request
  * @returns Streaming Anthropic request object
  */
@@ -59,13 +57,13 @@ export function createStreamingRequest(
 ): AnthropicRequest {
   return createAnthropicRequest({
     stream: true,
-    ...overrides
+    ...overrides,
   });
 }
 
 /**
  * Creates an Anthropic request with system message
- * 
+ *
  * @param systemMessage - System message content
  * @param userMessage - User message content
  * @param overrides - Additional properties to override
@@ -79,13 +77,13 @@ export function createRequestWithSystem(
   return createAnthropicRequest({
     system: systemMessage,
     messages: [createMessage('user', userMessage)],
-    ...overrides
+    ...overrides,
   });
 }
 
 /**
  * Creates an Anthropic request with conversation history
- * 
+ *
  * @param messages - Array of messages forming the conversation
  * @param overrides - Additional properties to override
  * @returns Anthropic request with conversation history
@@ -96,13 +94,13 @@ export function createConversationRequest(
 ): AnthropicRequest {
   return createAnthropicRequest({
     messages,
-    ...overrides
+    ...overrides,
   });
 }
 
 /**
  * Creates an Anthropic request with multimodal content (text + image)
- * 
+ *
  * @param textContent - Text content
  * @param imageData - Base64 encoded image data
  * @param mediaType - Image media type (e.g., 'image/png')
@@ -122,20 +120,20 @@ export function createMultimodalRequest(
         content: [
           {
             type: 'text',
-            text: textContent
+            text: textContent,
           },
           {
             type: 'image',
             source: {
               type: 'base64',
               media_type: mediaType,
-              data: imageData
-            }
-          }
-        ]
-      }
+              data: imageData,
+            },
+          },
+        ],
+      },
     ],
-    ...overrides
+    ...overrides,
   });
 }
 
@@ -167,7 +165,7 @@ export const requestFixtures = {
   multiTurnConversation: createConversationRequest([
     createMessage('user', 'Hello!'),
     createMessage('assistant', 'Hello! How can I help you today?'),
-    createMessage('user', 'Can you tell me a joke?')
+    createMessage('user', 'Can you tell me a joke?'),
   ]),
 
   /**
@@ -175,7 +173,7 @@ export const requestFixtures = {
    */
   creativeRequest: createAnthropicRequest({
     temperature: 1.0,
-    messages: [createMessage('user', 'Write a creative story about a robot.')]
+    messages: [createMessage('user', 'Write a creative story about a robot.')],
   }),
 
   /**
@@ -183,7 +181,7 @@ export const requestFixtures = {
    */
   factualRequest: createAnthropicRequest({
     temperature: 0.1,
-    messages: [createMessage('user', 'What is 2 + 2?')]
+    messages: [createMessage('user', 'What is 2 + 2?')],
   }),
 
   /**
@@ -191,7 +189,7 @@ export const requestFixtures = {
    */
   maxTokensRequest: createAnthropicRequest({
     max_tokens: 4000,
-    messages: [createMessage('user', 'Write a detailed explanation of quantum physics.')]
+    messages: [createMessage('user', 'Write a detailed explanation of quantum physics.')],
   }),
 
   /**
@@ -199,7 +197,7 @@ export const requestFixtures = {
    */
   topPRequest: createAnthropicRequest({
     top_p: 0.9,
-    messages: [createMessage('user', 'Generate some ideas for a birthday party.')]
+    messages: [createMessage('user', 'Generate some ideas for a birthday party.')],
   }),
 
   /**
@@ -209,8 +207,8 @@ export const requestFixtures = {
     metadata: {
       user_id: 'test-user-123',
       session_id: 'test-session-456',
-      source: 'test-suite'
+      source: 'test-suite',
     },
-    messages: [createMessage('user', 'Hello with metadata')]
-  })
+    messages: [createMessage('user', 'Hello with metadata')],
+  }),
 };
