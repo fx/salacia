@@ -14,7 +14,7 @@ import type { AnthropicRequest, AnthropicResponse } from '../../lib/ai/types';
  * @returns Unique message ID string
  */
 export function generateMessageId(): string {
-  return `msg_test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `msg_test_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

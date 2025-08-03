@@ -52,7 +52,7 @@ describe('Testing Infrastructure', () => {
       
       expect(systemRequest).toHaveProperty('system');
       expect(typeof systemRequest.system).toBe('string');
-      expect(systemRequest.system.length).toBeGreaterThan(0);
+      expect(systemRequest.system && systemRequest.system.length).toBeGreaterThan(0);
     });
   });
 
@@ -138,7 +138,8 @@ describe('Testing Infrastructure', () => {
     });
 
     it('should reject invalid response objects', () => {
-      const invalidResponse = { not: 'valid' };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const invalidResponse = { not: 'valid' } as any;
       
       expect(() => {
         assertions.isValidAnthropicResponse(invalidResponse);

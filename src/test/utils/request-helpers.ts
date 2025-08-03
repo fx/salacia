@@ -129,9 +129,18 @@ export async function parseJsonResponse<T = unknown>(response: Response): Promis
 }
 
 /**
+ * Type definition for assertion helper methods
+ */
+type AssertionHelpers = {
+  hasStatus(_response: Response, _expectedStatus: number): void;
+  hasContentType(_response: Response, _expectedContentType: string): void;
+  isValidAnthropicResponse(response: unknown): asserts response is AnthropicResponse;
+};
+
+/**
  * Assertion helpers for testing API responses
  */
-export const assertions = {
+export const assertions: AssertionHelpers = {
   /**
    * Asserts that a response has the expected status code
    * 
