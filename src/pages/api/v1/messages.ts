@@ -85,4 +85,3 @@ export const POST: APIRoute = async ({ request }) => {
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);
   }
 };
-
