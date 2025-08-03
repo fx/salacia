@@ -24,6 +24,17 @@ export default [
         setTimeout: 'readonly',
         Math: 'readonly',
         JSON: 'readonly',
+        // Vitest globals
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        vi: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        globalThis: 'readonly',
       },
     },
     plugins: {
