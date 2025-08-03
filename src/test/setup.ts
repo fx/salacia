@@ -1,6 +1,6 @@
 /**
  * Test setup and configuration
- * 
+ *
  * This file provides centralized test configuration, utilities, and MSW setup
  * for infrastructure testing of the AI service layer.
  */
@@ -35,9 +35,11 @@ export const testUtils = {
    */
   mockConsole: () => {
     const originalConsole = { ...console };
+    // eslint-disable-next-line no-console
     console.log = vi.fn();
     console.error = vi.fn();
     console.warn = vi.fn();
+    // eslint-disable-next-line no-console
     console.info = vi.fn();
     return originalConsole;
   },
