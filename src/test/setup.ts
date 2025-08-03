@@ -20,7 +20,7 @@ export const testUtils = {
    * Generate a unique test ID
    */
   generateTestId: (): string => {
-    return `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `test_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   },
 
   /**
