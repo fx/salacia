@@ -4,7 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { ProviderFactory } from './provider-factory';
 import { env } from '../env';
 import type { AiProvider } from '../db/schema';
-import type { AIProviderType } from './types';
+import type { AIProviderType, ProviderSettings, ModelConfig } from './types';
 
 /**
  * Provider manager for handling AI provider selection and management
@@ -171,24 +171,56 @@ export class ProviderManager {
     // Safely handle models and settings with proper type checking
     const models = provider.models as unknown;
     const settings = provider.settings as unknown;
-    
+
+    // Parse models with proper typing
+    let parsedModels: ModelConfig[] = [];
+    if (Array.isArray(models)) {
+      parsedModels = models as ModelConfig[];
+    }
+
+    // Parse settings with proper typing and defaults
+    let parsedSettings: ProviderSettings = {
+      timeout: 30000,
+      maxRetries: 3,
+    };
+
+    if (typeof settings === 'object' && settings !== null) {
+      const settingsObj = settings as Record<string, unknown>;
+
+      if (settingsObj.baseUrl && typeof settingsObj.baseUrl === 'string') {
+        parsedSettings.baseUrl = settingsObj.baseUrl;
+      }
+      if (settingsObj.organization && typeof settingsObj.organization === 'string') {
+        parsedSettings.organization = settingsObj.organization;
+      }
+      if (settingsObj.defaultModel && typeof settingsObj.defaultModel === 'string') {
+        parsedSettings.defaultModel = settingsObj.defaultModel;
+      }
+      if (settingsObj.timeout && typeof settingsObj.timeout === 'number') {
+        parsedSettings.timeout = settingsObj.timeout;
+      }
+      if (settingsObj.maxRetries && typeof settingsObj.maxRetries === 'number') {
+        parsedSettings.maxRetries = settingsObj.maxRetries;
+      }
+    }
+
+    // Override baseUrl if provided in provider configuration
+    if (provider.baseUrl) {
+      parsedSettings = { ...parsedSettings, baseUrl: provider.baseUrl };
+    }
+
     const providerConfig = {
       id: provider.id,
       name: provider.name,
       type: provider.type as AIProviderType, // Safe after validation above
       apiKey: provider.apiKey,
-      models: Array.isArray(models) ? models : [],
-      settings: typeof settings === 'object' && settings !== null ? settings : {},
+      models: parsedModels,
+      settings: parsedSettings,
       isActive: provider.isActive,
       isDefault: provider.isDefault,
       createdAt: provider.createdAt,
       updatedAt: provider.updatedAt,
     };
-
-    // Override baseUrl if provided in provider configuration
-    if (provider.baseUrl) {
-      (providerConfig.settings as Record<string, unknown>).baseUrl = provider.baseUrl;
-    }
 
     return ProviderFactory.createProvider(providerConfig);
   }
