@@ -15,7 +15,12 @@
     "type-check": "astro check",
     "lint": "eslint src --ext .ts,.astro",
     "lint:fix": "eslint src --ext .ts,.astro --fix",
-    "format": "prettier --write src/**/*.{ts,astro,json}"
+    "format": "prettier --write src/**/*.{ts,astro,json}",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
@@ -29,13 +34,18 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^9.3.3",
+    "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
+    "@vitest/ui": "^3.2.4",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.18.0",
     "eslint-plugin-astro": "^1.2.4",
+    "happy-dom": "^18.0.1",
+    "msw": "^2.10.4",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

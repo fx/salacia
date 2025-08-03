@@ -24,6 +24,11 @@ export default [
         setTimeout: 'readonly',
         Math: 'readonly',
         JSON: 'readonly',
+        Headers: 'readonly',
+        fetch: 'readonly',
+        Blob: 'readonly',
+        FormData: 'readonly',
+        ArrayBuffer: 'readonly',
       },
     },
     plugins: {
