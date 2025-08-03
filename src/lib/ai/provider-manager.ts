@@ -51,7 +51,12 @@ export class ProviderManager {
 
       return anyProvider.length > 0 ? anyProvider[0] : null;
     } catch (error) {
-      console.error('Failed to get default provider:', error);
+      console.error('Failed to get default provider:', error, {
+        envProvider: env.DEFAULT_AI_PROVIDER,
+        hasOpenAI: !!env.OPENAI_API_KEY,
+        hasAnthropic: !!env.ANTHROPIC_API_KEY,
+        hasGroq: !!env.GROQ_API_KEY,
+      });
       return this.createFallbackProvider();
     }
   }
@@ -75,7 +80,10 @@ export class ProviderManager {
       // Create from environment if available
       return this.createProviderFromEnv(type);
     } catch (error) {
-      console.error(`Failed to get provider for type ${type}:`, error);
+      console.error(`Failed to get provider for type ${type}:`, error, {
+        attemptedType: type,
+        dbError: error instanceof Error ? error.message : 'Unknown',
+      });
       return null;
     }
   }
@@ -105,11 +113,12 @@ export class ProviderManager {
     }
 
     // Create an in-memory provider configuration
+    // Note: API key is kept in memory only for immediate use and not logged
     return {
       id: `env-${type}`,
       name: `Environment ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       type,
-      apiKey,
+      apiKey, // This is used immediately by createClient and not stored/logged
       baseUrl: baseUrl || null,
       models: null,
       settings: null,
@@ -153,13 +162,23 @@ export class ProviderManager {
    * Create an AI SDK client for a provider
    */
   static createClient(provider: AiProvider) {
+    // Validate provider type at runtime
+    const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq'];
+    if (!validTypes.includes(provider.type as AIProviderType)) {
+      throw new Error(`Invalid provider type: ${provider.type}`);
+    }
+
+    // Safely handle models and settings with proper type checking
+    const models = provider.models as unknown;
+    const settings = provider.settings as unknown;
+    
     const providerConfig = {
       id: provider.id,
       name: provider.name,
-      type: provider.type as AIProviderType,
+      type: provider.type as AIProviderType, // Safe after validation above
       apiKey: provider.apiKey,
-      models: provider.models ? JSON.parse(JSON.stringify(provider.models)) : [],
-      settings: provider.settings ? JSON.parse(JSON.stringify(provider.settings)) : {},
+      models: Array.isArray(models) ? models : [],
+      settings: typeof settings === 'object' && settings !== null ? settings : {},
       isActive: provider.isActive,
       isDefault: provider.isDefault,
       createdAt: provider.createdAt,
@@ -168,7 +187,7 @@ export class ProviderManager {
 
     // Override baseUrl if provided in provider configuration
     if (provider.baseUrl) {
-      providerConfig.settings.baseUrl = provider.baseUrl;
+      (providerConfig.settings as Record<string, unknown>).baseUrl = provider.baseUrl;
     }
 
     return ProviderFactory.createProvider(providerConfig);
