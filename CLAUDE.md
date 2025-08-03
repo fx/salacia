@@ -25,7 +25,18 @@ We enforce strict pull request size limits to maintain code quality and review e
 - Auto-generated type definitions
 - Documentation files when appropriate
 
-Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests.
+**CRITICAL ENFORCEMENT**:
+- ALWAYS check PR size with `git diff main --stat` before creating PR
+- If approaching 500 lines, STOP immediately and break into smaller PRs
+- The pr-reviewer agent MUST check size limits as the FIRST review step
+- Size limit violations are BLOCKING issues that override all other concerns
+- Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests
+
+**PR Review Requirements**:
+- Every PR MUST be reviewed by the pr-reviewer agent after creation
+- All Copilot and automated review comments MUST be addressed
+- Continue iterating on feedback until PR is ready for merge
+- Do not consider work complete until PR is merged or explicitly blocked
 
 ### GitHub Diff Suppression
 
