@@ -195,6 +195,7 @@ export const systemAndConversationRequest: AnthropicRequest = {
 
 /**
  * High temperature creative request
+ * Note: temperature 1.5 is intentionally set above typical max (1.0) for edge-case testing
  */
 export const creativeRequest: AnthropicRequest = {
   model: 'claude-3-opus-20240229',
@@ -205,7 +206,7 @@ export const creativeRequest: AnthropicRequest = {
     },
   ],
   max_tokens: 2000,
-  temperature: 1.5,
+  temperature: 1.5, // Intentional edge case: testing high creativity parameters
   top_p: 0.95,
 };
 
@@ -258,12 +259,13 @@ export const minimalTokenRequest: AnthropicRequest = {
 
 /**
  * Edge case: Request with maximum reasonable parameters
+ * Note: temperature 2.0 is intentionally set above max (1.0) for edge-case testing
  */
 export const maximalRequest: AnthropicRequest = {
   model: 'claude-3-opus-20240229',
   messages: conversationHistory,
   max_tokens: 4096,
-  temperature: 2.0,
+  temperature: 2.0, // Intentional edge case: testing parameter validation boundaries
   top_p: 1.0,
   top_k: 100,
   stream: false,
@@ -322,7 +324,7 @@ export const requestFixturesByCategory = {
   basic: [basicRequest, minimalTokenRequest],
   advanced: [fullParameterRequest, maximalRequest],
   streaming: [streamingRequest],
-  multimodal: [multimodalRequest, complexMultimodalMessage],
+  multimodal: [multimodalRequest], // Fixed: removed AnthropicMessage from AnthropicRequest array
   conversation: [conversationRequest, systemAndConversationRequest],
   creative: [creativeRequest],
   analytical: [analyticalRequest, structuredContentRequest],
