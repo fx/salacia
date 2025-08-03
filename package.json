@@ -39,7 +39,7 @@
     "eslint": "^9.18.0",
     "eslint-plugin-astro": "^1.2.4",
     "happy-dom": "^15.11.6",
-    "msw": "^2.7.0",
+    "msw": "^2.10.4",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.8.3",
