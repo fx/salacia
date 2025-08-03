@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.astro/
+migrations/
+package-lock.json
+.env
+.env.local
