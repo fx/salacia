@@ -9,7 +9,7 @@ import { generateMessageId, estimateTokens } from './api-utils';
 
 /**
  * AI service for handling chat completions with real providers
- * 
+ *
  * This service integrates with the Vercel AI SDK to provide
  * unified access to multiple AI providers while maintaining
  * Anthropic API compatibility.
@@ -24,7 +24,7 @@ export class AIService {
   ): Promise<AnthropicResponse> {
     const startTime = Date.now();
     let selectedProvider = provider;
-    
+
     try {
       // Get provider if not provided
       if (!selectedProvider) {
@@ -37,20 +37,21 @@ export class AIService {
 
       // Convert Anthropic format to AI SDK format
       const messages = this.convertAnthropicMessages(request);
-      
-      // Generate response  
+
+      // Generate response
       const generateOptions: Parameters<typeof generateText>[0] = {
         model,
         messages,
         temperature: request.temperature,
         topP: request.top_p,
       };
-      
+
       // Add maxTokens if provided
       if (request.max_tokens) {
-        (generateOptions as Parameters<typeof generateText>[0] & { maxTokens?: number }).maxTokens = request.max_tokens;
+        (generateOptions as Parameters<typeof generateText>[0] & { maxTokens?: number }).maxTokens =
+          request.max_tokens;
       }
-      
+
       const result = await generateText(generateOptions);
 
       // Convert response back to Anthropic format
@@ -81,7 +82,7 @@ export class AIService {
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // Log error
       if (selectedProvider) {
         await this.logInteraction(selectedProvider, request, null, responseTime, errorMessage);
@@ -101,7 +102,7 @@ export class AIService {
   ): Promise<ReadableStream> {
     // For now, generate a regular completion and simulate streaming
     const response = await this.generateCompletion(request, provider);
-    
+
     // Create a streaming response that chunks the text
     return this.createSimulatedStream(response);
   }
@@ -111,7 +112,7 @@ export class AIService {
    */
   private static createSimulatedStream(response: AnthropicResponse): ReadableStream {
     const encoder = new TextEncoder();
-    
+
     return new ReadableStream({
       start(controller) {
         // Send message_start event
@@ -128,7 +129,9 @@ export class AIService {
             usage: { input_tokens: response.usage.input_tokens, output_tokens: 0 },
           },
         };
-        controller.enqueue(encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`));
+        controller.enqueue(
+          encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`)
+        );
 
         // Send content_block_start event
         const contentBlockStart = {
@@ -136,7 +139,11 @@ export class AIService {
           index: 0,
           content_block: { type: 'text', text: '' },
         };
-        controller.enqueue(encoder.encode(`event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`));
+        controller.enqueue(
+          encoder.encode(
+            `event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`
+          )
+        );
 
         // Send content in chunks
         const text = response.content[0].text;
@@ -147,18 +154,26 @@ export class AIService {
           if (currentIndex >= words.length) {
             // Send final events
             const contentBlockStop = { type: 'content_block_stop', index: 0 };
-            controller.enqueue(encoder.encode(`event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(
+                `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`
+              )
+            );
+
             const messageDelta = {
               type: 'message_delta',
               delta: { stop_reason: response.stop_reason, stop_sequence: response.stop_sequence },
               usage: { output_tokens: response.usage.output_tokens },
             };
-            controller.enqueue(encoder.encode(`event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(`event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`)
+            );
+
             const messageStop = { type: 'message_stop' };
-            controller.enqueue(encoder.encode(`event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`));
-            
+            controller.enqueue(
+              encoder.encode(`event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`)
+            );
+
             controller.close();
             return;
           }
@@ -169,8 +184,10 @@ export class AIService {
             index: 0,
             delta: { type: 'text_delta', text: currentIndex === 0 ? word : ` ${word}` },
           };
-          controller.enqueue(encoder.encode(`event: content_block_delta\ndata: ${JSON.stringify(delta)}\n\n`));
-          
+          controller.enqueue(
+            encoder.encode(`event: content_block_delta\ndata: ${JSON.stringify(delta)}\n\n`)
+          );
+
           currentIndex++;
           setTimeout(sendNextChunk, 100); // 100ms delay between words
         };
@@ -202,7 +219,7 @@ export class AIService {
         // Handle multimodal content - for now, just extract text
         content = message.content
           .filter(block => block.type === 'text' && 'text' in block)
-          .map(block => 'text' in block ? block.text! : '')
+          .map(block => ('text' in block ? block.text! : ''))
           .join('\n');
       } else {
         content = '';
@@ -225,14 +242,19 @@ export class AIService {
     }
 
     // For other providers, use the factory's model mapping
-    const factoryMappedModel = ProviderFactory.mapModelName(provider.type as AIProviderType, modelName);
+    const factoryMappedModel = ProviderFactory.mapModelName(
+      provider.type as AIProviderType,
+      modelName
+    );
     return factoryMappedModel;
   }
 
   /**
    * Map AI SDK finish reasons to Anthropic format
    */
-  private static mapFinishReason(finishReason: string | undefined): 'end_turn' | 'max_tokens' | 'stop_sequence' {
+  private static mapFinishReason(
+    finishReason: string | undefined
+  ): 'end_turn' | 'max_tokens' | 'stop_sequence' {
     switch (finishReason) {
       case 'stop':
         return 'end_turn';
@@ -253,7 +275,6 @@ export class AIService {
   private static estimateOutputTokens(text: string): number {
     return Math.ceil(text.length / 4);
   }
-
 
   /**
    * Log interaction to database

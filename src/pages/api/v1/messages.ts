@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (isStreaming) {
       // Generate streaming response using AI service
       const stream = await AIService.generateStreamingCompletion(requestData!);
-      
+
       return new Response(stream, {
         status: 200,
         headers: {
@@ -85,4 +85,3 @@ export const POST: APIRoute = async ({ request }) => {
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);
   }
 };
-

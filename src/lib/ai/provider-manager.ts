@@ -8,10 +8,10 @@ import type { AIProviderType } from './types';
 
 /**
  * Provider manager for handling AI provider selection and management
- * 
+ *
  * This service manages the selection of AI providers based on:
  * 1. Database configuration
- * 2. Environment variables 
+ * 2. Environment variables
  * 3. Default fallbacks
  */
 export class ProviderManager {
@@ -126,7 +126,7 @@ export class ProviderManager {
   private static createFallbackProvider(): AiProvider | null {
     // Try each provider type in order of preference
     const preferredOrder: AIProviderType[] = ['anthropic', 'openai', 'groq'];
-    
+
     for (const type of preferredOrder) {
       const provider = this.createProviderFromEnv(type);
       if (provider) {
@@ -142,10 +142,7 @@ export class ProviderManager {
    */
   static async getActiveProviders(): Promise<AiProvider[]> {
     try {
-      return await db
-        .select()
-        .from(aiProviders)
-        .where(eq(aiProviders.isActive, true));
+      return await db.select().from(aiProviders).where(eq(aiProviders.isActive, true));
     } catch (error) {
       console.error('Failed to get active providers:', error);
       return [];
@@ -183,7 +180,7 @@ export class ProviderManager {
   static async testProvider(provider: AiProvider): Promise<{ success: boolean; error?: string }> {
     try {
       const client = this.createClient(provider);
-      
+
       // For now, just test that we can create the client
       // In a full implementation, you might make a simple API call to test connectivity
       if (!client) {
@@ -204,7 +201,7 @@ export class ProviderManager {
    */
   static async ensureDefaultProvider(): Promise<AiProvider> {
     const provider = await this.getDefaultProvider();
-    
+
     if (provider) {
       return provider;
     }
