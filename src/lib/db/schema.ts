@@ -73,3 +73,71 @@ export type NewApiRequest = typeof apiRequests.$inferInsert;
 
 export type HealthCheck = typeof healthChecks.$inferSelect;
 export type NewHealthCheck = typeof healthChecks.$inferInsert;
+
+/**
+ * AI Provider configurations table for managing different AI service providers.
+ * Stores configuration details for routing requests to various AI providers.
+ */
+export const aiProviders = pgTable('ai_providers', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  type: varchar('type', { length: 50 }).notNull(), // 'anthropic', 'openai', 'groq', etc.
+  baseUrl: varchar('base_url', { length: 500 }),
+  apiKey: text('api_key').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  configuration: jsonb('configuration'), // Provider-specific settings
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * API interactions table for logging AI API requests and responses.
+ * Tracks requests to AI providers with detailed timing and usage metrics.
+ */
+export const apiInteractions = pgTable('api_interactions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  requestId: uuid('request_id').references(() => apiRequests.id),
+  providerId: uuid('provider_id').references(() => aiProviders.id),
+  model: varchar('model', { length: 100 }),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  totalTokens: integer('total_tokens'),
+  requestData: jsonb('request_data'),
+  responseData: jsonb('response_data'),
+  processingTime: integer('processing_time_ms'),
+  cost: varchar('cost', { length: 20 }), // Store as string to avoid decimal precision issues
+  success: boolean('success').notNull(),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * API authentication table for managing API keys and access control.
+ * Handles authentication for incoming API requests.
+ */
+export const apiAuthentication = pgTable('api_authentication', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  keyName: varchar('key_name', { length: 100 }).notNull(),
+  keyHash: varchar('key_hash', { length: 255 }).notNull().unique(),
+  isActive: boolean('is_active').default(true).notNull(),
+  permissions: jsonb('permissions'), // Array of allowed operations
+  lastUsed: timestamp('last_used'),
+  usageCount: integer('usage_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type AiProvider = typeof aiProviders.$inferSelect;
+export type NewAiProvider = typeof aiProviders.$inferInsert;
+
+export type ApiInteraction = typeof apiInteractions.$inferSelect;
+export type NewApiInteraction = typeof apiInteractions.$inferInsert;
+
+export type ApiAuthentication = typeof apiAuthentication.$inferSelect;
+export type NewApiAuthentication = typeof apiAuthentication.$inferInsert;

@@ -8,6 +8,13 @@
       "when": 1754245211176,
       "tag": "0000_classy_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754249402994,
+      "tag": "0001_noisy_maverick",
+      "breakpoints": true
     }
   ]
 }
