@@ -15,11 +15,31 @@ This project uses the following core technologies:
 
 We enforce strict pull request size limits to maintain code quality and review effectiveness:
 
-- **Hard limit**: 500 lines maximum
-- **Acceptable**: 200 lines or fewer
-- **Ideal**: 50 lines or fewer
+- **Hard limit**: 500 lines maximum of actual code changes
+- **Acceptable**: 200 lines or fewer of actual code changes
+- **Ideal**: 50 lines or fewer of actual code changes
+
+**Important**: These limits apply to human-written code only. The following do NOT count toward PR size limits:
+- Generated files (migrations, lock files, snapshots)
+- Configuration files that are mostly boilerplate
+- Auto-generated type definitions
+- Documentation files when appropriate
 
 Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests.
+
+### GitHub Diff Suppression
+
+Configure `.gitattributes` to mark generated files appropriately so they are collapsed by default in GitHub diffs:
+
+```gitattributes
+# Mark generated files
+migrations/*.sql linguist-generated=true
+migrations/meta/*.json linguist-generated=true
+*-lock.json linguist-generated=true
+*.lock linguist-generated=true
+```
+
+This helps reviewers focus on the actual code changes rather than generated artifacts.
 
 ### Task Breakdown Requirements
 

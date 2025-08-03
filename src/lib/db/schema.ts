@@ -62,6 +62,47 @@ export const healthChecks = pgTable('health_checks', {
 });
 
 /**
+ * AI provider configurations table for managing LLM provider settings.
+ * Stores configuration for different AI providers like OpenAI, Anthropic, etc.
+ */
+export const aiProviders = pgTable('ai_providers', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  type: varchar('type', { length: 50 }).notNull(), // 'openai', 'anthropic', 'groq', etc.
+  apiKey: text('api_key').notNull(),
+  baseUrl: varchar('base_url', { length: 500 }),
+  models: jsonb('models'), // Available models for this provider
+  settings: jsonb('settings'), // Provider-specific settings
+  isActive: boolean('is_active').default(true).notNull(),
+  isDefault: boolean('is_default').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * API interactions table for logging AI API requests and responses.
+ * Tracks all interactions with AI providers for monitoring and debugging.
+ */
+export const aiInteractions = pgTable('ai_interactions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  providerId: uuid('provider_id').references(() => aiProviders.id),
+  model: varchar('model', { length: 100 }).notNull(),
+  request: jsonb('request').notNull(),
+  response: jsonb('response'),
+  promptTokens: integer('prompt_tokens'),
+  completionTokens: integer('completion_tokens'),
+  totalTokens: integer('total_tokens'),
+  responseTimeMs: integer('response_time_ms'),
+  statusCode: integer('status_code'),
+  error: text('error'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
  * Type definitions for database tables.
  * Provides type safety for database operations.
  */
@@ -73,3 +114,9 @@ export type NewApiRequest = typeof apiRequests.$inferInsert;
 
 export type HealthCheck = typeof healthChecks.$inferSelect;
 export type NewHealthCheck = typeof healthChecks.$inferInsert;
+
+export type AiProvider = typeof aiProviders.$inferSelect;
+export type NewAiProvider = typeof aiProviders.$inferInsert;
+
+export type AiInteraction = typeof aiInteractions.$inferSelect;
+export type NewAiInteraction = typeof aiInteractions.$inferInsert;
