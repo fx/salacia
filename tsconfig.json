@@ -4,12 +4,13 @@
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["DOM", "ES2022"],
     "paths": {
       "@/*": ["./src/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/db/*": ["./src/lib/db/*"],
       "@/types/*": ["./src/types/*"]
     },
-    "types": ["astro/client"]
+    "types": ["astro/client", "node"]
   }
 }
