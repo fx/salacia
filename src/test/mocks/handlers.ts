@@ -13,6 +13,11 @@ import type { AnthropicRequest, AnthropicMessage, AnthropicResponse } from '../.
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 
 /**
+ * Streaming event delay in milliseconds
+ */
+const STREAMING_EVENT_DELAY_MS = 100;
+
+/**
  * Basic response fixtures
  */
 const basicSuccessResponse: AnthropicResponse = {
@@ -175,6 +180,11 @@ const streamingEvents = {
  * @returns Response type classification
  */
 function analyzeRequestContent(request: AnthropicRequest): string {
+  // Handle empty messages array
+  if (request.messages.length === 0) {
+    return 'basic';
+  }
+
   const lastMessage = request.messages[request.messages.length - 1];
   const content = getMessageContent(lastMessage);
   const contentLower = content.toLowerCase();
@@ -255,7 +265,7 @@ function getMessageContent(message: AnthropicMessage): string {
   }
 
   return message.content.reduce((text, block) => {
-    if (block.type === 'text' && block.text) {
+    if (block.type === 'text' && typeof block.text === 'string') {
       return text + block.text;
     }
     return text;
@@ -305,7 +315,7 @@ export const anthropicMessagesHandler = http.post(
               if (index === events.length - 1) {
                 controller.close();
               }
-            }, index * 100); // 100ms delay between events
+            }, index * STREAMING_EVENT_DELAY_MS);
           });
         },
       });
