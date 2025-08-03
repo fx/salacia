@@ -428,4 +428,3 @@ export const streamingSequence = [
   streamingEvents.messageDelta,
   streamingEvents.messageStop,
 ] as const;
-
