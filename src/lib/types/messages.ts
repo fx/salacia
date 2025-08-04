@@ -165,11 +165,11 @@ export interface MessagesPaginatedResult {
 /**
  * Transforms a database AI interaction record into a display-friendly format.
  * Computes derived fields and formats data for frontend consumption.
- * 
+ *
  * Note: The provider field is set to undefined in this basic transformation.
  * When used through the service layer, provider names are populated by joining
  * with the aiProviders table using the providerId reference.
- * 
+ *
  * @param interaction - Raw database record from aiInteractions table
  * @returns Formatted message display object with provider field undefined
  */
@@ -178,12 +178,14 @@ export function transformAiInteractionToDisplay(interaction: AiInteraction): Mes
   let requestPreview = 'No request data';
   if (interaction.request) {
     try {
-      const requestStr = typeof interaction.request === 'string' 
-        ? interaction.request 
-        : JSON.stringify(interaction.request);
-      requestPreview = requestStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-        ? `${requestStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-        : requestStr;
+      const requestStr =
+        typeof interaction.request === 'string'
+          ? interaction.request
+          : JSON.stringify(interaction.request);
+      requestPreview =
+        requestStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${requestStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : requestStr;
     } catch {
       requestPreview = 'Invalid request data';
     }
@@ -193,12 +195,14 @@ export function transformAiInteractionToDisplay(interaction: AiInteraction): Mes
   let responsePreview: string | undefined;
   if (interaction.response) {
     try {
-      const responseStr = typeof interaction.response === 'string'
-        ? interaction.response
-        : JSON.stringify(interaction.response);
-      responsePreview = responseStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-        ? `${responseStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-        : responseStr;
+      const responseStr =
+        typeof interaction.response === 'string'
+          ? interaction.response
+          : JSON.stringify(interaction.response);
+      responsePreview =
+        responseStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${responseStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : responseStr;
     } catch {
       responsePreview = 'Invalid response data';
     }
