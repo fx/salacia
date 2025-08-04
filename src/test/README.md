@@ -2,6 +2,8 @@
 
 This directory contains E2E integration tests for verifying Claude Code CLI works with our API, implementing the core requirements from issue #7.
 
+**Note**: The test suite has been simplified from the original implementation to focus on core E2E testing without complex subprocess management.
+
 ## Overview
 
 The test suite implements proper end-to-end integration tests by actually launching the Claude Code CLI and testing it against our API running at localhost:4321.
