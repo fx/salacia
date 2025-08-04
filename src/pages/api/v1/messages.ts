@@ -37,14 +37,21 @@ export const POST: APIRoute = async ({ request }) => {
     const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
       // Only log a summary in debug mode - full requests are too verbose
       if (data && typeof data === 'object' && 'model' in data) {
-        const requestData = data as Record<string, unknown>; // Type assertion for logging
-        const summary = {
-          model: requestData.model,
-          messageCount: Array.isArray(requestData.messages) ? requestData.messages.length : 0,
-          maxTokens: requestData.max_tokens || 'default',
-          hasSystem: !!requestData.system,
-        };
-        logger.debug('Request summary:', summary);
+        // Use proper type guards instead of type assertion
+        const hasModel = 'model' in data;
+        const hasMessages = 'messages' in data && Array.isArray(data.messages);
+        const hasMaxTokens = 'max_tokens' in data;
+        const hasSystem = 'system' in data;
+        
+        if (hasModel) {
+          const summary = {
+            model: data.model,
+            messageCount: hasMessages ? data.messages.length : 0,
+            maxTokens: hasMaxTokens ? data.max_tokens : 'default',
+            hasSystem: hasSystem,
+          };
+          logger.debug('Request summary:', summary);
+        }
       }
       return AnthropicRequestSchema.parse(data);
     });
