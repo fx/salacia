@@ -3,3 +3,21 @@
 @import "@webtui/css/utils/box.css";
 @import "@webtui/css/components/button.css";
 @import "@webtui/css/components/table.css";
+
+/* Real-time update styles */
+@layer components {
+  .webtui-table-row--processing {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 3px solid #ffc107;
+  }
+  
+  .webtui-table-row--processing .webtui-status--warning {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+}

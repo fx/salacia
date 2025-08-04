@@ -10,6 +10,9 @@ class MessagesDashboard {
     this.totalPages = 1;
     this.totalItems = 0;
     this.data = null;
+    this.eventSource = null;
+    this.messageCache = new Map(); // Cache messages by ID for real-time updates
+    this.inFlightMessages = new Set(); // Track in-flight message IDs
     
     // DOM elements
     this.loadingState = document.getElementById('loading-state');
@@ -33,6 +36,7 @@ class MessagesDashboard {
   init() {
     this.setupEventListeners();
     this.loadMessages();
+    this.initializeRealTimeUpdates();
   }
   
   /**
@@ -112,6 +116,13 @@ class MessagesDashboard {
    */
   createTableRow(message) {
     const row = document.createElement('tr');
+    row.dataset.messageId = message.id; // Add message ID for real-time updates
+    
+    // Add in-flight styling if message is processing
+    const isInFlight = this.inFlightMessages.has(message.id) || message.status === 'in-flight';
+    if (isInFlight) {
+      row.classList.add('webtui-table-row--processing');
+    }
     
     // Time column
     const timeCell = document.createElement('td');
@@ -145,9 +156,24 @@ class MessagesDashboard {
     
     // Status column
     const statusCell = document.createElement('td');
+    statusCell.className = 'message-status'; // Add class for easy targeting
     const statusSpan = document.createElement('span');
-    statusSpan.className = `webtui-status ${message.isSuccess ? 'webtui-status--success' : 'webtui-status--error'}`;
-    statusSpan.textContent = message.isSuccess ? 'Success' : 'Error';
+    
+    // Determine status display based on in-flight state and success
+    let statusClass, statusText;
+    if (isInFlight) {
+      statusClass = 'webtui-status--warning';
+      statusText = 'Processing';
+    } else if (message.isSuccess) {
+      statusClass = 'webtui-status--success';
+      statusText = 'Success';
+    } else {
+      statusClass = 'webtui-status--error';
+      statusText = 'Error';
+    }
+    
+    statusSpan.className = `webtui-status ${statusClass}`;
+    statusSpan.textContent = statusText;
     statusCell.appendChild(statusSpan);
     row.appendChild(statusCell);
     
@@ -333,6 +359,187 @@ class MessagesDashboard {
     this.loadingState.style.display = 'none';
     this.errorState.style.display = 'none';
     this.messagesTable.style.display = 'block';
+  }
+  
+  /**
+   * Initialize Server-Sent Events for real-time updates
+   */
+  initializeRealTimeUpdates() {
+    if (typeof EventSource === 'undefined') {
+      console.warn('Server-Sent Events not supported in this browser');
+      return;
+    }
+
+    try {
+      const eventsEndpoint = window.MESSAGES_EVENTS_ENDPOINT || '/api/messages/events';
+      this.eventSource = new EventSource(eventsEndpoint);
+      
+      this.eventSource.onopen = () => {
+        console.log('Real-time connection established');
+      };
+
+      this.eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleRealTimeEvent(data);
+        } catch (error) {
+          console.error('Failed to parse SSE message:', error);
+        }
+      };
+
+      this.eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        // Attempt to reconnect after a delay
+        setTimeout(() => {
+          if (this.eventSource.readyState === EventSource.CLOSED) {
+            this.initializeRealTimeUpdates();
+          }
+        }, 5000);
+      };
+
+      // Clean up on page unload
+      window.addEventListener('beforeunload', () => {
+        if (this.eventSource) {
+          this.eventSource.close();
+        }
+      });
+    } catch (error) {
+      console.error('Failed to initialize SSE connection:', error);
+    }
+  }
+
+  /**
+   * Handle real-time events from Server-Sent Events
+   * @param {Object} eventData - Event data from SSE
+   */
+  handleRealTimeEvent(eventData) {
+    switch (eventData.type) {
+      case 'connected':
+        console.log('Real-time updates connected:', eventData.message);
+        break;
+      
+      case 'message':
+        this.handleMessageUpdate(eventData.data);
+        break;
+      
+      case 'status':
+        this.handleStatusUpdate(eventData.data);
+        break;
+      
+      case 'heartbeat':
+        // Just log for debugging, no action needed
+        console.debug('SSE heartbeat received');
+        break;
+      
+      case 'error':
+        console.error('SSE error:', eventData.message);
+        break;
+      
+      default:
+        console.log('Unknown SSE event type:', eventData.type);
+    }
+  }
+
+  /**
+   * Handle message updates from real-time events
+   * @param {Object} messageData - Message data from SSE
+   */
+  handleMessageUpdate(messageData) {
+    // Cache the message
+    this.messageCache.set(messageData.id, messageData);
+    
+    // Track in-flight status
+    if (messageData.status === 'in-flight') {
+      this.inFlightMessages.add(messageData.id);
+    } else if (messageData.status === 'completed') {
+      this.inFlightMessages.delete(messageData.id);
+    }
+
+    // If this is a new message and we're on the first page, prepend it
+    if (this.currentPage === 1 && this.data && this.data.messages) {
+      const existingIndex = this.data.messages.findIndex(msg => msg.id === messageData.id);
+      
+      if (existingIndex === -1) {
+        // New message - add to the beginning
+        this.data.messages.unshift(messageData);
+        this.totalItems++;
+        this.renderTable();
+        this.renderPagination();
+      } else {
+        // Update existing message
+        this.data.messages[existingIndex] = { ...this.data.messages[existingIndex], ...messageData };
+        this.updateTableRow(messageData);
+      }
+    } else {
+      // Update cached message for when we navigate to that page
+      this.updateCachedMessage(messageData);
+    }
+  }
+
+  /**
+   * Handle status updates for messages
+   * @param {Object} statusData - Status update data
+   */
+  handleStatusUpdate(statusData) {
+    const { id, status } = statusData;
+    
+    if (status === 'in-flight') {
+      this.inFlightMessages.add(id);
+    } else {
+      this.inFlightMessages.delete(id);
+    }
+
+    // Update the table row if visible
+    this.updateMessageStatus(id, status);
+  }
+
+  /**
+   * Update cached message data
+   * @param {Object} messageData - Updated message data
+   */
+  updateCachedMessage(messageData) {
+    this.messageCache.set(messageData.id, messageData);
+  }
+
+  /**
+   * Update a specific table row with new data
+   * @param {Object} messageData - Updated message data
+   */
+  updateTableRow(messageData) {
+    const rows = this.tbody.querySelectorAll('tr');
+    for (const row of rows) {
+      // Find row by matching the message data (we'll add data-id attribute)
+      if (row.dataset.messageId === messageData.id) {
+        // Replace the entire row
+        const newRow = this.createTableRow(messageData);
+        row.replaceWith(newRow);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Update message status in the table
+   * @param {string} messageId - Message ID
+   * @param {string} status - New status
+   */
+  updateMessageStatus(messageId, status) {
+    const rows = this.tbody.querySelectorAll('tr');
+    for (const row of rows) {
+      if (row.dataset.messageId === messageId) {
+        const statusCell = row.querySelector('.message-status');
+        if (statusCell) {
+          const statusSpan = statusCell.querySelector('span');
+          if (statusSpan) {
+            statusSpan.className = `webtui-status ${status === 'in-flight' ? 'webtui-status--warning' : 
+              status === 'completed' ? 'webtui-status--success' : 'webtui-status--error'}`;
+            statusSpan.textContent = status === 'in-flight' ? 'Processing' : 
+              status === 'completed' ? 'Success' : 'Error';
+          }
+        }
+        break;
+      }
+    }
   }
 }
 
