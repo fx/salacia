@@ -6,7 +6,6 @@ import type {
   MessagesPaginationParams, 
   MessagesPaginatedResult,
   MessageSort,
-  MessageSortField,
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
 import { aiInteractions } from '../db/schema.js';
@@ -261,19 +260,18 @@ export class MessagesService {
     const orderFunc = direction === 'asc' ? asc : desc;
 
     // Map sort fields to database columns
-    const fieldMap: Record<MessageSortField, unknown> = {
-      createdAt: aiInteractions.createdAt,
-      model: aiInteractions.model,
-      totalTokens: aiInteractions.totalTokens,
-      responseTime: aiInteractions.responseTimeMs,
-    };
-
-    const column = fieldMap[field];
-    if (!column) {
-      throw new Error(`Invalid sort field: ${field}`);
+    switch (field) {
+      case 'createdAt':
+        return [orderFunc(aiInteractions.createdAt)];
+      case 'model':
+        return [orderFunc(aiInteractions.model)];
+      case 'totalTokens':
+        return [orderFunc(aiInteractions.totalTokens)];
+      case 'responseTime':
+        return [orderFunc(aiInteractions.responseTimeMs)];
+      default:
+        throw new Error(`Invalid sort field: ${field}`);
     }
-
-    return [orderFunc(column)];
   }
 
   /**
