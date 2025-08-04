@@ -66,3 +66,24 @@ afterEach(() => {
 afterAll(() => {
   server.close();
 });
+
+/**
+ * Global test environment variables and configuration.
+ * These are available to all test files.
+ */
+declare global {
+  /**
+   * Global test utilities interface for shared test functionality
+   */
+  var TestUtils: {
+    /**
+     * Mock server instance for direct access in tests if needed
+     */
+    mockServer: typeof server;
+  };
+}
+
+// Make the server available globally for tests that need direct access
+globalThis.TestUtils = {
+  mockServer: server,
+};
