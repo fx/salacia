@@ -35,8 +35,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Parse and validate request body
     const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
-      // Log the raw request only in debug mode
-      logger.debug('Raw request from client:', data);
+      // Only log a summary in debug mode - full requests are too verbose
+      if (data && typeof data === 'object' && 'model' in data) {
+        const summary = {
+          model: data.model,
+          messageCount: Array.isArray(data.messages) ? data.messages.length : 0,
+          maxTokens: data.max_tokens || 'default',
+          hasSystem: !!data.system,
+        };
+        logger.debug('Request summary:', summary);
+      }
       return AnthropicRequestSchema.parse(data);
     });
 
