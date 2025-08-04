@@ -1,0 +1,111 @@
+---
+/**
+ * Messages Dashboard - WebTUI Foundation
+ * Phase 3 Part 1: Basic structure and styling setup
+ */
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages Dashboard - Salacia</title>
+  
+  <!-- WebTUI CSS Framework -->
+  <link rel="stylesheet" href="https://unpkg.com/@webtui/css@1.0.0/dist/webtui.min.css">
+  
+  <style>
+    /* Custom styles for messages dashboard */
+    .messages-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+    }
+    
+    .messages-title {
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .messages-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body class="wt-bg-gray-50">
+  <!-- Header Section -->
+  <header class="messages-header">
+    <div class="messages-container">
+      <h1 class="messages-title">Messages Dashboard</h1>
+      <p class="wt-text-gray-200 wt-mt-2">View and manage AI conversation messages</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="messages-container">
+    <!-- Table Container -->
+    <div class="table-container">
+      <!-- Table Header -->
+      <div class="wt-bg-gray-50 wt-px-6 wt-py-4 wt-border-b">
+        <h2 class="wt-text-lg wt-font-semibold wt-text-gray-900">Recent Messages</h2>
+        <p class="wt-text-sm wt-text-gray-600 wt-mt-1">Loading message data...</p>
+      </div>
+      
+      <!-- Table Skeleton -->
+      <div class="wt-overflow-x-auto">
+        <table class="wt-w-full wt-table-auto">
+          <thead class="wt-bg-gray-100">
+            <tr>
+              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
+                ID
+              </th>
+              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
+                Type
+              </th>
+              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
+                Content Preview
+              </th>
+              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
+                Created At
+              </th>
+              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="wt-bg-white wt-divide-y wt-divide-gray-200">
+            <!-- Placeholder row -->
+            <tr>
+              <td colspan="5" class="wt-px-6 wt-py-8 wt-text-center wt-text-gray-500">
+                <div class="wt-flex wt-flex-col wt-items-center">
+                  <div class="wt-w-12 wt-h-12 wt-bg-gray-200 wt-rounded-full wt-flex wt-items-center wt-justify-center wt-mb-3">
+                    <svg class="wt-w-6 wt-h-6 wt-text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.906-1.471c-1.42-.81-3.213-.9-4.728-.322C2.611 18.797 1.238 19 0 19V9c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+                    </svg>
+                  </div>
+                  <p class="wt-text-lg wt-font-medium wt-text-gray-900">Message Data Loading</p>
+                  <p class="wt-text-sm wt-text-gray-500">Data fetching will be implemented in the next phase</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
