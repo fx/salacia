@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
         if (hasModel) {
           const summary = {
             model: data.model,
-            messageCount: hasMessages ? data.messages.length : 0,
+            messageCount: hasMessages ? (data as { messages: unknown[] }).messages.length : 0,
             maxTokens: hasMaxTokens ? data.max_tokens : 'default',
             hasSystem: hasSystem,
           };

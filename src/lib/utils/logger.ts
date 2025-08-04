@@ -62,7 +62,7 @@ export class Logger {
         } else {
           try {
             errorInfo = JSON.stringify(error);
-          } catch (circularError) {
+          } catch (_circularError) {
             errorInfo = '[Circular object - cannot stringify]';
           }
         }
