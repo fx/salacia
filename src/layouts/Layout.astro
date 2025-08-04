@@ -19,11 +19,11 @@ const { title } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <div class="container">
-      <header class="header">
-        <h1 class="title">{title}</h1>
+    <div class="webtui-container">
+      <header class="webtui-header">
+        <h1 class="webtui-title">{title}</h1>
       </header>
-      <main class="main">
+      <main class="webtui-main">
         <slot />
       </main>
     </div>
@@ -31,21 +31,7 @@ const { title } = Astro.props;
 </html>
 
 <style>
-  .container {
+  body {
     min-height: 100vh;
-  }
-  
-  .header {
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
-  }
-  
-  .title {
-    margin: 0;
-    padding: 1rem 0;
-  }
-  
-  .main {
-    flex: 1;
   }
 </style>
