@@ -7,6 +7,8 @@
 
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { setupServer } from 'msw/node';
+import { globalProcessRegistry } from './utils/subprocess-manager';
+import { globalTestServerRegistry } from './utils/test-server';
 
 // Re-export config
 export { TEST_CONFIG } from './config';
@@ -62,9 +64,13 @@ afterEach(() => {
   server.resetHandlers();
 });
 
-// Cleanup MSW server
-afterAll(() => {
+// Cleanup MSW server and processes
+afterAll(async () => {
   server.close();
+  
+  // Clean up any remaining processes and test servers
+  await globalProcessRegistry.waitForAll(5000);
+  await globalTestServerRegistry.stopAll();
 });
 
 /**
