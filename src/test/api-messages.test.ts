@@ -81,7 +81,7 @@ describe('API Endpoints - Messages', () => {
       expect(response.headers.get('x-response-time')).toMatch(/\d+ms/);
 
       const data = await parseJsonResponse<MessagesPaginatedResult>(response);
-      
+
       // Check the structure matches, accounting for date serialization
       expect(data.messages).toHaveLength(1);
       expect(data.messages[0].id).toBe(mockPaginatedResult.messages[0].id);
@@ -103,7 +103,9 @@ describe('API Endpoints - Messages', () => {
     it('should handle custom pagination parameters', async () => {
       vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
 
-      const url = new globalThis.URL('http://localhost:4321/api/messages?page=2&pageSize=50&sortField=model&sortDirection=asc');
+      const url = new globalThis.URL(
+        'http://localhost:4321/api/messages?page=2&pageSize=50&sortField=model&sortDirection=asc'
+      );
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
@@ -121,7 +123,9 @@ describe('API Endpoints - Messages', () => {
     it('should handle filter parameters', async () => {
       vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
 
-      const url = new globalThis.URL('http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello');
+      const url = new globalThis.URL(
+        'http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello'
+      );
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
@@ -149,7 +153,7 @@ describe('API Endpoints - Messages', () => {
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'PAGINATION_ERROR',
@@ -165,7 +169,7 @@ describe('API Endpoints - Messages', () => {
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'DATABASE_ERROR',
@@ -181,7 +185,7 @@ describe('API Endpoints - Messages', () => {
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'DATABASE_ERROR',
@@ -212,8 +216,8 @@ describe('API Endpoints - Messages', () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
@@ -222,7 +226,7 @@ describe('API Endpoints - Messages', () => {
       expect(response.headers.get('x-response-time')).toMatch(/\d+ms/);
 
       const data = await parseJsonResponse<MessageDisplay>(response);
-      
+
       // Check the structure matches, accounting for date serialization
       expect(data.id).toBe(mockMessage.id);
       expect(data.model).toBe(mockMessage.model);
@@ -235,12 +239,12 @@ describe('API Endpoints - Messages', () => {
     });
 
     it('should return 400 for missing ID parameter', async () => {
-      const response = await messageDetailHandler({ 
-        params: {} as { id: string }
+      const response = await messageDetailHandler({
+        params: {} as { id: string },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'VALIDATION_ERROR',
@@ -254,12 +258,12 @@ describe('API Endpoints - Messages', () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.NOT_FOUND);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'NOT_FOUND',
@@ -272,12 +276,12 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('Invalid UUID format: invalid-uuid');
       vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
-      const response = await messageDetailHandler({ 
-        params: { id: invalidId } 
+      const response = await messageDetailHandler({
+        params: { id: invalidId },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'INVALID_UUID',
@@ -290,12 +294,12 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('database connection timeout');
       vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'DATABASE_ERROR',
@@ -308,12 +312,12 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('Unexpected error');
       vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
-      
+
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
         error: 'DATABASE_ERROR',
@@ -325,8 +329,8 @@ describe('API Endpoints - Messages', () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
       const responseTimeHeader = response.headers.get('x-response-time');
@@ -338,11 +342,13 @@ describe('API Endpoints - Messages', () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
 
-      const response = await messageDetailHandler({ 
-        params: { id: messageId } 
+      const response = await messageDetailHandler({
+        params: { id: messageId },
       } as unknown as APIContext);
 
-      const data = await parseJsonResponse<{ timestamp: string; error: string; message: string }>(response);
+      const data = await parseJsonResponse<{ timestamp: string; error: string; message: string }>(
+        response
+      );
       expect(data.timestamp).toBeTruthy();
       expect(new Date(data.timestamp)).toBeInstanceOf(Date);
     });
