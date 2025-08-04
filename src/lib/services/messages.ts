@@ -108,7 +108,7 @@ export class MessagesService {
       }
       
       if (filters?.providerId) {
-        conditions.push(sql`${aiInteractions.providerId} = ${filters.providerId}`);
+        conditions.push(sql`${aiInteractions.providerId}::text = ${filters.providerId}`);
       }
       
       if (filters?.statusCode) {
@@ -175,7 +175,7 @@ export class MessagesService {
       const [message] = await db
         .select()
         .from(aiInteractions)
-        .where(sql`${aiInteractions.id} = ${id}`)
+        .where(sql`${aiInteractions.id}::text = ${id}`)
         .limit(1);
 
       return message || null;
@@ -203,8 +203,8 @@ export class MessagesService {
       const [stats] = await db
         .select({
           total: count(),
-          totalTokens: sql<number>`COALESCE(SUM(${aiInteractions.totalTokens}), 0)`,
-          avgResponseTime: sql<number>`COALESCE(AVG(${aiInteractions.responseTimeMs}), 0)`,
+          totalTokens: sql<number>`COALESCE(SUM(${aiInteractions.totalTokens}), 0)::int`,
+          avgResponseTime: sql<number>`COALESCE(AVG(${aiInteractions.responseTimeMs}), 0)::int`,
           errors: sql<number>`COUNT(CASE WHEN ${aiInteractions.error} IS NOT NULL THEN 1 END)`,
         })
         .from(aiInteractions);
