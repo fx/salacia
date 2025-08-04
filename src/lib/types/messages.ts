@@ -166,8 +166,12 @@ export interface MessagesPaginatedResult {
  * Transforms a database AI interaction record into a display-friendly format.
  * Computes derived fields and formats data for frontend consumption.
  * 
+ * Note: The provider field is set to undefined in this basic transformation.
+ * When used through the service layer, provider names are populated by joining
+ * with the aiProviders table using the providerId reference.
+ * 
  * @param interaction - Raw database record from aiInteractions table
- * @returns Formatted message display object
+ * @returns Formatted message display object with provider field undefined
  */
 export function transformAiInteractionToDisplay(interaction: AiInteraction): MessageDisplay {
   // Extract request preview
@@ -203,16 +207,17 @@ export function transformAiInteractionToDisplay(interaction: AiInteraction): Mes
   return {
     id: interaction.id,
     model: interaction.model,
+    provider: undefined, // Provider name will be populated by service layer when joining with aiProviders table
     createdAt: interaction.createdAt,
-    responseTime: interaction.responseTimeMs || undefined,
-    totalTokens: interaction.totalTokens || undefined,
-    promptTokens: interaction.promptTokens || undefined,
-    completionTokens: interaction.completionTokens || undefined,
-    statusCode: interaction.statusCode || undefined,
+    responseTime: interaction.responseTimeMs ?? undefined,
+    totalTokens: interaction.totalTokens ?? undefined,
+    promptTokens: interaction.promptTokens ?? undefined,
+    completionTokens: interaction.completionTokens ?? undefined,
+    statusCode: interaction.statusCode ?? undefined,
     error: interaction.error || undefined,
     requestPreview,
     responsePreview,
-    isSuccess: !interaction.error && (interaction.statusCode === 200 || interaction.statusCode === undefined),
+    isSuccess: !interaction.error && interaction.statusCode === 200,
     request: interaction.request,
     response: interaction.response,
   };
