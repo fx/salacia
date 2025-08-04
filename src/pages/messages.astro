@@ -1,171 +1,80 @@
 ---
-import Layout from '../layouts/Layout.astro';
----
 
-<Layout title="Salacia - Messages">
-  <div class="messages-container">
-    <div class="stats-bar">
-      <div class="stat">
-        <span class="stat-label">Total Messages:</span>
-        <span class="stat-value">--</span>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Salacia - AI Interaction Dashboard</title>
+    <link rel="stylesheet" href="/css/webtui.css" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="webtui-header">
+      <div class="webtui-container">
+        <h1 class="webtui-title">Salacia AI Dashboard</h1>
+        <p class="webtui-subtitle">Monitor and analyze AI interactions</p>
       </div>
-      <div class="stat">
-        <span class="stat-label">Success Rate:</span>
-        <span class="stat-value">--%</span>
+    </header>
+
+    <!-- Main Content -->
+    <main class="webtui-main">
+      <div class="webtui-container">
+        <!-- Messages Table Container -->
+        <div id="messages-container">
+          <!-- Loading state -->
+          <div id="loading-state" class="webtui-loading">
+            <div class="webtui-spinner"></div>
+            Loading messages...
+          </div>
+
+          <!-- Error state -->
+          <div id="error-state" class="webtui-error" style="display: none;">
+            <div class="webtui-error-title">Failed to load messages</div>
+            <div id="error-message">An error occurred while fetching data.</div>
+          </div>
+
+          <!-- Messages table (will be populated by JavaScript) -->
+          <div id="messages-table" style="display: none;">
+            <div class="webtui-table-container">
+              <table class="webtui-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Model</th>
+                    <th>Provider</th>
+                    <th>Tokens</th>
+                    <th>Response Time</th>
+                    <th>Status</th>
+                    <th>Preview</th>
+                  </tr>
+                </thead>
+                <tbody id="messages-tbody">
+                  <!-- Rows will be populated by JavaScript -->
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div id="pagination" class="webtui-pagination">
+                <div class="webtui-pagination-info">
+                  Showing <span id="pagination-start">0</span> to <span id="pagination-end">0</span> 
+                  of <span id="pagination-total">0</span> messages
+                </div>
+                <div class="webtui-pagination-controls">
+                  <button id="prev-btn" class="webtui-pagination-btn" disabled>Previous</button>
+                  <div id="page-numbers"></div>
+                  <button id="next-btn" class="webtui-pagination-btn" disabled>Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat-label">Avg Response Time:</span>
-        <span class="stat-value">--ms</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Total Tokens:</span>
-        <span class="stat-value">--</span>
-      </div>
-    </div>
+    </main>
 
-    <div class="table-container">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Model</th>
-            <th>Provider</th>
-            <th>Tokens</th>
-            <th>Response Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="messages-tbody">
-          <tr>
-            <td colspan="6" class="loading-row">Loading messages...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="pagination">
-      <button class="btn" id="prev-btn" disabled>Previous</button>
-      <span class="page-info">Page 1 of 1</span>
-      <button class="btn" id="next-btn" disabled>Next</button>
-    </div>
-  </div>
-</Layout>
-
-<style>
-  .messages-container {
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  .stats-bar {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-  }
-
-  .stat-value {
-    font-weight: bold;
-    font-family: monospace;
-  }
-
-  .table-container {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 1rem;
-  }
-
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: monospace;
-  }
-
-  .table th,
-  .table td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .table th {
-    background: var(--surface);
-    font-weight: bold;
-    position: sticky;
-    top: 0;
-  }
-
-  .table tbody tr:hover {
-    background: var(--surface);
-    cursor: pointer;
-  }
-
-  .loading-row {
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-  }
-
-  .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .page-info {
-    font-family: monospace;
-    color: var(--text-muted);
-  }
-
-  @media (max-width: 768px) {
-    .stats-bar {
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .table-container {
-      overflow-x: auto;
-    }
-
-    .table {
-      min-width: 600px;
-    }
-  }
-</style>
-
-<script>
-  // Basic page initialization
-  document.addEventListener('DOMContentLoaded', () => {
-    // Add click handlers for pagination buttons
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        // Previous page functionality will be implemented in Part 2
-      });
-    }
-    
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        // Next page functionality will be implemented in Part 2
-      });
-    }
-  });
-</script>
+    <!-- JavaScript for data fetching and table management -->
+    <script src="/js/messages-dashboard.js"></script>
+  </body>
+</html>
