@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { APIContext } from 'astro';
 import { GET as messagesListHandler } from '../pages/api/messages.js';
 import { GET as messageDetailHandler } from '../pages/api/messages/[id].js';
 import { MessagesService } from '../lib/services/messages.js';
-import { createTestRequest, HTTP_STATUS, parseJsonResponse } from './utils/request-helpers.js';
+import { HTTP_STATUS, parseJsonResponse } from './utils/request-helpers.js';
 import type { MessagesPaginatedResult, MessageDisplay } from '../lib/types/messages.js';
 
 // Mock the MessagesService
@@ -71,8 +72,8 @@ describe('API Endpoints - Messages', () => {
     it('should return paginated messages with default parameters', async () => {
       vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
 
-      const url = new URL('http://localhost:4321/api/messages');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
       expect(response.headers.get('content-type')).toBe('application/json');
@@ -102,8 +103,8 @@ describe('API Endpoints - Messages', () => {
     it('should handle custom pagination parameters', async () => {
       vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
 
-      const url = new URL('http://localhost:4321/api/messages?page=2&pageSize=50&sortField=model&sortDirection=asc');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages?page=2&pageSize=50&sortField=model&sortDirection=asc');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
@@ -120,8 +121,8 @@ describe('API Endpoints - Messages', () => {
     it('should handle filter parameters', async () => {
       vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
 
-      const url = new URL('http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
@@ -144,8 +145,8 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('Page number must be greater than 0');
       vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
 
-      const url = new URL('http://localhost:4321/api/messages?page=0');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages?page=0');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
       
@@ -160,8 +161,8 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('database connection failed');
       vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
 
-      const url = new URL('http://localhost:4321/api/messages');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
       
@@ -176,8 +177,8 @@ describe('API Endpoints - Messages', () => {
       const error = new Error('Unexpected error');
       vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
 
-      const url = new URL('http://localhost:4321/api/messages');
-      const response = await messagesListHandler({ url });
+      const url = new globalThis.URL('http://localhost:4321/api/messages');
+      const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
       
@@ -213,7 +214,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
       expect(response.headers.get('content-type')).toBe('application/json');
@@ -236,7 +237,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 400 for missing ID parameter', async () => {
       const response = await messageDetailHandler({ 
         params: {} as { id: string }
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
       
@@ -255,7 +256,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.NOT_FOUND);
       
@@ -273,7 +274,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: invalidId } 
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
       
@@ -291,7 +292,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
       
@@ -309,7 +310,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
       
@@ -326,7 +327,7 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
       const responseTimeHeader = response.headers.get('x-response-time');
       expect(responseTimeHeader).toBeTruthy();
@@ -339,9 +340,9 @@ describe('API Endpoints - Messages', () => {
 
       const response = await messageDetailHandler({ 
         params: { id: messageId } 
-      });
+      } as unknown as APIContext);
 
-      const data = await parseJsonResponse(response);
+      const data = await parseJsonResponse<{ timestamp: string; error: string; message: string }>(response);
       expect(data.timestamp).toBeTruthy();
       expect(new Date(data.timestamp)).toBeInstanceOf(Date);
     });
