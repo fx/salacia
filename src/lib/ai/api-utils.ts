@@ -1,4 +1,7 @@
 import type { AnthropicRequest } from './types';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('API/Utils');
 
 /**
  * Standard error types for Anthropic API compatibility
@@ -105,7 +108,7 @@ export async function parseRequestBody<T>(
       const validatedData = validator(parsedBody);
       return { data: validatedData };
     } catch (validationError) {
-      console.error('Request validation error:', validationError);
+      logger.debug('Request validation error:', validationError);
       return {
         error: createErrorResponse(
           API_ERROR_TYPES.INVALID_REQUEST_ERROR,
@@ -115,7 +118,7 @@ export async function parseRequestBody<T>(
       };
     }
   } catch (error) {
-    console.error('Request parsing error:', error);
+    logger.error('Request parsing error:', error);
     return {
       error: createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Failed to process request', 500),
     };

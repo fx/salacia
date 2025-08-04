@@ -6,6 +6,9 @@ import { aiInteractions } from '../db/schema';
 import type { AnthropicRequest, AnthropicResponse, AIProviderType } from './types';
 import type { AiProvider } from '../db/schema';
 import { generateMessageId, estimateTokens } from './api-utils';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AIService');
 
 /**
  * AI service for handling chat completions with real providers
@@ -314,7 +317,7 @@ export class AIService {
         error,
       });
     } catch (dbError) {
-      console.error('Failed to log interaction:', dbError);
+      logger.warn('Failed to log interaction:', dbError);
       // Don't throw - logging failures shouldn't break the API
     }
   }

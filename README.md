@@ -187,6 +187,16 @@ Example response:
 - All environment variables are validated using Zod
 - Add new variables to both `src/lib/env.ts` and `.env.example`
 
+#### Logging Configuration
+
+Control application logging verbosity using the `LOG_LEVEL` environment variable:
+
+- **`LOG_LEVEL`**: Set to `error`, `warn`, `info`, or `debug`
+  - Default: `info` in production, `debug` in development
+  - Example: `LOG_LEVEL=warn npm run dev`
+- **`NODE_ENV`**: Set to `test` to suppress most logs during testing
+  - Example: `NODE_ENV=test npm test`
+
 ## 🚀 Deployment
 
 ### Build for Production

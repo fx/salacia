@@ -9,6 +9,9 @@ import {
   handleOptions,
   CORS_HEADERS,
 } from '../../../lib/ai/api-utils';
+import { createLogger } from '../../../lib/utils/logger';
+
+const logger = createLogger('API/Messages');
 
 /**
  * Anthropic-compatible API endpoint for chat completions
@@ -32,8 +35,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Parse and validate request body
     const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
-      // Log the raw request to understand what Claude Code is sending
-      console.log('Raw request from client:', JSON.stringify(data, null, 2));
+      // Log the raw request only in debug mode
+      logger.debug('Raw request from client:', data);
       return AnthropicRequestSchema.parse(data);
     });
 
@@ -73,7 +76,16 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
   } catch (error) {
-    console.error('API endpoint error:', error);
+    // Log errors appropriately based on type
+    if (error instanceof Error) {
+      if (error.message.includes('authentication') || error.message.includes('invalid x-api-key')) {
+        logger.debug('Authentication error (expected when no API key configured)', error.message);
+      } else {
+        logger.error('API endpoint error:', error);
+      }
+    } else {
+      logger.error('Unknown error:', error);
+    }
 
     // Return appropriate error response
     if (error instanceof Error) {
