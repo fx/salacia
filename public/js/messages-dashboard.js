@@ -27,6 +27,16 @@ class MessagesDashboard {
     this.nextBtn = document.getElementById('next-btn');
     this.pageNumbers = document.getElementById('page-numbers');
     
+    // Modal elements
+    this.modal = document.getElementById('message-modal');
+    this.modalOverlay = document.getElementById('modal-overlay');
+    this.modalClose = document.getElementById('modal-close');
+    this.modalTitle = document.getElementById('modal-title');
+    this.modalLoading = document.getElementById('modal-loading');
+    this.modalError = document.getElementById('modal-error');
+    this.modalErrorMessage = document.getElementById('modal-error-message');
+    this.modalContent = document.getElementById('modal-content');
+    
     this.init();
   }
   
@@ -40,11 +50,22 @@ class MessagesDashboard {
   }
   
   /**
-   * Set up event listeners for pagination controls
+   * Set up event listeners for pagination controls and modal
    */
   setupEventListeners() {
     this.prevBtn.addEventListener('click', () => this.goToPage(this.currentPage - 1));
     this.nextBtn.addEventListener('click', () => this.goToPage(this.currentPage + 1));
+    
+    // Modal event listeners
+    this.modalClose.addEventListener('click', () => this.hideModal());
+    this.modalOverlay.addEventListener('click', () => this.hideModal());
+    
+    // ESC key to close modal
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && this.modal.style.display !== 'none') {
+        this.hideModal();
+      }
+    });
   }
   
   /**
@@ -184,6 +205,9 @@ class MessagesDashboard {
     previewCell.textContent = message.requestPreview || 'No preview available';
     previewCell.title = message.requestPreview || 'No preview available';
     row.appendChild(previewCell);
+    
+    // Add click handler to open modal
+    row.addEventListener('click', () => this.showMessageDetails(message.id));
     
     return row;
   }
@@ -539,6 +563,198 @@ class MessagesDashboard {
         }
         break;
       }
+    }
+  }
+  
+  /**
+   * Show message details in modal
+   * @param {string} messageId - ID of the message to show details for
+   */
+  async showMessageDetails(messageId) {
+    this.showModal();
+    this.showModalLoading();
+    
+    try {
+      // First try to get details from cache
+      let messageData = this.messageCache.get(messageId);
+      
+      // If not in cache or incomplete, fetch from API
+      if (!messageData || !messageData.fullDetails) {
+        const detailEndpoint = window.MESSAGES_DETAIL_ENDPOINT || `/api/messages/${messageId}`;
+        const response = await fetch(detailEndpoint);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        messageData = await response.json();
+        
+        // Cache the complete data
+        this.messageCache.set(messageId, { ...messageData, fullDetails: true });
+      }
+      
+      this.populateModalContent(messageData);
+      this.showModalContent();
+      
+    } catch (error) {
+      console.error('Failed to load message details:', error);
+      this.showModalError(`Failed to load message details: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Show the modal
+   */
+  showModal() {
+    this.modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+  }
+  
+  /**
+   * Hide the modal
+   */
+  hideModal() {
+    this.modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restore body scroll
+  }
+  
+  /**
+   * Show loading state in modal
+   */
+  showModalLoading() {
+    this.modalLoading.style.display = 'flex';
+    this.modalError.style.display = 'none';
+    this.modalContent.style.display = 'none';
+  }
+  
+  /**
+   * Show error state in modal
+   * @param {string} message - Error message to display
+   */
+  showModalError(message) {
+    this.modalLoading.style.display = 'none';
+    this.modalError.style.display = 'block';
+    this.modalContent.style.display = 'none';
+    this.modalErrorMessage.textContent = message;
+  }
+  
+  /**
+   * Show content in modal
+   */
+  showModalContent() {
+    this.modalLoading.style.display = 'none';
+    this.modalError.style.display = 'none';
+    this.modalContent.style.display = 'block';
+  }
+  
+  /**
+   * Populate modal with message data
+   * @param {Object} messageData - Complete message data
+   */
+  populateModalContent(messageData) {
+    // Overview section
+    document.getElementById('detail-model').textContent = messageData.model || 'N/A';
+    document.getElementById('detail-provider').textContent = messageData.provider || 'N/A';
+    document.getElementById('detail-timestamp').textContent = this.formatDate(messageData.createdAt);
+    
+    // Status with same logic as table
+    const isInFlight = this.inFlightMessages.has(messageData.id) || messageData.status === 'in-flight';
+    const statusElement = document.getElementById('detail-status');
+    let statusText, statusClass;
+    
+    if (isInFlight) {
+      statusText = 'Processing';
+      statusClass = 'webtui-status webtui-status--warning';
+    } else if (messageData.isSuccess) {
+      statusText = 'Success';
+      statusClass = 'webtui-status webtui-status--success';
+    } else {
+      statusText = 'Error';
+      statusClass = 'webtui-status webtui-status--error';
+    }
+    
+    statusElement.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+    
+    document.getElementById('detail-response-time').textContent = this.formatResponseTime(messageData.responseTime);
+    document.getElementById('detail-tokens').textContent = this.formatTokens(messageData);
+    
+    // Request details
+    const requestElement = document.getElementById('detail-request');
+    if (messageData.requestData) {
+      requestElement.textContent = this.formatJson(messageData.requestData);
+    } else {
+      requestElement.textContent = 'Request data not available';
+    }
+    
+    // Response details
+    const responseElement = document.getElementById('detail-response');
+    if (messageData.responseData) {
+      responseElement.textContent = this.formatJson(messageData.responseData);
+    } else if (messageData.errorData) {
+      responseElement.textContent = this.formatJson(messageData.errorData);
+    } else {
+      responseElement.textContent = 'Response data not available';
+    }
+    
+    // Headers
+    const headersElement = document.getElementById('detail-headers');
+    if (messageData.requestHeaders || messageData.responseHeaders) {
+      const headers = {
+        request: messageData.requestHeaders || {},
+        response: messageData.responseHeaders || {}
+      };
+      headersElement.textContent = this.formatJson(headers);
+    } else {
+      headersElement.textContent = 'Headers not available';
+    }
+  }
+  
+  /**
+   * Format tokens display for modal
+   * @param {Object} messageData - Message data
+   * @returns {string} Formatted tokens string
+   */
+  formatTokens(messageData) {
+    const parts = [];
+    
+    if (messageData.inputTokens) {
+      parts.push(`Input: ${this.formatNumber(messageData.inputTokens)}`);
+    }
+    if (messageData.outputTokens) {
+      parts.push(`Output: ${this.formatNumber(messageData.outputTokens)}`);
+    }
+    if (messageData.totalTokens) {
+      parts.push(`Total: ${this.formatNumber(messageData.totalTokens)}`);
+    }
+    
+    return parts.length > 0 ? parts.join(', ') : 'N/A';
+  }
+  
+  /**
+   * Format JSON data for display
+   * @param {any} data - Data to format as JSON
+   * @returns {string} Formatted JSON string
+   */
+  formatJson(data) {
+    if (data === null || data === undefined) {
+      return 'null';
+    }
+    
+    try {
+      if (typeof data === 'string') {
+        // Try to parse if it's a JSON string
+        try {
+          const parsed = JSON.parse(data);
+          return JSON.stringify(parsed, null, 2);
+        } catch {
+          // If not valid JSON, return as-is
+          return data;
+        }
+      } else {
+        return JSON.stringify(data, null, 2);
+      }
+    } catch (error) {
+      return String(data);
     }
   }
 }

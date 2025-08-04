@@ -66,6 +66,91 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </main>
 
+  <!-- Message Detail Modal -->
+  <div id="message-modal" class="webtui-modal" style="display: none;">
+    <div class="webtui-modal-overlay" id="modal-overlay"></div>
+    <div class="webtui-modal-content">
+      <div class="webtui-modal-header">
+        <h3 class="webtui-modal-title" id="modal-title">Message Details</h3>
+        <button id="modal-close" class="webtui-modal-close" aria-label="Close modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <div class="webtui-modal-body" id="modal-body">
+        <!-- Loading state -->
+        <div id="modal-loading" class="webtui-loading">
+          <div class="webtui-spinner"></div>
+          Loading message details...
+        </div>
+        
+        <!-- Error state -->
+        <div id="modal-error" class="webtui-error" style="display: none;">
+          <div class="webtui-error-title">Failed to load message details</div>
+          <div id="modal-error-message">An error occurred while fetching data.</div>
+        </div>
+        
+        <!-- Content sections -->
+        <div id="modal-content" style="display: none;">
+          <!-- Message Overview -->
+          <div class="webtui-section">
+            <h4 class="webtui-section-title">Overview</h4>
+            <div class="webtui-grid webtui-grid--2">
+              <div class="webtui-field">
+                <label class="webtui-label">Model</label>
+                <div id="detail-model" class="webtui-value"></div>
+              </div>
+              <div class="webtui-field">
+                <label class="webtui-label">Provider</label>
+                <div id="detail-provider" class="webtui-value"></div>
+              </div>
+              <div class="webtui-field">
+                <label class="webtui-label">Timestamp</label>
+                <div id="detail-timestamp" class="webtui-value"></div>
+              </div>
+              <div class="webtui-field">
+                <label class="webtui-label">Status</label>
+                <div id="detail-status" class="webtui-value"></div>
+              </div>
+              <div class="webtui-field">
+                <label class="webtui-label">Response Time</label>
+                <div id="detail-response-time" class="webtui-value"></div>
+              </div>
+              <div class="webtui-field">
+                <label class="webtui-label">Tokens</label>
+                <div id="detail-tokens" class="webtui-value"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Request Details -->
+          <div class="webtui-section">
+            <h4 class="webtui-section-title">Request</h4>
+            <div class="webtui-code-block">
+              <pre id="detail-request" class="webtui-code"></pre>
+            </div>
+          </div>
+          
+          <!-- Response Details -->
+          <div class="webtui-section">
+            <h4 class="webtui-section-title">Response</h4>
+            <div class="webtui-code-block">
+              <pre id="detail-response" class="webtui-code"></pre>
+            </div>
+          </div>
+          
+          <!-- Headers -->
+          <div class="webtui-section">
+            <h4 class="webtui-section-title">Headers</h4>
+            <div class="webtui-code-block">
+              <pre id="detail-headers" class="webtui-code"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- JavaScript for data fetching and table management -->
   <script src="/js/messages-dashboard.js"></script>
 </Layout>
