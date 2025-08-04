@@ -78,7 +78,7 @@ export class Logger {
       if (data && typeof data === 'object') {
         try {
           console.warn(`[${this.context}] ${message}`, JSON.stringify(data));
-        } catch (circularError) {
+        } catch (_circularError) {
           console.warn(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
         }
       } else {
@@ -93,7 +93,7 @@ export class Logger {
         try {
           // eslint-disable-next-line no-console
           console.info(`[${this.context}] ${message}`, JSON.stringify(data));
-        } catch (circularError) {
+        } catch (_circularError) {
           // eslint-disable-next-line no-console
           console.info(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
         }
@@ -111,7 +111,7 @@ export class Logger {
         try {
           // eslint-disable-next-line no-console
           console.debug(`[${this.context}] ${message}`, JSON.stringify(data));
-        } catch (circularError) {
+        } catch (_circularError) {
           // eslint-disable-next-line no-console
           console.debug(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
         }
