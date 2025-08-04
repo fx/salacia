@@ -1,80 +1,76 @@
 ---
+import Layout from '../layouts/Layout.astro';
+---
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Salacia - AI Interaction Dashboard</title>
-    <link rel="stylesheet" href="/css/webtui.css" />
-  </head>
-  <body>
-    <!-- Header -->
-    <header class="webtui-header">
-      <div class="webtui-container">
-        <h1 class="webtui-title">Salacia AI Dashboard</h1>
-        <p class="webtui-subtitle">Monitor and analyze AI interactions</p>
-      </div>
-    </header>
+<Layout title="Salacia - AI Interaction Dashboard">
+  <!-- Header -->
+  <header class="webtui-header">
+    <div class="webtui-container">
+      <h1 class="webtui-title">Salacia AI Dashboard</h1>
+      <p class="webtui-subtitle">Monitor and analyze AI interactions</p>
+    </div>
+  </header>
 
-    <!-- Main Content -->
-    <main class="webtui-main">
-      <div class="webtui-container">
-        <!-- Messages Table Container -->
-        <div id="messages-container">
-          <!-- Loading state -->
-          <div id="loading-state" class="webtui-loading">
-            <div class="webtui-spinner"></div>
-            Loading messages...
-          </div>
+  <!-- Main Content -->
+  <main class="webtui-main">
+    <div class="webtui-container">
+      <!-- Messages Table Container -->
+      <div id="messages-container">
+        <!-- Loading state -->
+        <div id="loading-state" class="webtui-loading">
+          <div class="webtui-spinner"></div>
+          Loading messages...
+        </div>
 
-          <!-- Error state -->
-          <div id="error-state" class="webtui-error" style="display: none;">
-            <div class="webtui-error-title">Failed to load messages</div>
-            <div id="error-message">An error occurred while fetching data.</div>
-          </div>
+        <!-- Error state -->
+        <div id="error-state" class="webtui-error" style="display: none;">
+          <div class="webtui-error-title">Failed to load messages</div>
+          <div id="error-message">An error occurred while fetching data.</div>
+        </div>
 
-          <!-- Messages table (will be populated by JavaScript) -->
-          <div id="messages-table" style="display: none;">
-            <div class="webtui-table-container">
-              <table class="webtui-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Model</th>
-                    <th>Provider</th>
-                    <th>Tokens</th>
-                    <th>Response Time</th>
-                    <th>Status</th>
-                    <th>Preview</th>
-                  </tr>
-                </thead>
-                <tbody id="messages-tbody">
-                  <!-- Rows will be populated by JavaScript -->
-                </tbody>
-              </table>
+        <!-- Messages table (will be populated by JavaScript) -->
+        <div id="messages-table" style="display: none;">
+          <div class="webtui-table-container">
+            <table class="webtui-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Model</th>
+                  <th>Provider</th>
+                  <th>Tokens</th>
+                  <th>Response Time</th>
+                  <th>Status</th>
+                  <th>Preview</th>
+                </tr>
+              </thead>
+              <tbody id="messages-tbody">
+                <!-- Rows will be populated by JavaScript -->
+              </tbody>
+            </table>
 
-              <!-- Pagination -->
-              <div id="pagination" class="webtui-pagination">
-                <div class="webtui-pagination-info">
-                  Showing <span id="pagination-start">0</span> to <span id="pagination-end">0</span> 
-                  of <span id="pagination-total">0</span> messages
-                </div>
-                <div class="webtui-pagination-controls">
-                  <button id="prev-btn" class="webtui-pagination-btn" disabled>Previous</button>
-                  <div id="page-numbers"></div>
-                  <button id="next-btn" class="webtui-pagination-btn" disabled>Next</button>
-                </div>
+            <!-- Pagination -->
+            <div id="pagination" class="webtui-pagination">
+              <div class="webtui-pagination-info">
+                Showing <span id="pagination-start">0</span> to <span id="pagination-end">0</span> 
+                of <span id="pagination-total">0</span> messages
+              </div>
+              <div class="webtui-pagination-controls">
+                <button id="prev-btn" class="webtui-pagination-btn" disabled>Previous</button>
+                <div id="page-numbers"></div>
+                <button id="next-btn" class="webtui-pagination-btn" disabled>Next</button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
+  </main>
 
-    <!-- JavaScript for data fetching and table management -->
-    <script src="/js/messages-dashboard.js"></script>
-  </body>
-</html>
+  <!-- JavaScript for data fetching and table management -->
+  <script src="/js/messages-dashboard.js"></script>
+</Layout>
+
+<style>
+  /* Add WebTUI CSS link */
+  @import '/css/webtui.css';
+</style>
