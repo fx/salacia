@@ -30,7 +30,7 @@ export abstract class ApiError extends Error {
  */
 export class ValidationError extends ApiError {
   readonly statusCode = 400;
-  readonly errorCode = 'VALIDATION_ERROR';
+  readonly errorCode: string = 'VALIDATION_ERROR';
 
   constructor(message: string, cause?: Error) {
     super(message, cause);
@@ -42,7 +42,7 @@ export class ValidationError extends ApiError {
  * Specific case of validation error for UUID format issues.
  */
 export class InvalidUuidError extends ValidationError {
-  readonly errorCode = 'INVALID_UUID';
+  readonly errorCode: string = 'INVALID_UUID';
 
   constructor(uuid: string, cause?: Error) {
     super(`The provided ID is not a valid UUID format: ${uuid}`, cause);
@@ -80,7 +80,7 @@ export class DatabaseError extends ApiError {
  * Specific case of validation error for pagination issues.
  */
 export class PaginationError extends ValidationError {
-  readonly errorCode = 'PAGINATION_ERROR';
+  readonly errorCode: string = 'PAGINATION_ERROR';
 
   constructor(message: string, cause?: Error) {
     super(message, cause);
