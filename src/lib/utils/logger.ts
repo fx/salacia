@@ -52,25 +52,44 @@ export class Logger {
 
   error(message: string, error?: unknown): void {
     if (currentLogLevel >= LogLevel.ERROR) {
-      console.error(`[${this.context}] ${message}`, error || '');
+      if (error && typeof error === 'object') {
+        // For errors, preserve stack traces if available
+        const errorInfo = error instanceof Error ? error.stack || error.message : JSON.stringify(error);
+        console.error(`[${this.context}] ${message}`, errorInfo);
+      } else {
+        console.error(`[${this.context}] ${message}`, error || '');
+      }
     }
   }
 
   warn(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.WARN) {
-      console.warn(`[${this.context}] ${message}`, data || '');
+      if (data && typeof data === 'object') {
+        console.warn(`[${this.context}] ${message}`, JSON.stringify(data));
+      } else {
+        console.warn(`[${this.context}] ${message}`, data || '');
+      }
     }
   }
 
   info(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.INFO) {
-      console.info(`[${this.context}] ${message}`, data || '');
+      if (data && typeof data === 'object') {
+        console.info(`[${this.context}] ${message}`, JSON.stringify(data));
+      } else {
+        console.info(`[${this.context}] ${message}`, data || '');
+      }
     }
   }
 
   debug(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.DEBUG) {
-      console.debug(`[${this.context}] ${message}`, data || '');
+      if (data && typeof data === 'object') {
+        // Stringify objects to keep logs concise on a single line
+        console.debug(`[${this.context}] ${message}`, JSON.stringify(data));
+      } else {
+        console.debug(`[${this.context}] ${message}`, data || '');
+      }
     }
   }
 }
