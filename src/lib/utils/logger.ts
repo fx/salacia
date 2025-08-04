@@ -10,14 +10,16 @@
  * Control via LOG_LEVEL environment variable
  */
 
-export enum LogLevel {
-  ERROR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3,
-}
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
 
-const LOG_LEVEL_NAMES: Record<string, LogLevel> = {
+export type LogLevelType = typeof LogLevel[keyof typeof LogLevel];
+
+const LOG_LEVEL_NAMES: Record<string, LogLevelType> = {
   error: LogLevel.ERROR,
   warn: LogLevel.WARN,
   info: LogLevel.INFO,
@@ -27,7 +29,7 @@ const LOG_LEVEL_NAMES: Record<string, LogLevel> = {
 /**
  * Get current log level from environment
  */
-function getCurrentLogLevel(): LogLevel {
+function getCurrentLogLevel(): LogLevelType {
   const envLevel = process.env.LOG_LEVEL?.toLowerCase();
   
   // Default to INFO in production, DEBUG in development
@@ -75,8 +77,10 @@ export class Logger {
   info(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.INFO) {
       if (data && typeof data === 'object') {
+        // eslint-disable-next-line no-console
         console.info(`[${this.context}] ${message}`, JSON.stringify(data));
       } else {
+        // eslint-disable-next-line no-console
         console.info(`[${this.context}] ${message}`, data || '');
       }
     }
@@ -86,8 +90,10 @@ export class Logger {
     if (currentLogLevel >= LogLevel.DEBUG) {
       if (data && typeof data === 'object') {
         // Stringify objects to keep logs concise on a single line
+        // eslint-disable-next-line no-console
         console.debug(`[${this.context}] ${message}`, JSON.stringify(data));
       } else {
+        // eslint-disable-next-line no-console
         console.debug(`[${this.context}] ${message}`, data || '');
       }
     }

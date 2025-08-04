@@ -1,3 +1,6 @@
+/* eslint-disable no-console */
+/* eslint-disable no-undef */
+
 /**
  * Claude Code E2E Integration Test
  * 

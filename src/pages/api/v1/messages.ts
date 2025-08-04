@@ -37,11 +37,12 @@ export const POST: APIRoute = async ({ request }) => {
     const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
       // Only log a summary in debug mode - full requests are too verbose
       if (data && typeof data === 'object' && 'model' in data) {
+        const requestData = data as any; // Type assertion for logging
         const summary = {
-          model: data.model,
-          messageCount: Array.isArray(data.messages) ? data.messages.length : 0,
-          maxTokens: data.max_tokens || 'default',
-          hasSystem: !!data.system,
+          model: requestData.model,
+          messageCount: Array.isArray(requestData.messages) ? requestData.messages.length : 0,
+          maxTokens: requestData.max_tokens || 'default',
+          hasSystem: !!requestData.system,
         };
         logger.debug('Request summary:', summary);
       }
