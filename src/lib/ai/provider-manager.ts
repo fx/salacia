@@ -49,7 +49,12 @@ export class ProviderManager {
         .where(eq(aiProviders.isActive, true))
         .limit(1);
 
-      return anyProvider.length > 0 ? anyProvider[0] : null;
+      if (anyProvider.length > 0) {
+        return anyProvider[0];
+      }
+
+      // If no database providers, try environment variables
+      return this.createFallbackProvider();
     } catch (error) {
       console.error('Failed to get default provider:', error, {
         envProvider: env.DEFAULT_AI_PROVIDER,

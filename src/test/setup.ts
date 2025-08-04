@@ -63,7 +63,7 @@ afterEach(() => {
 });
 
 // Cleanup MSW server
-afterAll(() => {
+afterAll(async () => {
   server.close();
 });
 

@@ -9,6 +9,9 @@ import {
   handleOptions,
   CORS_HEADERS,
 } from '../../../lib/ai/api-utils';
+import { createLogger } from '../../../lib/utils/logger';
+
+const logger = createLogger('API/Messages');
 
 /**
  * Anthropic-compatible API endpoint for chat completions
@@ -31,9 +34,27 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Parse and validate request body
-    const { data: requestData, error: parseError } = await parseRequestBody(request, data =>
-      AnthropicRequestSchema.parse(data)
-    );
+    const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
+      // Only log a summary in debug mode - full requests are too verbose
+      if (data && typeof data === 'object' && 'model' in data) {
+        // Use proper type guards instead of type assertion
+        const hasModel = 'model' in data;
+        const hasMessages = 'messages' in data && Array.isArray(data.messages);
+        const hasMaxTokens = 'max_tokens' in data;
+        const hasSystem = 'system' in data;
+
+        if (hasModel) {
+          const summary = {
+            model: data.model,
+            messageCount: hasMessages ? (data as { messages: unknown[] }).messages.length : 0,
+            maxTokens: hasMaxTokens ? data.max_tokens : 'default',
+            hasSystem: hasSystem,
+          };
+          logger.debug('Request summary:', summary);
+        }
+      }
+      return AnthropicRequestSchema.parse(data);
+    });
 
     if (parseError) {
       return parseError;
@@ -71,15 +92,31 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
   } catch (error) {
-    console.error('API endpoint error:', error);
+    // Log errors appropriately based on type
+    if (error instanceof Error) {
+      if (error.message.includes('authentication') || error.message.includes('invalid x-api-key')) {
+        logger.debug('Authentication error (expected when no API key configured)', error.message);
+      } else {
+        logger.error('API endpoint error:', error);
+      }
+    } else {
+      logger.error('Unknown error:', error);
+    }
 
     // Return appropriate error response
-    if (error instanceof Error && error.message.includes('No AI provider configured')) {
-      return createErrorResponse(
-        API_ERROR_TYPES.PERMISSION_ERROR,
-        'AI provider not configured. Please contact administrator.',
-        503
-      );
+    if (error instanceof Error) {
+      // Handle various configuration issues
+      if (
+        error.message.includes('No AI provider configured') ||
+        error.message.includes('invalid x-api-key') ||
+        error.message.includes('authentication')
+      ) {
+        return createErrorResponse(
+          API_ERROR_TYPES.PERMISSION_ERROR,
+          'AI provider not configured. Please contact administrator.',
+          503
+        );
+      }
     }
 
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);
