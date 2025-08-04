@@ -8,9 +8,6 @@
 // Database types and utilities
 export * from './db/index.js';
 
-// Type definitions
-export * from './types/index.js';
-
 // AI-related functionality
 export * from './ai/types.js';
 

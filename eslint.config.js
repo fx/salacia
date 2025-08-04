@@ -26,6 +26,7 @@ export default [
         setTimeout: 'readonly',
         Math: 'readonly',
         JSON: 'readonly',
+        URLSearchParams: 'readonly',
         // Vitest globals
         describe: 'readonly',
         it: 'readonly',

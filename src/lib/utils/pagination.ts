@@ -1,7 +1,6 @@
 import type { 
   MessagesPaginationParams, 
   MessagesFilterParams, 
-  MessageSort, 
   MessageSortField, 
   MessageSortDirection 
 } from '../types/messages.js';
@@ -266,7 +265,7 @@ export function calculatePaginationMetadata(
   // Calculate the range of pages to show
   const halfMax = Math.floor(maxPages / 2);
   let startPage = Math.max(1, safePage - halfMax);
-  let endPage = Math.min(totalPages, startPage + maxPages - 1);
+  const endPage = Math.min(totalPages, startPage + maxPages - 1);
   
   // Adjust if we're near the end
   if (endPage === totalPages) {
