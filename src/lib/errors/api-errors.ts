@@ -14,6 +14,10 @@ export abstract class ApiError extends Error {
   constructor(message: string, public readonly cause?: Error) {
     super(message);
     this.name = this.constructor.name;
+    // Store cause for error chaining
+    if (cause) {
+      this.cause = cause;
+    }
   }
 }
 
