@@ -15,7 +15,7 @@ export * from './types/index.js';
 export * from './ai/types.js';
 
 // Utility functions
-export * from './utils/logger.js';
+export * from './utils/index.js';
 
 // Environment configuration
 export * from './env.js';
