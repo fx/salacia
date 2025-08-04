@@ -1,5 +1,5 @@
 import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
+import { defaultHandlers } from './handlers';
 
 /**
  * Mock Service Worker (MSW) server instance for Node.js testing environment.
@@ -15,4 +15,4 @@ import { handlers } from './handlers';
  *
  * @see https://mswjs.io/docs/getting-started/integrate/node
  */
-export const server = setupServer(...handlers);
+export const server = setupServer(...defaultHandlers);
