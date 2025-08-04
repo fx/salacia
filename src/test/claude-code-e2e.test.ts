@@ -96,7 +96,7 @@ describe('Claude Code E2E Integration', () => {
     expect(true).toBe(true);
   });
 
-  it('should verify our API endpoint exists', async () => {
+  it('should verify our API endpoint exists and is properly configured', async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/v1/messages`, {
         method: 'POST',
@@ -112,18 +112,28 @@ describe('Claude Code E2E Integration', () => {
         }),
       });
 
-      // The endpoint exists (even if it returns an error due to missing provider)
       console.log(`API endpoint status: ${response.status}`);
-      expect(response.status).toBeDefined();
       
-      // In a real E2E test with proper configuration, this would be 200
+      // The API should return 200 for success
       if (response.status === 200) {
         console.log('✓ API is properly configured and working');
-      } else {
+        expect(response.status).toBe(200);
+      } else if (response.status === 503) {
         console.log('✗ API endpoint exists but needs provider configuration');
+        const body = await response.json();
+        throw new Error(
+          `API is not configured. ${body.error?.message || 'Please set ANTHROPIC_API_KEY environment variable.'}\n` +
+          `See docs/PROVIDER_CONFIGURATION.md for setup instructions.`
+        );
+      } else {
+        console.log(`✗ Unexpected status: ${response.status}`);
+        throw new Error(`API returned unexpected status: ${response.status}`);
       }
     } catch (error) {
-      console.log('✗ API server not running at', API_BASE_URL);
+      if (error instanceof Error && error.message.includes('fetch failed')) {
+        console.log('✗ API server not running at', API_BASE_URL);
+        throw new Error(`API server not running. Start it with: npm run dev`);
+      }
       throw error;
     }
   });
