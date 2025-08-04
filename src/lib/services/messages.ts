@@ -1,9 +1,9 @@
 import { desc, asc, and, or, gte, lte, like, isNull, isNotNull, count, sql } from 'drizzle-orm';
-import type { 
-  MessageDisplay, 
-  MessageStats, 
-  MessagesFilterParams, 
-  MessagesPaginationParams, 
+import type {
+  MessageDisplay,
+  MessageStats,
+  MessagesFilterParams,
+  MessagesPaginationParams,
   MessagesPaginatedResult,
   MessageSort,
 } from '../types/messages.js';
@@ -13,7 +13,7 @@ import { db } from '../db/connection.js';
 
 /**
  * Service class for managing AI message interactions.
- * 
+ *
  * Provides comprehensive database operations for retrieving, filtering, and analyzing
  * AI interaction data with support for pagination, sorting, and statistical aggregation.
  * All methods include proper error handling and type safety.
@@ -21,7 +21,7 @@ import { db } from '../db/connection.js';
 export class MessagesService {
   /**
    * Retrieves a single AI interaction message by its unique identifier.
-   * 
+   *
    * @param id - The UUID of the AI interaction to retrieve
    * @returns Promise resolving to the message display object or null if not found
    * @throws Error if the database query fails
@@ -45,13 +45,15 @@ export class MessagesService {
 
       return transformAiInteractionToDisplay(result[0]);
     } catch (error) {
-      throw new Error(`Failed to retrieve message by ID: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to retrieve message by ID: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Retrieves a paginated list of AI interaction messages with filtering and sorting.
-   * 
+   *
    * @param params - Pagination parameters including page, pageSize, and sort configuration
    * @param filters - Optional filtering criteria to narrow down results
    * @returns Promise resolving to paginated result with messages and metadata
@@ -88,13 +90,10 @@ export class MessagesService {
           .offset(offset),
 
         // Count query for total items
-        db
-          .select({ count: count() })
-          .from(aiInteractions)
-          .where(whereConditions),
+        db.select({ count: count() }).from(aiInteractions).where(whereConditions),
 
         // Statistics query for aggregated data
-        this.getFilteredStats(filters)
+        this.getFilteredStats(filters),
       ]);
 
       const totalItems = countResult[0]?.count ?? 0;
@@ -116,13 +115,15 @@ export class MessagesService {
         stats: statsResult,
       };
     } catch (error) {
-      throw new Error(`Failed to retrieve messages: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to retrieve messages: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Retrieves aggregated statistics for AI interactions with optional filtering.
-   * 
+   *
    * @param filters - Optional filtering criteria to apply to statistics calculation
    * @returns Promise resolving to aggregated statistics object
    * @throws Error if the database query fails
@@ -155,16 +156,17 @@ export class MessagesService {
           .where(whereConditions)
           .groupBy(aiInteractions.model)
           .orderBy(desc(count()))
-          .limit(1)
+          .limit(1),
       ]);
 
       const stats = statsResult[0];
       const mostUsedModelResult = modelStatsResult[0];
 
       // Calculate derived metrics
-      const successRate = stats?.totalMessages > 0 
-        ? Math.round((stats.successfulMessages / stats.totalMessages) * 100)
-        : 0;
+      const successRate =
+        stats?.totalMessages > 0
+          ? Math.round((stats.successfulMessages / stats.totalMessages) * 100)
+          : 0;
 
       // Count unique models
       const uniqueModelsResult = await db
@@ -184,13 +186,15 @@ export class MessagesService {
         uniqueModels: uniqueModelsResult.length,
       };
     } catch (error) {
-      throw new Error(`Failed to retrieve statistics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to retrieve statistics: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Builds WHERE conditions for filtering queries based on provided filter parameters.
-   * 
+   *
    * @param filters - Filtering parameters to convert to SQL conditions
    * @returns Combined WHERE condition for use in Drizzle queries
    * @private
@@ -250,7 +254,7 @@ export class MessagesService {
 
   /**
    * Builds ORDER BY clauses for sorting queries based on sort configuration.
-   * 
+   *
    * @param sort - Sort configuration specifying field and direction
    * @returns Array of order by clauses for use in Drizzle queries
    * @private
@@ -276,7 +280,7 @@ export class MessagesService {
 
   /**
    * Validates UUID format for safe database operations.
-   * 
+   *
    * @param id - String to validate as UUID
    * @returns True if the string is a valid UUID format
    * @private
