@@ -18,6 +18,7 @@ export * from './services/index.js';
 export * from './ai/types.js';
 
 // Utility functions
+export * from './utils/index.js';
 export * from './utils/logger.js';
 
 // Environment configuration
