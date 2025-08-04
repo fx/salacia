@@ -195,7 +195,7 @@ class MessagesDashboard {
     // Calculate visible page range
     const maxVisible = 5;
     let startPage = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
+    const endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
     
     // Adjust if we're near the end
     if (endPage - startPage + 1 < maxVisible) {
@@ -274,7 +274,7 @@ class MessagesDashboard {
       } else {
         return date.toLocaleDateString();
       }
-    } catch (error) {
+    } catch (_error) {
       return 'Invalid date';
     }
   }
