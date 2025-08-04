@@ -233,6 +233,75 @@ export const prerender = false;
         text-shadow: 0 0 5px currentColor;
       }
 
+      /* Status indicators */
+      .status-success {
+        color: #00ff00;
+        font-weight: bold;
+      }
+      .status-error {
+        color: #ff4444;
+        font-weight: bold;
+      }
+      .status-loading {
+        color: #ffaa00;
+      }
+
+      /* Loading states */
+      .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #333333;
+        border-radius: 50%;
+        border-top-color: #00ff00;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Pagination controls */
+      .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background-color: #1a1a1a;
+        border-top: 1px solid #333333;
+      }
+
+      .pagination-button {
+        background-color: #222222;
+        color: #00ff00;
+        border: 1px solid #333333;
+        padding: 0.5rem 1rem;
+        font-family: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .pagination-button:hover {
+        background-color: #333333;
+        border-color: #00ff00;
+      }
+
+      .pagination-button:disabled {
+        background-color: #111111;
+        color: #666666;
+        border-color: #222222;
+        cursor: not-allowed;
+      }
+
+      .pagination-info {
+        color: #888888;
+        font-size: 0.875rem;
+      }
+
       /* Responsive design */
       @media (max-width: 768px) {
         .messages-title {
@@ -267,7 +336,7 @@ export const prerender = false;
         <!-- Table Header -->
         <div class="table-header">
           <h2 class="table-title">Recent Messages</h2>
-          <p class="table-subtitle">Loading message data...</p>
+          <p class="table-subtitle" id="table-subtitle">Loading message data...</p>
         </div>
 
         <!-- Table Skeleton -->
@@ -275,39 +344,212 @@ export const prerender = false;
           <table class="w-full">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Content Preview</th>
-                <th>Created At</th>
-                <th>Actions</th>
+                <th>Time</th>
+                <th>Model</th>
+                <th>Provider</th>
+                <th>Tokens</th>
+                <th>Response Time</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Placeholder row -->
-              <tr>
-                <td colspan="5" class="text-center">
-                  <div class="placeholder-container">
-                    <div class="placeholder-icon">
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.906-1.471c-1.42-.81-3.213-.9-4.728-.322C2.611 18.797 1.238 19 0 19V9c0-4.418 3.582-8 8-8s8 3.582 8 8z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <p class="placeholder-title">Message Data Loading</p>
-                    <p class="placeholder-text">
-                      Data fetching will be implemented in the next phase
-                    </p>
-                  </div>
-                </td>
-              </tr>
+            <tbody id="messages-tbody">
+              <!-- Messages will be loaded here -->
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls" id="pagination-controls" style="display: none;">
+          <button class="pagination-button" id="prev-button" disabled>Previous</button>
+          <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
+          <button class="pagination-button" id="next-button" disabled>Next</button>
+        </div>
       </div>
     </main>
+
+    <script>
+      // WebTUI Messages Dashboard - Client-side JavaScript
+      class MessagesUI {
+        constructor() {
+          this.currentPage = 1;
+          this.pageSize = 20;
+          this.totalPages = 1;
+          this.isLoading = false;
+          this.init();
+        }
+
+        init() {
+          this.bindEvents();
+          this.loadMessages();
+        }
+
+        bindEvents() {
+          document.getElementById('prev-button').addEventListener('click', () => {
+            if (this.currentPage > 1) {
+              this.currentPage--;
+              this.loadMessages();
+            }
+          });
+
+          document.getElementById('next-button').addEventListener('click', () => {
+            if (this.currentPage < this.totalPages) {
+              this.currentPage++;
+              this.loadMessages();
+            }
+          });
+        }
+
+        async loadMessages() {
+          if (this.isLoading) return;
+
+          this.isLoading = true;
+          this.showLoading();
+
+          try {
+            const url = `/api/messages?page=${this.currentPage}&pageSize=${this.pageSize}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            this.renderMessages(data);
+            this.updatePagination(data);
+            this.showSuccess(data);
+          } catch (error) {
+            console.error('Failed to load messages:', error);
+            this.showError(error.message);
+          } finally {
+            this.isLoading = false;
+          }
+        }
+
+        showLoading() {
+          const subtitle = document.getElementById('table-subtitle');
+          const tbody = document.getElementById('messages-tbody');
+          const pagination = document.getElementById('pagination-controls');
+
+          subtitle.innerHTML = '<span class="loading-spinner"></span> Loading messages...';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                  <span class="loading-spinner"></span>
+                  <span class="terminal-dim">Fetching message data...</span>
+                </div>
+              </td>
+            </tr>
+          `;
+          pagination.style.display = 'none';
+        }
+
+        showError(message) {
+          const subtitle = document.getElementById('table-subtitle');
+          const tbody = document.getElementById('messages-tbody');
+          const pagination = document.getElementById('pagination-controls');
+
+          subtitle.innerHTML = `<span class="terminal-error">Error loading messages</span>`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem;">
+                <div style="color: #ff4444;">
+                  <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">⚠ Failed to load messages</div>
+                  <div style="color: #888888; font-size: 0.875rem;">${message}</div>
+                </div>
+              </td>
+            </tr>
+          `;
+          pagination.style.display = 'none';
+        }
+
+        showSuccess(data) {
+          const subtitle = document.getElementById('table-subtitle');
+          subtitle.innerHTML = `Showing ${data.messages.length} of ${data.totalItems} messages`;
+        }
+
+        renderMessages(data) {
+          const tbody = document.getElementById('messages-tbody');
+          
+          if (!data.messages || data.messages.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem;">
+                  <div class="terminal-dim">
+                    <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">No messages found</div>
+                    <div style="font-size: 0.875rem;">No AI interactions have been recorded yet</div>
+                  </div>
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tbody.innerHTML = data.messages.map(message => `
+            <tr>
+              <td>${this.formatDate(message.createdAt)}</td>
+              <td class="terminal-bright">${message.model}</td>
+              <td class="terminal-dim">${message.provider || 'Unknown'}</td>
+              <td>${this.formatTokens(message.totalTokens)}</td>
+              <td>${this.formatResponseTime(message.responseTime)}</td>
+              <td>${this.formatStatus(message.isSuccess, message.error)}</td>
+            </tr>
+          `).join('');
+        }
+
+        updatePagination(data) {
+          const pagination = document.getElementById('pagination-controls');
+          const prevButton = document.getElementById('prev-button');
+          const nextButton = document.getElementById('next-button');
+          const paginationInfo = document.getElementById('pagination-info');
+
+          this.totalPages = data.totalPages;
+
+          prevButton.disabled = !data.hasPreviousPage;
+          nextButton.disabled = !data.hasNextPage;
+          paginationInfo.textContent = `Page ${data.currentPage} of ${data.totalPages}`;
+
+          pagination.style.display = data.totalPages > 1 ? 'flex' : 'none';
+        }
+
+        formatDate(dateString) {
+          const date = new Date(dateString);
+          return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+        }
+
+        formatTokens(tokens) {
+          if (!tokens) return '<span class="terminal-dim">—</span>';
+          return `<span class="terminal-bright">${tokens.toLocaleString()}</span>`;
+        }
+
+        formatResponseTime(responseTime) {
+          if (!responseTime) return '<span class="terminal-dim">—</span>';
+          const formatted = responseTime < 1000 
+            ? `${responseTime}ms` 
+            : `${(responseTime / 1000).toFixed(1)}s`;
+          return `<span class="terminal-bright">${formatted}</span>`;
+        }
+
+        formatStatus(isSuccess, error) {
+          if (isSuccess) {
+            return '<span class="status-success">✓ Success</span>';
+          } else {
+            const errorText = error ? ` (${error.substring(0, 30)}...)` : '';
+            return `<span class="status-error">✗ Error${errorText}</span>`;
+          }
+        }
+      }
+
+      // Initialize the UI when the page loads
+      document.addEventListener('DOMContentLoaded', () => {
+        new MessagesUI();
+      });
+    </script>
   </body>
 </html>
