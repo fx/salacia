@@ -13,22 +13,66 @@ export const prerender = false;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Messages Dashboard - Salacia</title>
   
-  <!-- WebTUI CSS Framework -->
-  <link rel="stylesheet" href="https://unpkg.com/@webtui/css@1.0.0/dist/webtui.min.css">
-  
   <style>
-    /* Custom styles for messages dashboard */
+    /* Terminal-style CSS Framework */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      background-color: #0a0a0a;
+      color: #00ff00;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    
+    /* Terminal-style utility classes */
+    .terminal-bg { background-color: #0a0a0a; }
+    .terminal-text { color: #00ff00; }
+    .terminal-dim { color: #888888; }
+    .terminal-bright { color: #ffffff; }
+    .terminal-error { color: #ff4444; }
+    .terminal-warning { color: #ffaa00; }
+    .terminal-success { color: #00ff00; }
+    
+    /* Layout utilities */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .w-full { width: 100%; }
+    .h-12 { height: 3rem; }
+    .w-12 { width: 3rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 0.75rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    
+    /* Terminal-style messages dashboard */
     .messages-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background-color: #1a1a1a;
+      border-bottom: 2px solid #00ff00;
       padding: 1.5rem 0;
       margin-bottom: 2rem;
     }
     
     .messages-title {
       font-size: 2rem;
-      font-weight: 600;
+      font-weight: normal;
       margin: 0;
+      color: #00ff00;
+      text-shadow: 0 0 10px #00ff00;
     }
     
     .messages-container {
@@ -38,20 +82,121 @@ export const prerender = false;
     }
     
     .table-container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background-color: #111111;
+      border: 1px solid #333333;
       overflow: hidden;
+    }
+    
+    .table-header {
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #333333;
+      padding: 1rem 1.5rem;
+    }
+    
+    .table-title {
+      font-size: 1.125rem;
+      font-weight: normal;
+      color: #ffffff;
+      margin: 0;
+    }
+    
+    .table-subtitle {
+      font-size: 0.875rem;
+      color: #888888;
+      margin: 0.25rem 0 0 0;
+    }
+    
+    /* Terminal-style table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #111111;
+    }
+    
+    th {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #333333;
+    }
+    
+    td {
+      padding: 1.5rem;
+      border-bottom: 1px solid #222222;
+      color: #888888;
+    }
+    
+    /* Terminal-style placeholder */
+    .placeholder-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem;
+    }
+    
+    .placeholder-icon {
+      width: 3rem;
+      height: 3rem;
+      background-color: #222222;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    
+    .placeholder-icon svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #666666;
+    }
+    
+    .placeholder-title {
+      font-size: 1.125rem;
+      font-weight: normal;
+      color: #ffffff;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .placeholder-text {
+      font-size: 0.875rem;
+      color: #888888;
+      margin: 0;
+    }
+    
+    /* Terminal glow effects */
+    .terminal-glow {
+      text-shadow: 0 0 5px currentColor;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .messages-title {
+        font-size: 1.5rem;
+      }
+      
+      .container {
+        padding: 0 0.5rem;
+      }
+      
+      th, td {
+        padding: 0.75rem;
+      }
     }
   </style>
 </head>
 
-<body class="wt-bg-gray-50">
+<body class="terminal-bg">
   <!-- Header Section -->
   <header class="messages-header">
     <div class="messages-container">
-      <h1 class="messages-title">Messages Dashboard</h1>
-      <p class="wt-text-gray-200 wt-mt-2">View and manage AI conversation messages</p>
+      <h1 class="messages-title terminal-glow">Messages Dashboard</h1>
+      <p class="terminal-dim mt-2">View and manage AI conversation messages</p>
     </div>
   </header>
 
@@ -60,45 +205,35 @@ export const prerender = false;
     <!-- Table Container -->
     <div class="table-container">
       <!-- Table Header -->
-      <div class="wt-bg-gray-50 wt-px-6 wt-py-4 wt-border-b">
-        <h2 class="wt-text-lg wt-font-semibold wt-text-gray-900">Recent Messages</h2>
-        <p class="wt-text-sm wt-text-gray-600 wt-mt-1">Loading message data...</p>
+      <div class="table-header">
+        <h2 class="table-title">Recent Messages</h2>
+        <p class="table-subtitle">Loading message data...</p>
       </div>
       
       <!-- Table Skeleton -->
-      <div class="wt-overflow-x-auto">
-        <table class="wt-w-full wt-table-auto">
-          <thead class="wt-bg-gray-100">
+      <div>
+        <table class="w-full">
+          <thead>
             <tr>
-              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
-                ID
-              </th>
-              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
-                Type
-              </th>
-              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
-                Content Preview
-              </th>
-              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
-                Created At
-              </th>
-              <th class="wt-px-6 wt-py-3 wt-text-left wt-text-xs wt-font-medium wt-text-gray-500 wt-uppercase wt-tracking-wider">
-                Actions
-              </th>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Content Preview</th>
+              <th>Created At</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody class="wt-bg-white wt-divide-y wt-divide-gray-200">
+          <tbody>
             <!-- Placeholder row -->
             <tr>
-              <td colspan="5" class="wt-px-6 wt-py-8 wt-text-center wt-text-gray-500">
-                <div class="wt-flex wt-flex-col wt-items-center">
-                  <div class="wt-w-12 wt-h-12 wt-bg-gray-200 wt-rounded-full wt-flex wt-items-center wt-justify-center wt-mb-3">
-                    <svg class="wt-w-6 wt-h-6 wt-text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <td colspan="5" class="text-center">
+                <div class="placeholder-container">
+                  <div class="placeholder-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.906-1.471c-1.42-.81-3.213-.9-4.728-.322C2.611 18.797 1.238 19 0 19V9c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
                     </svg>
                   </div>
-                  <p class="wt-text-lg wt-font-medium wt-text-gray-900">Message Data Loading</p>
-                  <p class="wt-text-sm wt-text-gray-500">Data fetching will be implemented in the next phase</p>
+                  <p class="placeholder-title">Message Data Loading</p>
+                  <p class="placeholder-text">Data fetching will be implemented in the next phase</p>
                 </div>
               </td>
             </tr>
