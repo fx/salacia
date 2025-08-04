@@ -84,7 +84,20 @@ export const AnthropicRequestSchema = z.object({
   top_p: z.number().min(0).max(1).optional(),
   top_k: z.number().int().positive().optional(),
   stream: z.boolean().optional(),
-  system: z.string().optional(),
+  system: z.union([
+    z.string(),
+    z.array(
+      z.object({
+        type: z.literal('text'),
+        text: z.string(),
+        cache_control: z
+          .object({
+            type: z.enum(['ephemeral']),
+          })
+          .optional(),
+      })
+    ),
+  ]).optional(),
   metadata: z.record(z.any()).optional(),
 });
 export type AnthropicRequest = z.infer<typeof AnthropicRequestSchema>;

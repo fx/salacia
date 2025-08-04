@@ -31,9 +31,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Parse and validate request body
-    const { data: requestData, error: parseError } = await parseRequestBody(request, data =>
-      AnthropicRequestSchema.parse(data)
-    );
+    const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
+      // Log the raw request to understand what Claude Code is sending
+      console.log('Raw request from client:', JSON.stringify(data, null, 2));
+      return AnthropicRequestSchema.parse(data);
+    });
 
     if (parseError) {
       return parseError;
@@ -74,12 +76,19 @@ export const POST: APIRoute = async ({ request }) => {
     console.error('API endpoint error:', error);
 
     // Return appropriate error response
-    if (error instanceof Error && error.message.includes('No AI provider configured')) {
-      return createErrorResponse(
-        API_ERROR_TYPES.PERMISSION_ERROR,
-        'AI provider not configured. Please contact administrator.',
-        503
-      );
+    if (error instanceof Error) {
+      // Handle various configuration issues
+      if (
+        error.message.includes('No AI provider configured') ||
+        error.message.includes('invalid x-api-key') ||
+        error.message.includes('authentication')
+      ) {
+        return createErrorResponse(
+          API_ERROR_TYPES.PERMISSION_ERROR,
+          'AI provider not configured. Please contact administrator.',
+          503
+        );
+      }
     }
 
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);

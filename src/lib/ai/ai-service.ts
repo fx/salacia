@@ -206,7 +206,21 @@ export class AIService {
 
     // Add system message if provided
     if (request.system) {
-      messages.push({ role: 'system', content: request.system });
+      let systemContent: string;
+      if (typeof request.system === 'string') {
+        systemContent = request.system;
+      } else if (Array.isArray(request.system)) {
+        // Extract text from array format (Claude Code sends it as an array)
+        systemContent = request.system
+          .filter(block => block.type === 'text')
+          .map(block => block.text)
+          .join('\n');
+      } else {
+        systemContent = '';
+      }
+      if (systemContent) {
+        messages.push({ role: 'system', content: systemContent });
+      }
     }
 
     // Convert messages
