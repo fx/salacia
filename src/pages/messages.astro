@@ -367,7 +367,7 @@ export const prerender = false;
       </div>
     </main>
 
-    <script>
+    <script is:inline>
       // WebTUI Messages Dashboard - Client-side JavaScript
       class MessagesUI {
         constructor() {
@@ -470,7 +470,7 @@ export const prerender = false;
 
         renderMessages(data) {
           const tbody = document.getElementById('messages-tbody');
-          
+
           if (!data.messages || data.messages.length === 0) {
             tbody.innerHTML = `
               <tr>
@@ -485,7 +485,9 @@ export const prerender = false;
             return;
           }
 
-          tbody.innerHTML = data.messages.map(message => `
+          tbody.innerHTML = data.messages
+            .map(
+              message => `
             <tr>
               <td>${this.formatDate(message.createdAt)}</td>
               <td class="terminal-bright">${message.model}</td>
@@ -494,7 +496,9 @@ export const prerender = false;
               <td>${this.formatResponseTime(message.responseTime)}</td>
               <td>${this.formatStatus(message.isSuccess, message.error)}</td>
             </tr>
-          `).join('');
+          `
+            )
+            .join('');
         }
 
         updatePagination(data) {
@@ -519,7 +523,7 @@ export const prerender = false;
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false
+            hour12: false,
           });
         }
 
@@ -530,9 +534,8 @@ export const prerender = false;
 
         formatResponseTime(responseTime) {
           if (!responseTime) return '<span class="terminal-dim">—</span>';
-          const formatted = responseTime < 1000 
-            ? `${responseTime}ms` 
-            : `${(responseTime / 1000).toFixed(1)}s`;
+          const formatted =
+            responseTime < 1000 ? `${responseTime}ms` : `${(responseTime / 1000).toFixed(1)}s`;
           return `<span class="terminal-bright">${formatted}</span>`;
         }
 
