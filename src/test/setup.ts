@@ -1,43 +1,68 @@
-import { beforeAll, afterEach, afterAll } from 'vitest';
-import { server } from './mocks/server';
-
 /**
- * Global test setup configuration for Vitest.
+ * Test setup and configuration
  *
- * Sets up MSW (Mock Service Worker) server for intercepting HTTP requests
- * during tests. This allows us to mock external API calls and ensure
- * consistent, reliable test behavior.
- *
- * The setup follows the standard MSW testing pattern:
- * - Start server before all tests
- * - Reset handlers after each test to ensure test isolation
- * - Close server after all tests complete
- *
- * @see https://mswjs.io/docs/getting-started/integrate/node
+ * This file provides centralized test configuration, utilities, and MSW setup
+ * for infrastructure testing of the AI service layer.
  */
 
-/**
- * Start the MSW server before all tests run.
- * This enables request interception for all test suites.
- */
+import { beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { setupServer } from 'msw/node';
+
+// Re-export config
+export { TEST_CONFIG } from './config';
+
+// Basic MSW server setup (handlers will be added in follow-up PRs)
+export const server = setupServer();
+
+// Test utilities
+export const testUtils = {
+  /**
+   * Generate a unique test ID
+   */
+  generateTestId: (): string => {
+    return `test_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  },
+
+  /**
+   * Create a delay for testing async operations
+   */
+  delay: (ms: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
+
+  /**
+   * Mock console methods to suppress logs during tests
+   */
+  mockConsole: () => {
+    const originalConsole = { ...console };
+    // eslint-disable-next-line no-console
+    console.log = vi.fn();
+    console.error = vi.fn();
+    console.warn = vi.fn();
+    // eslint-disable-next-line no-console
+    console.info = vi.fn();
+    return originalConsole;
+  },
+
+  /**
+   * Restore console methods
+   */
+  restoreConsole: (originalConsole: typeof console) => {
+    Object.assign(console, originalConsole);
+  },
+};
+
+// Setup MSW server
 beforeAll(() => {
-  server.listen({
-    onUnhandledRequest: 'error',
-  });
+  server.listen({ onUnhandledRequest: 'bypass' });
 });
 
-/**
- * Reset MSW handlers after each test to ensure test isolation.
- * This prevents one test's mocked responses from affecting another test.
- */
+// Reset MSW handlers after each test
 afterEach(() => {
   server.resetHandlers();
 });
 
-/**
- * Close the MSW server after all tests complete.
- * This cleans up resources and ensures proper test teardown.
- */
+// Cleanup MSW server
 afterAll(() => {
   server.close();
 });
