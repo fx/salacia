@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { MessagesService } from '../../lib/services/messages.js';
 import { parseUrlPaginationParams, parseUrlFilterParams } from '../../lib/utils/pagination.js';
 import { createLogger } from '../../lib/utils/logger.js';
+import { classifyMessagesServiceError, createErrorResponse } from '../../lib/errors/api-errors.js';
 
 const logger = createLogger('API/Messages');
 
@@ -72,60 +73,8 @@ export const GET: APIRoute = async ({ url }) => {
     
     logger.error('Messages API error:', error);
 
-    // Handle specific error types
-    if (error instanceof Error) {
-      // Validation errors
-      if (error.message.includes('Page number must be greater than 0') ||
-          error.message.includes('Page size must be between 1 and 100')) {
-        return new Response(
-          JSON.stringify({
-            error: 'Invalid request parameters',
-            message: error.message,
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            status: 400,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Response-Time': `${responseTime}ms`,
-            },
-          }
-        );
-      }
-
-      // Database connection errors
-      if (error.message.includes('database') || error.message.includes('connection')) {
-        return new Response(
-          JSON.stringify({
-            error: 'Database error',
-            message: 'Unable to retrieve messages at this time',
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            status: 503,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Response-Time': `${responseTime}ms`,
-            },
-          }
-        );
-      }
-    }
-
-    // Generic server error
-    return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: 'An unexpected error occurred',
-        timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Response-Time': `${responseTime}ms`,
-        },
-      }
-    );
+    // Classify the error and create appropriate response
+    const apiError = classifyMessagesServiceError(error, 'retrieve messages');
+    return createErrorResponse(apiError, responseTime);
   }
 };

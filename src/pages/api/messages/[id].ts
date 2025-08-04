@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { MessagesService } from '../../../lib/services/messages.js';
 import { createLogger } from '../../../lib/utils/logger.js';
+import { classifyMessagesServiceError, createErrorResponse, NotFoundError, ValidationError } from '../../../lib/errors/api-errors.js';
 
 const logger = createLogger('API/Messages/ID');
 
@@ -27,20 +28,8 @@ export const GET: APIRoute = async ({ params }) => {
     if (!messageId) {
       const responseTime = Date.now() - startTime;
       
-      return new Response(
-        JSON.stringify({
-          error: 'Missing parameter',
-          message: 'Message ID is required',
-          timestamp: new Date().toISOString(),
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Response-Time': `${responseTime}ms`,
-          },
-        }
-      );
+      const validationError = new ValidationError('Message ID is required');
+      return createErrorResponse(validationError, responseTime);
     }
 
     logger.debug('Fetching message by ID:', { messageId });
@@ -54,20 +43,8 @@ export const GET: APIRoute = async ({ params }) => {
     if (!message) {
       logger.debug('Message not found:', { messageId });
       
-      return new Response(
-        JSON.stringify({
-          error: 'Message not found',
-          message: `No message found with ID: ${messageId}`,
-          timestamp: new Date().toISOString(),
-        }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Response-Time': `${responseTime}ms`,
-          },
-        }
-      );
+      const notFoundError = new NotFoundError('Message', messageId);
+      return createErrorResponse(notFoundError, responseTime);
     }
 
     logger.debug('Message retrieved successfully:', {
@@ -90,59 +67,8 @@ export const GET: APIRoute = async ({ params }) => {
     
     logger.error('Message API error:', { messageId, error });
 
-    // Handle specific error types
-    if (error instanceof Error) {
-      // Invalid UUID format errors
-      if (error.message.includes('Invalid UUID format')) {
-        return new Response(
-          JSON.stringify({
-            error: 'Invalid message ID',
-            message: 'The provided message ID is not a valid UUID format',
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            status: 400,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Response-Time': `${responseTime}ms`,
-            },
-          }
-        );
-      }
-
-      // Database connection errors
-      if (error.message.includes('database') || error.message.includes('connection')) {
-        return new Response(
-          JSON.stringify({
-            error: 'Database error',
-            message: 'Unable to retrieve message at this time',
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            status: 503,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Response-Time': `${responseTime}ms`,
-            },
-          }
-        );
-      }
-    }
-
-    // Generic server error
-    return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: 'An unexpected error occurred',
-        timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Response-Time': `${responseTime}ms`,
-        },
-      }
-    );
+    // Classify the error and create appropriate response
+    const apiError = classifyMessagesServiceError(error, `retrieve message ${messageId}`);
+    return createErrorResponse(apiError, responseTime);
   }
 };
