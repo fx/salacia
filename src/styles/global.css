@@ -1,5 +1,2 @@
 @layer base, utils, components;
-@import "@webtui/css/dist/base.css";
-@import "@webtui/css/dist/utils/box.css";
-@import "@webtui/css/dist/components/button.css";
-@import "@webtui/css/dist/components/table.css";
+@import "@webtui/css";
