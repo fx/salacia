@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AiInteraction } from '../lib/db/schema.js';
-import { 
-  transformAiInteractionToDisplay,
-  MESSAGES_CONSTANTS
-} from '../lib/types/messages.js';
+import { transformAiInteractionToDisplay, MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
 describe('Messages Types', () => {
   describe('MESSAGES_CONSTANTS', () => {
@@ -48,9 +45,9 @@ describe('Messages Types', () => {
     it('should handle request preview truncation', () => {
       const longRequest = { prompt: 'a'.repeat(150) };
       const interaction = { ...mockInteraction, request: longRequest };
-      
+
       const result = transformAiInteractionToDisplay(interaction);
-      
+
       expect(result.requestPreview).toHaveLength(103); // 100 chars + '...'
       expect(result.requestPreview).toMatch(/\.\.\.$/); // Ends with '...'
     });
@@ -58,9 +55,9 @@ describe('Messages Types', () => {
     it('should handle response preview truncation', () => {
       const longResponse = { content: 'b'.repeat(150) };
       const interaction = { ...mockInteraction, response: longResponse };
-      
+
       const result = transformAiInteractionToDisplay(interaction);
-      
+
       expect(result.responsePreview).toHaveLength(103); // 100 chars + '...'
       expect(result.responsePreview).toMatch(/\.\.\.$/); // Ends with '...'
     });
@@ -71,9 +68,9 @@ describe('Messages Types', () => {
         error: 'API timeout',
         statusCode: 500,
       };
-      
+
       const result = transformAiInteractionToDisplay(failedInteraction);
-      
+
       expect(result.error).toBe('API timeout');
       expect(result.statusCode).toBe(500);
       expect(result.isSuccess).toBe(false);
@@ -94,9 +91,9 @@ describe('Messages Types', () => {
         error: null,
         createdAt: new Date('2024-01-01T10:00:00Z'),
       };
-      
+
       const result = transformAiInteractionToDisplay(minimalInteraction);
-      
+
       expect(result.responseTime).toBeUndefined();
       expect(result.totalTokens).toBeUndefined();
       expect(result.promptTokens).toBeUndefined();
@@ -113,9 +110,9 @@ describe('Messages Types', () => {
         request: 'invalid json' as unknown,
         response: 'also invalid' as unknown,
       };
-      
+
       const result = transformAiInteractionToDisplay(interaction);
-      
+
       expect(result.requestPreview).toBe('invalid json');
       expect(result.responsePreview).toBe('also invalid');
     });
@@ -125,9 +122,9 @@ describe('Messages Types', () => {
         ...mockInteraction,
         request: null,
       };
-      
+
       const result = transformAiInteractionToDisplay(interaction);
-      
+
       expect(result.requestPreview).toBe('No request data');
     });
   });

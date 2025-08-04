@@ -1,6 +1,6 @@
 /**
  * Type definitions for the Salacia application.
- * 
+ *
  * This module exports all type definitions used throughout the application,
  * providing a centralized location for importing types across different modules.
  */
