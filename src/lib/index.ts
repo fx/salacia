@@ -11,6 +11,9 @@ export * from './db/index.js';
 // Type definitions
 export * from './types/index.js';
 
+// Service layer
+export * from './services/index.js';
+
 // AI-related functionality
 export * from './ai/types.js';
 
