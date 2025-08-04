@@ -56,8 +56,16 @@ export class Logger {
     if (currentLogLevel >= LogLevel.ERROR) {
       if (error && typeof error === 'object') {
         // For errors, preserve stack traces if available
-        const errorInfo =
-          error instanceof Error ? error.stack || error.message : JSON.stringify(error);
+        let errorInfo: string;
+        if (error instanceof Error) {
+          errorInfo = error.stack || error.message;
+        } else {
+          try {
+            errorInfo = JSON.stringify(error);
+          } catch (circularError) {
+            errorInfo = '[Circular object - cannot stringify]';
+          }
+        }
         console.error(`[${this.context}] ${message}`, errorInfo);
       } else {
         console.error(`[${this.context}] ${message}`, error || '');
@@ -68,7 +76,11 @@ export class Logger {
   warn(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.WARN) {
       if (data && typeof data === 'object') {
-        console.warn(`[${this.context}] ${message}`, JSON.stringify(data));
+        try {
+          console.warn(`[${this.context}] ${message}`, JSON.stringify(data));
+        } catch (circularError) {
+          console.warn(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
+        }
       } else {
         console.warn(`[${this.context}] ${message}`, data || '');
       }
@@ -78,8 +90,13 @@ export class Logger {
   info(message: string, data?: unknown): void {
     if (currentLogLevel >= LogLevel.INFO) {
       if (data && typeof data === 'object') {
-        // eslint-disable-next-line no-console
-        console.info(`[${this.context}] ${message}`, JSON.stringify(data));
+        try {
+          // eslint-disable-next-line no-console
+          console.info(`[${this.context}] ${message}`, JSON.stringify(data));
+        } catch (circularError) {
+          // eslint-disable-next-line no-console
+          console.info(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
+        }
       } else {
         // eslint-disable-next-line no-console
         console.info(`[${this.context}] ${message}`, data || '');
@@ -91,8 +108,13 @@ export class Logger {
     if (currentLogLevel >= LogLevel.DEBUG) {
       if (data && typeof data === 'object') {
         // Stringify objects to keep logs concise on a single line
-        // eslint-disable-next-line no-console
-        console.debug(`[${this.context}] ${message}`, JSON.stringify(data));
+        try {
+          // eslint-disable-next-line no-console
+          console.debug(`[${this.context}] ${message}`, JSON.stringify(data));
+        } catch (circularError) {
+          // eslint-disable-next-line no-console
+          console.debug(`[${this.context}] ${message}`, '[Circular object - cannot stringify]');
+        }
       } else {
         // eslint-disable-next-line no-console
         console.debug(`[${this.context}] ${message}`, data || '');
