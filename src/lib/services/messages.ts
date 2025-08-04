@@ -9,7 +9,7 @@ import type {
   MessageSortField,
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
-import { aiInteractions, aiProviders } from '../db/schema.js';
+import { aiInteractions } from '../db/schema.js';
 import { db } from '../db/connection.js';
 
 /**
@@ -29,6 +29,11 @@ export class MessagesService {
    */
   static async getMessageById(id: string): Promise<MessageDisplay | null> {
     try {
+      // Validate UUID format before database query
+      if (!this.isValidUUID(id)) {
+        throw new Error(`Invalid UUID format: ${id}`);
+      }
+
       const result = await db
         .select()
         .from(aiInteractions)
@@ -256,7 +261,7 @@ export class MessagesService {
     const orderFunc = direction === 'asc' ? asc : desc;
 
     // Map sort fields to database columns
-    const fieldMap: Record<MessageSortField, typeof aiInteractions.createdAt> = {
+    const fieldMap: Record<MessageSortField, any> = {
       createdAt: aiInteractions.createdAt,
       model: aiInteractions.model,
       totalTokens: aiInteractions.totalTokens,
