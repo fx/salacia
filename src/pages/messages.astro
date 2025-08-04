@@ -16,16 +16,58 @@ import Layout from '../layouts/Layout.astro';
     <div class="webtui-container">
       <!-- Messages Table Container -->
       <div id="messages-container">
-        <!-- Loading state -->
+        <!-- Loading state with skeleton -->
         <div id="loading-state" class="webtui-loading">
-          <div class="webtui-spinner"></div>
-          Loading messages...
+          <div class="loading-skeleton">
+            <div class="skeleton-header">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-subtitle"></div>
+            </div>
+            <div class="skeleton-table">
+              <div class="skeleton-row" style="--delay: 0.1s;">
+                <div class="skeleton-cell skeleton-cell--time"></div>
+                <div class="skeleton-cell skeleton-cell--model"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--tokens"></div>
+                <div class="skeleton-cell skeleton-cell--response-time"></div>
+                <div class="skeleton-cell skeleton-cell--status"></div>
+                <div class="skeleton-cell skeleton-cell--preview"></div>
+              </div>
+              <div class="skeleton-row" style="--delay: 0.2s;">
+                <div class="skeleton-cell skeleton-cell--time"></div>
+                <div class="skeleton-cell skeleton-cell--model"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--tokens"></div>
+                <div class="skeleton-cell skeleton-cell--response-time"></div>
+                <div class="skeleton-cell skeleton-cell--status"></div>
+                <div class="skeleton-cell skeleton-cell--preview"></div>
+              </div>
+              <div class="skeleton-row" style="--delay: 0.3s;">
+                <div class="skeleton-cell skeleton-cell--time"></div>
+                <div class="skeleton-cell skeleton-cell--model"></div>
+                <div class="skeleton-cell skeleton-cell--provider"></div>
+                <div class="skeleton-cell skeleton-cell--tokens"></div>
+                <div class="skeleton-cell skeleton-cell--response-time"></div>
+                <div class="skeleton-cell skeleton-cell--status"></div>
+                <div class="skeleton-cell skeleton-cell--preview"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Error state -->
         <div id="error-state" class="webtui-error" style="display: none;">
-          <div class="webtui-error-title">Failed to load messages</div>
-          <div id="error-message">An error occurred while fetching data.</div>
+          <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <div class="error-content">
+              <div class="webtui-error-title">Unable to load messages</div>
+              <div id="error-message" class="error-message">An error occurred while fetching data.</div>
+              <div class="error-actions">
+                <button id="retry-btn" class="webtui-button webtui-button--primary">Try Again</button>
+                <button id="refresh-btn" class="webtui-button webtui-button--secondary">Refresh Page</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Messages table (will be populated by JavaScript) -->

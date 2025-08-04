@@ -37,6 +37,10 @@ class MessagesDashboard {
     this.modalErrorMessage = document.getElementById('modal-error-message');
     this.modalContent = document.getElementById('modal-content');
     
+    // Error action buttons
+    this.retryBtn = document.getElementById('retry-btn');
+    this.refreshBtn = document.getElementById('refresh-btn');
+    
     this.init();
   }
   
@@ -66,6 +70,15 @@ class MessagesDashboard {
         this.hideModal();
       }
     });
+    
+    // Error action button listeners
+    if (this.retryBtn) {
+      this.retryBtn.addEventListener('click', () => this.loadMessages());
+    }
+    
+    if (this.refreshBtn) {
+      this.refreshBtn.addEventListener('click', () => window.location.reload());
+    }
   }
   
   /**
@@ -80,9 +93,9 @@ class MessagesDashboard {
   }
   
   /**
-   * Load messages from the API
+   * Load messages from the API with retry logic
    */
-  async loadMessages() {
+  async loadMessages(retryCount = 0) {
     this.showLoading();
     
     try {
@@ -93,7 +106,7 @@ class MessagesDashboard {
       url.searchParams.set('sortField', 'createdAt');
       url.searchParams.set('sortDirection', 'desc');
       
-      const response = await fetch(url);
+      const response = await this.fetchWithRetry(url, { retryCount });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -110,7 +123,8 @@ class MessagesDashboard {
       
     } catch (error) {
       console.error('Failed to load messages:', error);
-      this.showError(`Failed to load messages: ${error.message}`);
+      const userFriendlyMessage = this.getUserFriendlyErrorMessage(error);
+      this.showError(userFriendlyMessage);
     }
   }
   
@@ -581,7 +595,7 @@ class MessagesDashboard {
       // If not in cache or incomplete, fetch from API
       if (!messageData || !messageData.fullDetails) {
         const detailEndpoint = window.MESSAGES_DETAIL_ENDPOINT || `/api/messages/${messageId}`;
-        const response = await fetch(detailEndpoint);
+        const response = await this.fetchWithRetry(detailEndpoint);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -598,7 +612,8 @@ class MessagesDashboard {
       
     } catch (error) {
       console.error('Failed to load message details:', error);
-      this.showModalError(`Failed to load message details: ${error.message}`);
+      const userFriendlyMessage = this.getUserFriendlyErrorMessage(error);
+      this.showModalError(userFriendlyMessage);
     }
   }
   
@@ -756,6 +771,113 @@ class MessagesDashboard {
     } catch (error) {
       return String(data);
     }
+  }
+  
+  /**
+   * Fetch with retry logic and exponential backoff
+   * @param {string|URL} url - URL to fetch
+   * @param {Object} options - Fetch options including retry settings
+   * @returns {Promise<Response>} Fetch response
+   */
+  async fetchWithRetry(url, options = {}) {
+    const {
+      retryCount = 0,
+      maxRetries = 3,
+      retryDelay = 1000,
+      ...fetchOptions
+    } = options;
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Don't retry client errors (4xx), only server errors (5xx) and network errors
+      if (!response.ok && response.status >= 400 && response.status < 500) {
+        return response; // Let the caller handle 4xx errors
+      }
+      
+      if (!response.ok && response.status >= 500 && retryCount < maxRetries) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      return response;
+      
+    } catch (error) {
+      if (retryCount < maxRetries && (
+        error.name === 'AbortError' ||
+        error.name === 'TypeError' ||
+        error.message.includes('Server error')
+      )) {
+        console.warn(`Request failed, retrying (${retryCount + 1}/${maxRetries}):`, error.message);
+        
+        // Exponential backoff: wait longer between retries
+        const delay = retryDelay * Math.pow(2, retryCount);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        return this.fetchWithRetry(url, { ...options, retryCount: retryCount + 1 });
+      }
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Get user-friendly error message
+   * @param {Error} error - The error object
+   * @returns {string} User-friendly error message
+   */
+  getUserFriendlyErrorMessage(error) {
+    if (error.name === 'AbortError') {
+      return 'Request timed out. Please check your connection and try again.';
+    }
+    
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      return 'Unable to connect to the server. Please check your network connection.';
+    }
+    
+    if (error.message.includes('HTTP 404')) {
+      return 'The requested data was not found.';
+    }
+    
+    if (error.message.includes('HTTP 403')) {
+      return 'You do not have permission to access this data.';
+    }
+    
+    if (error.message.includes('HTTP 500')) {
+      return 'Server error occurred. Please try again later.';
+    }
+    
+    if (error.message.includes('HTTP 502') || error.message.includes('HTTP 503')) {
+      return 'Service temporarily unavailable. Please try again in a few moments.';
+    }
+    
+    // Default fallback
+    return `An error occurred: ${error.message}`;
+  }
+  
+  /**
+   * Debounce function to limit how often a function can be called
+   * @param {Function} func - Function to debounce
+   * @param {number} wait - Wait time in milliseconds
+   * @returns {Function} Debounced function
+   */
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func.apply(this, args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 }
 
