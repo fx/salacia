@@ -11,10 +11,14 @@ export * from './db/index.js';
 // Type definitions
 export * from './types/index.js';
 
+// Service layer
+export * from './services/index.js';
+
 // AI-related functionality
 export * from './ai/types.js';
 
 // Utility functions
+export * from './utils/index.js';
 export * from './utils/logger.js';
 
 // Environment configuration
