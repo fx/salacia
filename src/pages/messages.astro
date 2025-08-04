@@ -1,0 +1,674 @@
+---
+// No server-side code needed - all data fetching happens client-side
+---
+
+<!doctype html>
+<html lang="en" data-webtui-theme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Salacia - AI Messages Dashboard</title>
+    
+    <!-- WebTUI CSS Imports -->
+    <style>
+      @layer base, utils, components;
+      @import "@webtui/css/dist/base.css";
+      @import "@webtui/css/dist/utils/box.css";
+      @import "@webtui/css/dist/components/button.css";
+      @import "@webtui/css/dist/components/table.css";
+      @import "@webtui/css/dist/components/input.css";
+      @import "@webtui/css/dist/components/badge.css";
+      @import "@webtui/css/dist/components/spinner.css";
+      @import "@webtui/css/dist/components/typography.css";
+    </style>
+    
+    <style>
+      /* Custom overrides for specific message UI needs */
+      .messages-container {
+        padding: 1rem;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      
+      .filters-section {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 1px solid var(--border-color, #333);
+      }
+      
+      .filter-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .filter-group label {
+        font-size: 0.875rem;
+        font-weight: bold;
+      }
+      
+      .messages-table {
+        width: 100%;
+        font-family: monospace;
+      }
+      
+      .messages-table tbody tr:hover {
+        background-color: var(--surface1, rgba(255, 255, 255, 0.05));
+        cursor: pointer;
+      }
+      
+      .status-success {
+        color: var(--green, #a6e3a1);
+      }
+      
+      .status-error {
+        color: var(--red, #f38ba8);
+      }
+      
+      .pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+      
+      .pagination-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+      
+      .pagination-info {
+        font-family: monospace;
+        font-size: 0.875rem;
+      }
+      
+      .loading-state {
+        text-align: center;
+        padding: 2rem;
+        font-family: monospace;
+      }
+      
+      .error-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--red, #f38ba8);
+        font-family: monospace;
+      }
+      
+      .stats-summary {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        font-family: monospace;
+        font-size: 0.875rem;
+      }
+      
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .stat-label {
+        font-weight: bold;
+        color: var(--text-muted, #888);
+      }
+      
+      .stat-value {
+        font-size: 1.125rem;
+        font-weight: bold;
+      }
+      
+      .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      
+      .clickable-row:hover {
+        background-color: var(--surface1, rgba(255, 255, 255, 0.05)) !important;
+      }
+      
+      /* Modal styles for message details */
+      .message-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+      }
+      
+      .message-modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .modal-content {
+        background-color: var(--surface0, #1e1e2e);
+        border: 2px solid var(--border-color, #333);
+        padding: 2rem;
+        max-width: 80%;
+        max-height: 80%;
+        overflow-y: auto;
+        font-family: monospace;
+      }
+      
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color, #333);
+        padding-bottom: 1rem;
+      }
+      
+      .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text, #cdd6f4);
+      }
+      
+      .modal-section {
+        margin-bottom: 1.5rem;
+      }
+      
+      .modal-section h3 {
+        margin-bottom: 0.5rem;
+        color: var(--blue, #89b4fa);
+      }
+      
+      .modal-section pre {
+        background-color: var(--surface1, #313244);
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="messages-container">
+      <h1>Salacia AI Messages Dashboard</h1>
+      <p>Monitor and analyze AI interactions with terminal-style interface</p>
+      
+      <!-- Statistics Summary -->
+      <div class="stats-summary" id="statsContainer">
+        <div class="stat-item">
+          <span class="stat-label">Total Messages</span>
+          <span class="stat-value" id="totalMessages">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Success Rate</span>
+          <span class="stat-value" id="successRate">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg Response Time</span>
+          <span class="stat-value" id="avgResponseTime">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Tokens</span>
+          <span class="stat-value" id="totalTokens">-</span>
+        </div>
+      </div>
+      
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <h2>Filters</h2>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="modelFilter">Model:</label>
+            <input type="text" id="modelFilter" placeholder="e.g. gpt-4, claude-3" />
+          </div>
+          <div class="filter-group">
+            <label for="providerFilter">Provider:</label>
+            <input type="text" id="providerFilter" placeholder="e.g. openai, anthropic" />
+          </div>
+          <div class="filter-group">
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="success">Success</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="startDateFilter">Start Date:</label>
+            <input type="date" id="startDateFilter" />
+          </div>
+          <div class="filter-group">
+            <label for="endDateFilter">End Date:</label>
+            <input type="date" id="endDateFilter" />
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="minTokensFilter">Min Tokens:</label>
+            <input type="number" id="minTokensFilter" placeholder="0" min="0" />
+          </div>
+          <div class="filter-group">
+            <label for="maxTokensFilter">Max Tokens:</label>
+            <input type="number" id="maxTokensFilter" placeholder="10000" min="0" />
+          </div>
+          <div class="filter-group">
+            <label for="searchTermFilter">Search:</label>
+            <input type="text" id="searchTermFilter" placeholder="Search content..." />
+          </div>
+          <div class="filter-group">
+            <label>&nbsp;</label>
+            <button variant-="primary" id="applyFiltersBtn">Apply Filters</button>
+          </div>
+          <div class="filter-group">
+            <label>&nbsp;</label>
+            <button variant-="secondary" id="clearFiltersBtn">Clear</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState">
+        <div is-="spinner"></div>
+        <p>Loading messages...</p>
+      </div>
+      
+      <!-- Error State -->
+      <div class="error-state" id="errorState" style="display: none;">
+        <p id="errorMessage">Failed to load messages</p>
+        <button variant-="primary" id="retryBtn">Retry</button>
+      </div>
+      
+      <!-- Messages Table -->
+      <div id="messagesContainer" style="display: none;">
+        <table class="messages-table">
+          <thead>
+            <tr>
+              <th><button variant-="ghost" class="sort-btn" data-field="createdAt">Time</button></th>
+              <th><button variant-="ghost" class="sort-btn" data-field="model">Model</button></th>
+              <th>Provider</th>
+              <th><button variant-="ghost" class="sort-btn" data-field="totalTokens">Tokens</button></th>
+              <th><button variant-="ghost" class="sort-btn" data-field="responseTime">Response Time</button></th>
+              <th>Status</th>
+              <th>Preview</th>
+            </tr>
+          </thead>
+          <tbody id="messagesTableBody">
+            <!-- Messages will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div class="pagination-controls" id="paginationContainer" style="display: none;">
+        <div class="pagination-info" id="paginationInfo">
+          <!-- Pagination info will be populated by JavaScript -->
+        </div>
+        <div class="pagination-buttons">
+          <button variant-="secondary" id="prevPageBtn" disabled>Previous</button>
+          <button variant-="secondary" id="nextPageBtn" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Message Detail Modal -->
+    <div class="message-modal" id="messageModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Message Details</h2>
+          <button class="close-modal" id="closeModalBtn">&times;</button>
+        </div>
+        <div id="modalBody">
+          <!-- Modal content will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // TypeScript-style JavaScript with strong typing patterns
+      class MessagesUI {
+        constructor() {
+          this.currentPage = 1;
+          this.pageSize = 20;
+          this.sortField = 'createdAt';
+          this.sortDirection = 'desc';
+          this.filters = {};
+          this.messages = [];
+          this.totalPages = 0;
+          this.totalItems = 0;
+          
+          this.initializeEventListeners();
+          this.loadMessages();
+        }
+        
+        initializeEventListeners() {
+          // Filter controls
+          document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            this.applyFilters();
+          });
+          
+          document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            this.clearFilters();
+          });
+          
+          // Pagination controls
+          document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (this.currentPage > 1) {
+              this.currentPage--;
+              this.loadMessages();
+            }
+          });
+          
+          document.getElementById('nextPageBtn').addEventListener('click', () => {
+            if (this.currentPage < this.totalPages) {
+              this.currentPage++;
+              this.loadMessages();
+            }
+          });
+          
+          // Sort controls
+          document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              const field = e.target.dataset.field;
+              if (this.sortField === field) {
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+              } else {
+                this.sortField = field;
+                this.sortDirection = 'desc';
+              }
+              this.currentPage = 1;
+              this.loadMessages();
+            });
+          });
+          
+          // Retry button
+          document.getElementById('retryBtn').addEventListener('click', () => {
+            this.loadMessages();
+          });
+          
+          // Modal controls
+          document.getElementById('closeModalBtn').addEventListener('click', () => {
+            this.closeModal();
+          });
+          
+          document.getElementById('messageModal').addEventListener('click', (e) => {
+            if (e.target.id === 'messageModal') {
+              this.closeModal();
+            }
+          });
+          
+          // Keyboard shortcuts
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              this.closeModal();
+            }
+          });
+        }
+        
+        async loadMessages() {
+          this.showLoading();
+          
+          try {
+            const params = new URLSearchParams({
+              page: this.currentPage.toString(),
+              pageSize: this.pageSize.toString(),
+              sortField: this.sortField,
+              sortDirection: this.sortDirection
+            });
+            
+            // Add filters to params
+            Object.entries(this.filters).forEach(([key, value]) => {
+              if (value !== null && value !== undefined && value !== '') {
+                params.append(key, value.toString());
+              }
+            });
+            
+            const response = await fetch(`/api/messages?${params.toString()}`);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            this.handleMessagesData(data);
+            
+          } catch (error) {
+            console.error('Failed to load messages:', error);
+            this.showError(error.message);
+          }
+        }
+        
+        handleMessagesData(data) {
+          this.messages = data.messages || [];
+          this.currentPage = data.currentPage || 1;
+          this.totalPages = data.totalPages || 0;
+          this.totalItems = data.totalItems || 0;
+          
+          this.updateStatsSummary(data.stats);
+          this.renderMessages();
+          this.updatePagination();
+          this.showMessages();
+        }
+        
+        updateStatsSummary(stats) {
+          if (!stats) return;
+          
+          document.getElementById('totalMessages').textContent = stats.totalMessages || 0;
+          document.getElementById('successRate').textContent = 
+            stats.successRate ? `${stats.successRate.toFixed(1)}%` : '0%';
+          document.getElementById('avgResponseTime').textContent = 
+            stats.averageResponseTime ? `${Math.round(stats.averageResponseTime)}ms` : '-';
+          document.getElementById('totalTokens').textContent = 
+            stats.totalTokens ? stats.totalTokens.toLocaleString() : '0';
+        }
+        
+        renderMessages() {
+          const tbody = document.getElementById('messagesTableBody');
+          tbody.innerHTML = '';
+          
+          this.messages.forEach(message => {
+            const row = document.createElement('tr');
+            row.className = 'clickable-row';
+            row.addEventListener('click', () => this.showMessageDetails(message));
+            
+            const statusClass = message.isSuccess ? 'status-success' : 'status-error';
+            const statusText = message.isSuccess ? 'SUCCESS' : 'ERROR';
+            const responseTime = message.responseTime ? `${message.responseTime}ms` : '-';
+            const tokens = message.totalTokens || '-';
+            const provider = message.provider || '-';
+            
+            row.innerHTML = `
+              <td>${this.formatDate(message.createdAt)}</td>
+              <td>${this.escapeHtml(message.model)}</td>
+              <td>${this.escapeHtml(provider)}</td>
+              <td>${tokens}</td>
+              <td>${responseTime}</td>
+              <td><span class="${statusClass}">${statusText}</span></td>
+              <td>${this.escapeHtml(this.truncateText(message.requestPreview, 50))}</td>
+            `;
+            
+            tbody.appendChild(row);
+          });
+        }
+        
+        updatePagination() {
+          const container = document.getElementById('paginationContainer');
+          const info = document.getElementById('paginationInfo');
+          const prevBtn = document.getElementById('prevPageBtn');
+          const nextBtn = document.getElementById('nextPageBtn');
+          
+          if (this.totalItems === 0) {
+            container.style.display = 'none';
+            return;
+          }
+          
+          container.style.display = 'flex';
+          
+          const start = (this.currentPage - 1) * this.pageSize + 1;
+          const end = Math.min(this.currentPage * this.pageSize, this.totalItems);
+          
+          info.textContent = `Showing ${start}-${end} of ${this.totalItems} messages (Page ${this.currentPage}/${this.totalPages})`;
+          
+          prevBtn.disabled = this.currentPage <= 1;
+          nextBtn.disabled = this.currentPage >= this.totalPages;
+        }
+        
+        showMessageDetails(message) {
+          const modal = document.getElementById('messageModal');
+          const modalBody = document.getElementById('modalBody');
+          
+          modalBody.innerHTML = `
+            <div class="modal-section">
+              <h3>Basic Information</h3>
+              <p><strong>ID:</strong> ${this.escapeHtml(message.id)}</p>
+              <p><strong>Model:</strong> ${this.escapeHtml(message.model)}</p>
+              <p><strong>Provider:</strong> ${this.escapeHtml(message.provider || 'Unknown')}</p>
+              <p><strong>Created:</strong> ${this.formatDate(message.createdAt)}</p>
+              <p><strong>Status:</strong> <span class="${message.isSuccess ? 'status-success' : 'status-error'}">${message.isSuccess ? 'SUCCESS' : 'ERROR'}</span></p>
+              <p><strong>Status Code:</strong> ${message.statusCode || 'N/A'}</p>
+              <p><strong>Response Time:</strong> ${message.responseTime ? `${message.responseTime}ms` : 'N/A'}</p>
+            </div>
+            
+            <div class="modal-section">
+              <h3>Token Usage</h3>
+              <p><strong>Total Tokens:</strong> ${message.totalTokens || 'N/A'}</p>
+              <p><strong>Prompt Tokens:</strong> ${message.promptTokens || 'N/A'}</p>
+              <p><strong>Completion Tokens:</strong> ${message.completionTokens || 'N/A'}</p>
+            </div>
+            
+            ${message.error ? `
+            <div class="modal-section">
+              <h3>Error Details</h3>
+              <pre>${this.escapeHtml(message.error)}</pre>
+            </div>
+            ` : ''}
+            
+            <div class="modal-section">
+              <h3>Request Data</h3>
+              <pre>${this.escapeHtml(JSON.stringify(message.request, null, 2))}</pre>
+            </div>
+            
+            ${message.response ? `
+            <div class="modal-section">
+              <h3>Response Data</h3>
+              <pre>${this.escapeHtml(JSON.stringify(message.response, null, 2))}</pre>
+            </div>
+            ` : ''}
+          `;
+          
+          modal.classList.add('show');
+        }
+        
+        closeModal() {
+          document.getElementById('messageModal').classList.remove('show');
+        }
+        
+        applyFilters() {
+          this.filters = {
+            model: document.getElementById('modelFilter').value.trim(),
+            provider: document.getElementById('providerFilter').value.trim(),
+            hasError: this.getStatusFilter(),
+            startDate: document.getElementById('startDateFilter').value,
+            endDate: document.getElementById('endDateFilter').value,
+            minTokens: this.parseNumber(document.getElementById('minTokensFilter').value),
+            maxTokens: this.parseNumber(document.getElementById('maxTokensFilter').value),
+            searchTerm: document.getElementById('searchTermFilter').value.trim()
+          };
+          
+          // Remove empty filters
+          Object.keys(this.filters).forEach(key => {
+            if (this.filters[key] === '' || this.filters[key] === null || this.filters[key] === undefined) {
+              delete this.filters[key];
+            }
+          });
+          
+          this.currentPage = 1;
+          this.loadMessages();
+        }
+        
+        clearFilters() {
+          document.getElementById('modelFilter').value = '';
+          document.getElementById('providerFilter').value = '';
+          document.getElementById('statusFilter').value = '';
+          document.getElementById('startDateFilter').value = '';
+          document.getElementById('endDateFilter').value = '';
+          document.getElementById('minTokensFilter').value = '';
+          document.getElementById('maxTokensFilter').value = '';
+          document.getElementById('searchTermFilter').value = '';
+          
+          this.filters = {};
+          this.currentPage = 1;
+          this.loadMessages();
+        }
+        
+        getStatusFilter() {
+          const value = document.getElementById('statusFilter').value;
+          if (value === 'success') return false;
+          if (value === 'error') return true;
+          return undefined;
+        }
+        
+        parseNumber(value) {
+          const num = parseInt(value, 10);
+          return isNaN(num) ? undefined : num;
+        }
+        
+        formatDate(dateString) {
+          const date = new Date(dateString);
+          return date.toLocaleString();
+        }
+        
+        truncateText(text, maxLength) {
+          if (!text) return '';
+          return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+        
+        escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+        
+        showLoading() {
+          document.getElementById('loadingState').style.display = 'block';
+          document.getElementById('errorState').style.display = 'none';
+          document.getElementById('messagesContainer').style.display = 'none';
+          document.getElementById('paginationContainer').style.display = 'none';
+        }
+        
+        showError(message) {
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = 'block';
+          document.getElementById('messagesContainer').style.display = 'none';
+          document.getElementById('paginationContainer').style.display = 'none';
+          document.getElementById('errorMessage').textContent = message;
+        }
+        
+        showMessages() {
+          document.getElementById('loadingState').style.display = 'none';
+          document.getElementById('errorState').style.display = 'none';
+          document.getElementById('messagesContainer').style.display = 'block';
+        }
+      }
+      
+      // Initialize the UI when the DOM is loaded
+      document.addEventListener('DOMContentLoaded', () => {
+        new MessagesUI();
+      });
+    </script>
+  </body>
+</html>
