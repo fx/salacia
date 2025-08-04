@@ -18,7 +18,7 @@ import { promisify } from 'util';
  */
 const TEST_TIMEOUT = 60000; // 60 seconds for E2E tests
 const CLAUDE_TIMEOUT = 30000; // 30 seconds for Claude CLI commands
-const API_BASE_URL = 'http://localhost:4321';
+const API_BASE_URL = 'http://localhost:4321/api';
 
 /**
  * Interface for subprocess execution result
@@ -35,7 +35,7 @@ interface ExecResult {
  */
 async function runClaudeCommand(prompt: string, timeout: number = CLAUDE_TIMEOUT): Promise<ExecResult> {
   return new Promise((resolve) => {
-    const process = spawn('claude', [prompt], {
+    const claudeProcess = spawn('claude', [], {
       env: {
         ...process.env,
         ANTHROPIC_BASE_URL: API_BASE_URL,
@@ -48,27 +48,33 @@ async function runClaudeCommand(prompt: string, timeout: number = CLAUDE_TIMEOUT
     let stderr = '';
     let timedOut = false;
 
+    // Send the prompt to Claude's stdin
+    if (claudeProcess.stdin) {
+      claudeProcess.stdin.write(prompt + '\n');
+      claudeProcess.stdin.end();
+    }
+
     // Set up timeout
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      process.kill('SIGKILL');
+      claudeProcess.kill('SIGKILL');
     }, timeout);
 
     // Collect output
-    if (process.stdout) {
-      process.stdout.on('data', (data) => {
+    if (claudeProcess.stdout) {
+      claudeProcess.stdout.on('data', (data) => {
         stdout += data.toString();
       });
     }
 
-    if (process.stderr) {
-      process.stderr.on('data', (data) => {
+    if (claudeProcess.stderr) {
+      claudeProcess.stderr.on('data', (data) => {
         stderr += data.toString();
       });
     }
 
     // Handle process exit
-    process.on('exit', (code) => {
+    claudeProcess.on('exit', (code) => {
       clearTimeout(timeoutId);
       resolve({
         exitCode: code || 0,
@@ -79,7 +85,7 @@ async function runClaudeCommand(prompt: string, timeout: number = CLAUDE_TIMEOUT
     });
 
     // Handle process errors
-    process.on('error', (error) => {
+    claudeProcess.on('error', (error) => {
       clearTimeout(timeoutId);
       resolve({
         exitCode: 1,
