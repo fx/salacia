@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
         const hasMessages = 'messages' in data && Array.isArray(data.messages);
         const hasMaxTokens = 'max_tokens' in data;
         const hasSystem = 'system' in data;
-        
+
         if (hasModel) {
           const summary = {
             model: data.model,

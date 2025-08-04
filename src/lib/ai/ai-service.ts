@@ -215,7 +215,9 @@ export class AIService {
       } else if (Array.isArray(request.system)) {
         // Extract text from array format (Claude Code sends it as an array)
         systemContent = request.system
-          .filter(block => block.type === 'text' && 'text' in block && typeof block.text === 'string')
+          .filter(
+            block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+          )
           .map(block => block.text)
           .join('\n');
       } else {
