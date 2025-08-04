@@ -212,10 +212,6 @@ The application builds to a standalone Node.js server in the `dist/` directory.
 5. Commit using conventional commits: `git commit -m "feat: add new feature"`
 6. Push and create a pull request
 
-## 📜 License
-
-This project is licensed under the MIT License.
-
 ## 🔗 Technologies
 
 - [Astro](https://astro.build) - Web framework
