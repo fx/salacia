@@ -4,7 +4,13 @@ import type {
   MessageSortField, 
   MessageSortDirection 
 } from '../types/messages.js';
-import { MESSAGES_CONSTANTS } from '../types/messages.js';
+
+// TODO: Move these constants to MESSAGES_CONSTANTS when PR #28 is merged
+const PAGINATION_CONSTANTS = {
+  MAX_PAGE_SIZE: 100,
+  MAX_PAGINATION_PAGES: 7,
+  SORT_FIELDS: ['createdAt', 'model', 'totalTokens', 'responseTime'] as const,
+} as const;
 
 /**
  * URL parameter names for message filtering and pagination.
@@ -58,7 +64,7 @@ export function parseUrlPaginationParams(searchParams: URLSearchParams): Message
   // Parse and validate page size
   const pageSizeParam = searchParams.get(URL_PARAMS.PAGE_SIZE);
   let pageSize = pageSizeParam ? parseInt(pageSizeParam, 10) : DEFAULT_VALUES.PAGE_SIZE;
-  pageSize = Math.max(1, Math.min(100, pageSize)); // Clamp between 1 and 100
+  pageSize = Math.max(1, Math.min(PAGINATION_CONSTANTS.MAX_PAGE_SIZE, pageSize)); // Clamp between 1 and max
   
   // Parse and validate sort configuration
   const sortField = parseSortField(searchParams.get(URL_PARAMS.SORT_FIELD));
@@ -189,10 +195,10 @@ export function serializeToUrlParams(
   if (filters.searchTerm) params.set(URL_PARAMS.SEARCH_TERM, filters.searchTerm);
   
   if (filters.startDate) {
-    params.set(URL_PARAMS.START_DATE, filters.startDate.toISOString().split('T')[0]);
+    params.set(URL_PARAMS.START_DATE, serializeDate(filters.startDate));
   }
   if (filters.endDate) {
-    params.set(URL_PARAMS.END_DATE, filters.endDate.toISOString().split('T')[0]);
+    params.set(URL_PARAMS.END_DATE, serializeDate(filters.endDate));
   }
   
   if (filters.hasError !== undefined) {
@@ -227,7 +233,7 @@ export function serializeToUrlParams(
 export function calculatePaginationMetadata(
   currentPage: number,
   totalPages: number,
-  maxPages: number = MESSAGES_CONSTANTS.MAX_PAGINATION_PAGES
+  maxPages: number = PAGINATION_CONSTANTS.MAX_PAGINATION_PAGES
 ) {
   // Handle edge cases
   if (totalPages <= 0) {
@@ -304,10 +310,21 @@ export function calculatePaginationMetadata(
 function parseSortField(value: string | null): MessageSortField {
   if (!value) return DEFAULT_VALUES.SORT_FIELD;
   
-  const validFields: MessageSortField[] = ['createdAt', 'model', 'totalTokens', 'responseTime'];
+  const validFields = PAGINATION_CONSTANTS.SORT_FIELDS;
   return validFields.includes(value as MessageSortField) 
     ? (value as MessageSortField) 
     : DEFAULT_VALUES.SORT_FIELD;
+}
+
+/**
+ * Serializes a Date object to ISO date string (YYYY-MM-DD format).
+ * 
+ * @param date - Date object to serialize
+ * @returns ISO date string in YYYY-MM-DD format
+ * @private
+ */
+function serializeDate(date: Date): string {
+  return date.toISOString().split('T')[0];
 }
 
 /**
