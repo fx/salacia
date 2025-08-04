@@ -1,4 +1,4 @@
-import { desc, asc, and, or, gte, lte, like, isNull, isNotNull, count, avg, sum, sql } from 'drizzle-orm';
+import { desc, asc, and, or, gte, lte, like, isNull, isNotNull, count, sql } from 'drizzle-orm';
 import type { 
   MessageDisplay, 
   MessageStats, 
@@ -261,7 +261,7 @@ export class MessagesService {
     const orderFunc = direction === 'asc' ? asc : desc;
 
     // Map sort fields to database columns
-    const fieldMap: Record<MessageSortField, any> = {
+    const fieldMap: Record<MessageSortField, unknown> = {
       createdAt: aiInteractions.createdAt,
       model: aiInteractions.model,
       totalTokens: aiInteractions.totalTokens,
