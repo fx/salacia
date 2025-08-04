@@ -61,7 +61,8 @@ class MessagesDashboard {
     this.showLoading();
     
     try {
-      const url = new URL('/api/messages', window.location.origin);
+      const apiEndpoint = window.MESSAGES_API_ENDPOINT || '/api/messages';
+      const url = new URL(apiEndpoint, window.location.origin);
       url.searchParams.set('page', this.currentPage.toString());
       url.searchParams.set('pageSize', this.pageSize.toString());
       url.searchParams.set('sortField', 'createdAt');
@@ -273,7 +274,7 @@ class MessagesDashboard {
       } else {
         return date.toLocaleDateString();
       }
-    } catch {
+    } catch (error) {
       return 'Invalid date';
     }
   }
