@@ -1,12 +1,12 @@
 /**
  * Centralized logging utility with verbosity control
- * 
+ *
  * Log levels:
  * - ERROR: Always shown (critical errors)
  * - WARN: Shown in production (warnings)
  * - INFO: Default level (important information)
  * - DEBUG: Development debugging (verbose)
- * 
+ *
  * Control via LOG_LEVEL environment variable
  */
 
@@ -17,7 +17,7 @@ export const LogLevel = {
   DEBUG: 3,
 } as const;
 
-export type LogLevelType = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevelType = (typeof LogLevel)[keyof typeof LogLevel];
 
 const LOG_LEVEL_NAMES: Record<string, LogLevelType> = {
   error: LogLevel.ERROR,
@@ -31,12 +31,12 @@ const LOG_LEVEL_NAMES: Record<string, LogLevelType> = {
  */
 function getCurrentLogLevel(): LogLevelType {
   const envLevel = process.env.LOG_LEVEL?.toLowerCase();
-  
+
   // Default to INFO in production, DEBUG in development
   if (!envLevel) {
     return process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
   }
-  
+
   return LOG_LEVEL_NAMES[envLevel] ?? LogLevel.INFO;
 }
 
@@ -56,7 +56,8 @@ export class Logger {
     if (currentLogLevel >= LogLevel.ERROR) {
       if (error && typeof error === 'object') {
         // For errors, preserve stack traces if available
-        const errorInfo = error instanceof Error ? error.stack || error.message : JSON.stringify(error);
+        const errorInfo =
+          error instanceof Error ? error.stack || error.message : JSON.stringify(error);
         console.error(`[${this.context}] ${message}`, errorInfo);
       } else {
         console.error(`[${this.context}] ${message}`, error || '');

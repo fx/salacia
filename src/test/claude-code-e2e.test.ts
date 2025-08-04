@@ -3,7 +3,7 @@
 
 /**
  * Claude Code E2E Integration Test
- * 
+ *
  * This test demonstrates how to launch Claude Code CLI and point it to our API.
  * For a complete E2E test, the server would need either:
  * 1. A real Anthropic API key configured
@@ -16,7 +16,7 @@ import { spawn } from 'child_process';
 
 describe('Claude Code E2E Integration', () => {
   const API_BASE_URL = 'http://localhost:4321/api';
-  
+
   beforeAll(() => {
     console.log(`
     ==========================================
@@ -48,18 +48,20 @@ describe('Claude Code E2E Integration', () => {
     console.log('Claude Code would be launched with:');
     console.log(`  ANTHROPIC_BASE_URL=${testEnv.ANTHROPIC_BASE_URL}`);
     console.log(`  ANTHROPIC_API_KEY=${testEnv.ANTHROPIC_API_KEY}`);
-    
+
     // Verify Claude CLI is available
-    const checkClaude = await new Promise<boolean>((resolve) => {
+    const checkClaude = await new Promise<boolean>(resolve => {
       const proc = spawn('claude', ['--version'], { stdio: 'pipe' });
       proc.on('error', () => resolve(false));
-      proc.on('exit', (code) => resolve(code === 0));
+      proc.on('exit', code => resolve(code === 0));
     });
 
     if (checkClaude) {
       console.log('✓ Claude CLI is installed and available');
     } else {
-      console.log('✗ Claude CLI is not available - install with: npm install -g @anthropic-ai/claude-cli');
+      console.log(
+        '✗ Claude CLI is not available - install with: npm install -g @anthropic-ai/claude-cli'
+      );
     }
 
     expect(checkClaude).toBe(true);
@@ -94,7 +96,7 @@ describe('Claude Code E2E Integration', () => {
 
     console.log('Example code for E2E testing:');
     console.log(exampleCode);
-    
+
     // This test passes to show the concept
     expect(true).toBe(true);
   });
@@ -116,13 +118,15 @@ describe('Claude Code E2E Integration', () => {
       });
 
       console.log(`API endpoint status: ${response.status}`);
-      
+
       // The API should return 200 for success
       if (response.status === 200) {
         console.log('✓ API is properly configured and working');
         expect(response.status).toBe(200);
       } else if (response.status === 503) {
-        console.log('✓ API endpoint exists but needs provider configuration (expected in test environment)');
+        console.log(
+          '✓ API endpoint exists but needs provider configuration (expected in test environment)'
+        );
         const body = await response.json();
         console.log(`  Message: ${body.error?.message}`);
         // This is expected behavior when no API key is configured
