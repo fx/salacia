@@ -1,65 +1,79 @@
-# Claude Code Integration Test Suite
+# Claude Code E2E Integration Test Suite
 
-This directory contains a comprehensive test suite for verifying Claude Code integration with our API, implementing the core requirements from issue #7.
+This directory contains E2E integration tests for verifying Claude Code CLI works with our API, implementing the core requirements from issue #7.
 
 ## Overview
 
-The test suite addresses the key requirement to test Claude Code end-to-end integration with our API by:
+The test suite implements proper end-to-end integration tests by actually launching the Claude Code CLI and testing it against our API running at localhost:4321.
 
-1. **API Compatibility Testing**: Validates that our API implementation matches Claude Code's expected request/response format
-2. **Subprocess Management**: Provides infrastructure for managing Claude Code CLI processes in tests
-3. **MSW Integration**: Uses Mock Service Worker to simulate Anthropic API responses
-4. **Infrastructure Validation**: Confirms all components work together correctly
+Key features:
+1. **Real CLI Testing**: Launches actual Claude Code CLI processes with ANTHROPIC_BASE_URL
+2. **E2E Validation**: Tests complete request/response cycles through Claude CLI
+3. **Scenario Coverage**: Tests various use cases like simple questions, code generation, and creative content
+4. **API Compatibility**: Verifies our API works correctly with Claude Code
 
 ## Architecture
 
 ### Core Components
 
-#### 1. Test Server (`utils/test-server.ts`)
-- HTTP server that serves our API endpoints with MSW mocks
-- Handles CORS, request forwarding, and streaming responses
-- Maps local API paths to Anthropic API format for MSW compatibility
-- Provides server lifecycle management for tests
+#### 1. E2E Integration Tests (`claude-code-integration.test.ts`)
+- Launches Claude Code CLI with `ANTHROPIC_BASE_URL=http://localhost:4321`
+- Tests various scenarios: simple questions, code generation, creative content
+- Validates that Claude CLI can successfully communicate with our API
+- Verifies response handling and error scenarios
 
-#### 2. Subprocess Manager (`utils/subprocess-manager.ts`)
-- Manages child process spawning with proper timeout and cleanup
-- Provides process registry for automatic cleanup after tests
-- Handles stdout/stderr capture and streaming
-- Supports interactive and non-interactive process modes
+#### 2. Request Helpers (`utils/request-helpers.ts`)
+- Utilities for creating test requests and validating responses
+- Pre-built message templates and request configurations
+- Helper functions for API testing and response validation
 
 #### 3. MSW Handlers (`mocks/handlers.ts`)
-- Intelligent request handlers that analyze content and return appropriate responses
+- Mock handlers that simulate realistic API responses
 - Support for streaming and non-streaming responses
-- Error scenario handlers (auth, rate limit, server errors)
-- Dynamic response generation based on request characteristics
+- Error scenario handlers for comprehensive testing
 
 ### Test Categories
 
-#### 1. API Compatibility Tests
-- **Basic Requests**: Validates non-streaming request/response cycle
-- **Code Generation**: Tests code-specific response handling
-- **Streaming Responses**: Verifies Server-Sent Events format
-- **Error Handling**: Tests various error scenarios (401, 429, 500)
-- **Response Format**: Validates Anthropic API schema compliance
+#### 1. Basic Integration Tests
+- **Simple Questions**: "What is 2 + 2?"
+- **Code Generation**: "Write a TypeScript function"
+- **Yes/No Questions**: Simple factual questions
+- **Creative Content**: Poems, stories, explanations
 
-#### 2. Infrastructure Tests
-- **Subprocess Management**: Tests process timeout and cleanup
-- **Server Lifecycle**: Validates test server startup/shutdown
-- **Claude Code Availability**: Confirms CLI is installed and functional
+#### 2. Sequential Testing
+- **Multiple Questions**: Testing CLI across multiple interactions
+- **API Compatibility**: Verifying our API format works with Claude CLI
+
+#### 3. Error Handling
+- **Timeout Scenarios**: Testing CLI timeout behavior
+- **API Compatibility**: Ensuring our responses match Claude's expectations
+
+## Prerequisites
+
+Before running these tests, ensure:
+
+1. **API Server Running**: Start the dev server at localhost:4321
+   ```bash
+   npm run dev
+   ```
+
+2. **Claude Code CLI Installed**: Install Claude CLI
+   - Visit https://claude.ai/docs/cli for installation instructions
+   - Verify with: `claude --version`
 
 ## Usage
 
 ### Running Tests
 
 ```bash
-# Run all integration tests
-npm run test claude-code-integration.test.ts
+# Run all E2E integration tests
+npm test claude-code-integration.test.ts
 
-# Run tests in watch mode
-npm run test
+# Run with verbose output
+npm test claude-code-integration.test.ts -- --reporter=verbose
 
-# Run tests with coverage
-npm run test:run claude-code-integration.test.ts
+# Run specific test suite
+npm test -- --grep "Claude Code E2E Integration Tests"
 ```
 
 ### Test Structure
@@ -67,108 +81,103 @@ npm run test:run claude-code-integration.test.ts
 Each test follows this pattern:
 
 ```typescript
-it('should test something', async () => {
-  // Arrange: Set up request body or subprocess config
-  const requestBody = {
-    model: 'claude-3-haiku-20240307',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: 'test prompt' }],
-  };
-
-  // Act: Make API request or spawn process
-  const response = await testApiDirectly(requestBody);
-
-  // Assert: Verify response format and content
-  expect(response.ok).toBe(true);
-  const data = await response.json();
-  expect(data.content[0].text).toBeDefined();
+it('should handle basic questions through Claude CLI', async () => {
+  // Act: Run Claude CLI with our API
+  const result = await runClaudeCommand('What is 2 + 2?');
+  
+  // Assert: Verify Claude CLI succeeded and got expected response
+  expect(result.timedOut).toBe(false);
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout.toLowerCase()).toContain('4');
 });
 ```
 
-## Current Limitations and Future Work
+## How It Works
 
-### Claude Code API Endpoint Configuration
+The E2E tests work by:
 
-**Current Status**: Claude Code CLI is hardcoded to use `api.anthropic.com` and doesn't currently support configurable API endpoints through environment variables or configuration files.
+1. **Setting Environment Variables**: Configure Claude CLI to use our API
+   ```typescript
+   env: {
+     ...process.env,
+     ANTHROPIC_BASE_URL: 'http://localhost:4321',
+     ANTHROPIC_API_KEY: 'test-api-key',
+   }
+   ```
 
-**Investigated Approaches**:
-- Environment variables (`ANTHROPIC_API_BASE_URL`, `ANTHROPIC_API_URL`) - Not supported
-- Configuration files - No documented mechanism
-- Runtime patching - Complex and brittle
+2. **Spawning Claude CLI**: Launch actual Claude processes
+   ```typescript
+   const process = spawn('claude', [prompt], { env, stdio: ['pipe', 'pipe', 'pipe'] });
+   ```
 
-**Future Integration**:
-When Claude Code supports configurable API endpoints, the existing infrastructure can be extended to:
-
-1. **Direct CLI Testing**:
-```typescript
-// Example of future direct CLI testing
-const result = await runClaudeCode('Hello', {
-  apiBaseUrl: testServer.apiBaseUrl,
-  timeout: 15000,
-});
-expect(result.exitCode).toBe(0);
-expect(result.stdout).toContain('response');
-```
-
-2. **End-to-End Workflows**:
-   - Test complete request/response cycles through Claude Code
-   - Validate streaming response handling in CLI
-   - Test error propagation and handling
-   - Verify authentication and rate limiting behavior
-
-### Workarounds and Alternatives
-
-For now, the test suite validates:
-
-1. **API Compatibility**: Our API responds with the exact format Claude Code expects
-2. **Request Handling**: All request types and parameters are processed correctly
-3. **Error Scenarios**: Error responses match Anthropic's format
-4. **Infrastructure**: Subprocess management works for when CLI integration is possible
-
-### Network-Level Interception
-
-Future approaches for testing could include:
-- HTTP proxy servers with SSL certificate management
-- Network namespace isolation
-- Container-based testing with custom DNS resolution
-- System-level request interception
+3. **Capturing Output**: Collect stdout/stderr and validate responses
+4. **Timeout Management**: Ensure tests don't hang on problematic scenarios
 
 ## Test Coverage
 
 The test suite covers:
 
-- ✅ **API Format Compatibility**: Request/response format validation
-- ✅ **Streaming Responses**: Server-Sent Events format
-- ✅ **Error Handling**: All major error scenarios
-- ✅ **Subprocess Management**: Process lifecycle and cleanup
-- ✅ **Server Infrastructure**: Test server functionality
-- ✅ **MSW Integration**: Mock service worker handlers
-- ⏳ **Direct CLI Integration**: Pending API endpoint configuration support
+- ✅ **Basic Questions**: Simple factual queries
+- ✅ **Code Generation**: TypeScript function creation
+- ✅ **Creative Content**: Poems and explanations
+- ✅ **Sequential Testing**: Multiple questions in sequence
+- ✅ **API Compatibility**: Verifying our API format works with Claude CLI
+- ✅ **Error Handling**: Timeout and error scenarios
+- ✅ **Prerequisites**: API server and CLI availability checks
 
 ## Development
 
 ### Adding New Tests
 
-1. **API Tests**: Add new test cases to the main describe block
-2. **Infrastructure Tests**: Add to the "Infrastructure Tests" describe block
-3. **New Handlers**: Create custom MSW handlers in `mocks/handlers.ts`
-4. **Subprocess Tests**: Use the subprocess management utilities
+1. **New Test Cases**: Add to the main describe blocks in `claude-code-integration.test.ts`
+2. **New Scenarios**: Create new test cases that call `runClaudeCommand(prompt)`
+3. **Error Cases**: Test edge cases and error scenarios
+
+Example:
+```typescript
+it('should handle new scenario', async () => {
+  const result = await runClaudeCommand('Your test prompt here');
+  
+  expect(result.timedOut).toBe(false);
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout).toContain('expected content');
+});
+```
 
 ### Debugging
 
-- Enable debug logs: Set `DEBUG=1` environment variable
-- Check server console output during test runs
-- Use `console.log` in test server for request inspection
-- Verify MSW handler matching with request logging
+- **Check API Server**: Ensure `npm run dev` is running at localhost:4321
+- **Verify CLI**: Test `claude --version` works
+- **Environment Variables**: Ensure ANTHROPIC_BASE_URL is set correctly
+- **Timeout Issues**: Increase timeout values if needed
+- **Response Validation**: Check stdout/stderr content for debugging
+
+### Best Practices
+
+1. **Clear Prompts**: Use specific, testable prompts
+2. **Flexible Assertions**: Use `.toContain()` for response validation
+3. **Proper Cleanup**: Tests automatically clean up processes
+4. **Appropriate Timeouts**: Use reasonable timeouts (30s for CLI commands)
+5. **Error Handling**: Test both success and failure scenarios
+
+## Benefits of E2E Testing
+
+This approach provides:
+
+1. **Real Integration**: Tests actual Claude CLI with our API
+2. **Comprehensive Coverage**: Tests complete request/response cycles
+3. **Regression Detection**: Catches API compatibility issues
+4. **Confidence**: Proves the integration actually works
+5. **Simplicity**: Straightforward test setup and execution
 
 ## Contributing
 
-When adding new test scenarios:
+When adding new tests:
 
 1. Follow the existing test structure and naming conventions
-2. Add proper cleanup for any resources (servers, processes)
-3. Use appropriate timeouts for different test types
-4. Document any new infrastructure components
-5. Ensure tests are deterministic and don't depend on external services
+2. Use descriptive test names that explain the scenario
+3. Add appropriate assertions for the expected behavior
+4. Consider both positive and negative test cases
+5. Ensure tests are deterministic and reliable
 
-This test suite provides a solid foundation for Claude Code integration testing and can be extended as the CLI evolves to support configurable API endpoints.
+This E2E test suite provides confidence that Claude Code CLI works correctly with our API implementation.
