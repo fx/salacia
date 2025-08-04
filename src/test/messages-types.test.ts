@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { AiInteraction } from '../lib/db/schema.js';
 import { 
   transformAiInteractionToDisplay,
-  MESSAGES_CONSTANTS,
-  type MessageDisplay 
+  MESSAGES_CONSTANTS
 } from '../lib/types/messages.js';
 
 describe('Messages Types', () => {
@@ -53,7 +52,7 @@ describe('Messages Types', () => {
       const result = transformAiInteractionToDisplay(interaction);
       
       expect(result.requestPreview).toHaveLength(103); // 100 chars + '...'
-      expect(result.requestPreview).toEndWith('...');
+      expect(result.requestPreview).toMatch(/\.\.\.$/); // Ends with '...'
     });
 
     it('should handle response preview truncation', () => {
@@ -63,7 +62,7 @@ describe('Messages Types', () => {
       const result = transformAiInteractionToDisplay(interaction);
       
       expect(result.responsePreview).toHaveLength(103); // 100 chars + '...'
-      expect(result.responsePreview).toEndWith('...');
+      expect(result.responsePreview).toMatch(/\.\.\.$/); // Ends with '...'
     });
 
     it('should handle failed interactions', () => {
@@ -105,14 +104,14 @@ describe('Messages Types', () => {
       expect(result.statusCode).toBeUndefined();
       expect(result.error).toBeUndefined();
       expect(result.responsePreview).toBeUndefined();
-      expect(result.isSuccess).toBe(true); // No error means success
+      expect(result.isSuccess).toBe(false); // Undefined status code means not successful
     });
 
     it('should handle invalid JSON gracefully', () => {
       const interaction = {
         ...mockInteraction,
-        request: 'invalid json' as any,
-        response: 'also invalid' as any,
+        request: 'invalid json' as unknown,
+        response: 'also invalid' as unknown,
       };
       
       const result = transformAiInteractionToDisplay(interaction);

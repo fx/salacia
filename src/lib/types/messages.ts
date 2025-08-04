@@ -212,7 +212,7 @@ export function transformAiInteractionToDisplay(interaction: AiInteraction): Mes
     error: interaction.error || undefined,
     requestPreview,
     responsePreview,
-    isSuccess: !interaction.error && (interaction.statusCode === 200 || interaction.statusCode === undefined),
+    isSuccess: !interaction.error && interaction.statusCode === 200,
     request: interaction.request,
     response: interaction.response,
   };
