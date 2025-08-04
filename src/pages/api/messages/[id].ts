@@ -1,7 +1,12 @@
 import type { APIRoute } from 'astro';
 import { MessagesService } from '../../../lib/services/messages.js';
 import { createLogger } from '../../../lib/utils/logger.js';
-import { classifyMessagesServiceError, createErrorResponse, NotFoundError, ValidationError } from '../../../lib/errors/api-errors.js';
+import {
+  classifyMessagesServiceError,
+  createErrorResponse,
+  NotFoundError,
+  ValidationError,
+} from '../../../lib/errors/api-errors.js';
 
 const logger = createLogger('API/Messages/ID');
 
@@ -27,7 +32,7 @@ export const GET: APIRoute = async ({ params }) => {
     // Validate that ID parameter is present
     if (!messageId) {
       const responseTime = Date.now() - startTime;
-      
+
       const validationError = new ValidationError('Message ID is required');
       return createErrorResponse(validationError, responseTime);
     }
@@ -36,13 +41,13 @@ export const GET: APIRoute = async ({ params }) => {
 
     // Fetch the message using the service layer
     const message = await MessagesService.getMessageById(messageId);
-    
+
     const responseTime = Date.now() - startTime;
 
     // Handle message not found
     if (!message) {
       logger.debug('Message not found:', { messageId });
-      
+
       const notFoundError = new NotFoundError('Message', messageId);
       return createErrorResponse(notFoundError, responseTime);
     }
@@ -64,7 +69,7 @@ export const GET: APIRoute = async ({ params }) => {
     });
   } catch (error) {
     const responseTime = Date.now() - startTime;
-    
+
     logger.error('Message API error:', { messageId, error });
 
     // Classify the error and create appropriate response

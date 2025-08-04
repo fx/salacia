@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Fetch messages using the service layer
     const result = await MessagesService.getMessages(paginationParams, filterParams);
-    
+
     const responseTime = Date.now() - startTime;
 
     logger.debug('Messages API response:', {
@@ -70,7 +70,7 @@ export const GET: APIRoute = async ({ url }) => {
     });
   } catch (error) {
     const responseTime = Date.now() - startTime;
-    
+
     logger.error('Messages API error:', error);
 
     // Classify the error and create appropriate response

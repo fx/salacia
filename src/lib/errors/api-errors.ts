@@ -10,8 +10,11 @@
 export abstract class ApiError extends Error {
   abstract readonly statusCode: number;
   abstract readonly errorCode: string;
-  
-  constructor(message: string, public readonly cause?: Error) {
+
+  constructor(
+    message: string,
+    public readonly cause?: Error
+  ) {
     super(message);
     this.name = this.constructor.name;
     // Store cause for error chaining
@@ -28,7 +31,7 @@ export abstract class ApiError extends Error {
 export class ValidationError extends ApiError {
   readonly statusCode = 400;
   readonly errorCode = 'VALIDATION_ERROR';
-  
+
   constructor(message: string, cause?: Error) {
     super(message, cause);
   }
@@ -40,7 +43,7 @@ export class ValidationError extends ApiError {
  */
 export class InvalidUuidError extends ValidationError {
   readonly errorCode = 'INVALID_UUID';
-  
+
   constructor(uuid: string, cause?: Error) {
     super(`The provided ID is not a valid UUID format: ${uuid}`, cause);
   }
@@ -53,7 +56,7 @@ export class InvalidUuidError extends ValidationError {
 export class NotFoundError extends ApiError {
   readonly statusCode = 404;
   readonly errorCode = 'NOT_FOUND';
-  
+
   constructor(resource: string, identifier: string, cause?: Error) {
     super(`${resource} not found with identifier: ${identifier}`, cause);
   }
@@ -66,7 +69,7 @@ export class NotFoundError extends ApiError {
 export class DatabaseError extends ApiError {
   readonly statusCode = 503;
   readonly errorCode = 'DATABASE_ERROR';
-  
+
   constructor(operation: string, cause?: Error) {
     super(`Database operation failed: ${operation}`, cause);
   }
@@ -78,7 +81,7 @@ export class DatabaseError extends ApiError {
  */
 export class PaginationError extends ValidationError {
   readonly errorCode = 'PAGINATION_ERROR';
-  
+
   constructor(message: string, cause?: Error) {
     super(message, cause);
   }
@@ -87,7 +90,7 @@ export class PaginationError extends ValidationError {
 /**
  * Utility function to classify errors from the MessagesService.
  * Converts generic Error objects into specific ApiError types based on message content.
- * 
+ *
  * @param error - The error to classify
  * @param context - Additional context for error classification
  * @returns Appropriate ApiError subclass
@@ -115,9 +118,11 @@ export function classifyMessagesServiceError(error: unknown, context?: string): 
   }
 
   // Database connection/operation errors
-  if (message.includes('failed to retrieve') || 
-      message.includes('database') || 
-      message.includes('connection')) {
+  if (
+    message.includes('failed to retrieve') ||
+    message.includes('database') ||
+    message.includes('connection')
+  ) {
     return new DatabaseError(context || error.message, error);
   }
 
@@ -127,7 +132,7 @@ export function classifyMessagesServiceError(error: unknown, context?: string): 
 
 /**
  * Creates a standardized JSON error response.
- * 
+ *
  * @param error - The ApiError to convert to response
  * @param responseTime - Response time in milliseconds
  * @returns Response object with proper status code and headers
