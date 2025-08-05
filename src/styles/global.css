@@ -1,13 +1,22 @@
-/* WebTUI CSS - Global Styles */
+/* WebTUI CSS - Global Styles with Catppuccin Theme */
 
 /* Define CSS layers for proper specificity */
 @layer base, utils, components;
 
-/* Import WebTUI base styles */
+/* Import WebTUI base styles first */
 @import "@webtui/css/base.css";
+
+/* Import Catppuccin theme */
+@import "@webtui/theme-catppuccin";
+
+/* Import Nerd Font plugin */
+@import "@webtui/plugin-nf";
 
 /* Import WebTUI utilities */
 @import "@webtui/css/utils/box.css";
+@import "@webtui/css/utils/layout.css";
+@import "@webtui/css/utils/spacing.css";
+@import "@webtui/css/utils/typography.css";
 
 /* Import WebTUI components */
 @import "@webtui/css/components/button.css";
