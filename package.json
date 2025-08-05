@@ -18,6 +18,7 @@
     "format": "prettier --write src/**/*.{ts,astro,json}"
   },
   "dependencies": {
+    "@webtui/css": "^0.1.4",
     "astro": "^5.12.8",
     "drizzle-orm": "^0.44.4",
     "postgres": "^3.4.5",
