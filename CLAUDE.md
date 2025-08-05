@@ -94,13 +94,36 @@ All commits and pull request titles must follow the Conventional Commits specifi
 
 ### WebTUI Design System
 
-This project uses WebTUI as the primary design system and CSS framework:
+This project uses WebTUI as the primary design system and CSS framework with Catppuccin theming:
 
 - **Documentation**: Always refer to https://webtui.ironclad.sh/start/intro/ for WebTUI documentation
+- **Theme**: Uses `@webtui/theme-catppuccin` with `catppuccin-mocha` variant for consistent dark terminal aesthetic
+- **Fonts**: Uses `@webtui/plugin-nf` with Hack Nerd Font as primary monospace font family
 - **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
 - **Styling Guidelines**: Contain any custom styling within components that directly use WebTUI or very simple CSS based on WebTUI patterns
 - **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
 - **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
+
+#### CSS Unit Standards
+
+For consistency with terminal-style interfaces, follow these strict unit conventions:
+
+- **Allowed Units**: Use only `ch` (character width) and `lh` (line height) units for sizing
+- **Forbidden Units**: Do not use `px`, `em`, `rem`, `%`, `vw`, `vh` in custom CSS
+- **Exception**: WebTUI utilities may use other units internally - this restriction applies only to custom CSS
+
+#### CSS Selector Conventions
+
+- **Class Names**: Use WebTUI utility classes exclusively when possible
+- **Custom Selectors**: When custom CSS is necessary, use semantic class names that describe function, not appearance
+- **Specificity**: Keep specificity low and rely on CSS layer ordering for proper cascade
+
+#### Terminal UI Patterns
+
+- **ASCII Borders**: Use Unicode box-drawing characters (┌─┐│└─┘) for terminal-style borders
+- **Monospace Layout**: All text should use monospace fonts for consistent character alignment
+- **Color Scheme**: Rely on Catppuccin color palette through WebTUI design tokens
+- **Spacing**: Use consistent character-based spacing (multiples of `1ch`) for terminal alignment
 
 ### Frontend Architecture
 
