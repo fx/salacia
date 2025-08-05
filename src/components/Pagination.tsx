@@ -15,7 +15,7 @@
  * @module Pagination
  */
 
-import React, { type JSX } from 'react';
+import React from 'react';
 import { MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
 /**
@@ -107,7 +107,7 @@ export function Pagination({
   onPageChange,
   disabled = false,
   className = '',
-}: PaginationProps): JSX.Element {
+}: PaginationProps): React.ReactElement {
   const pageNumbers = calculatePageRange(currentPage, totalPages);
   const hasPrevious = currentPage > 1;
   const hasNext = currentPage < totalPages;

@@ -17,7 +17,7 @@
  * @module TableFilters
  */
 
-import React, { useState, useEffect, useCallback, type JSX } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -85,7 +85,7 @@ export function TableFilters({
   availableProviders = [],
   disabled = false,
   className = '',
-}: TableFiltersProps): JSX.Element {
+}: TableFiltersProps): React.ReactElement {
   // Local state for immediate UI updates
   const [localSearchTerm, setLocalSearchTerm] = useState(filters.searchTerm || '');
   const [localMinTokens, setLocalMinTokens] = useState(filters.minTokens?.toString() || '');

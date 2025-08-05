@@ -135,11 +135,11 @@ export function buildApiUrlParams(
  * @returns Parsed data with Date objects restored
  */
 export function parseApiResponseDates(data: unknown): MessagesPaginatedResult {
-  // Parse the outer structure  
+  // Parse the outer structure
   const rawResult = data as RawApiResponse;
-  
+
   // Parse dates in each message
-  const messages: MessageDisplay[] = rawResult.messages 
+  const messages: MessageDisplay[] = rawResult.messages
     ? rawResult.messages.map(
         (message: MessageApiResponse): MessageDisplay => ({
           ...message,

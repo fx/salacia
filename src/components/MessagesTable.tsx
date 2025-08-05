@@ -15,7 +15,7 @@
  * @module MessagesTable
  */
 
-import React, { useMemo, type JSX } from 'react';
+import React, { useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -101,7 +101,7 @@ export function MessagesTable({
   sort,
   onSortChange,
   className = '',
-}: MessagesTableProps): JSX.Element {
+}: MessagesTableProps): React.ReactElement {
   /**
    * Column definitions for the messages table.
    * Memoized to prevent unnecessary re-renders.
