@@ -3,15 +3,61 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Salacia - AI Interaction Dashboard">
-  <div class="container">
-    <header class="header">
-      <h1 class="title">Salacia AI Dashboard</h1>
-      <p class="subtitle">Monitor and analyze AI interactions</p>
+  <div class="container mx-auto px-4 py-8">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Salacia AI Dashboard</h1>
+      <p class="text-muted">Monitor and analyze AI interactions</p>
     </header>
 
-    <main class="main">
-      <div class="card">
-        <p>Dashboard implementation coming soon...</p>
+    <main>
+      <!-- Messages Table Container -->
+      <div id="messages-container">
+        <!-- Loading state -->
+        <div id="loading-state" class="flex items-center justify-center py-12">
+          <div class="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mr-3"></div>
+          <span class="text-muted">Loading messages...</span>
+        </div>
+
+        <!-- Error state -->
+        <div id="error-state" class="hidden bg-danger/10 border border-danger/20 rounded-lg p-4 mb-6">
+          <div class="font-semibold text-danger mb-1">Failed to load messages</div>
+          <div id="error-message" class="text-sm text-muted">An error occurred while fetching data.</div>
+        </div>
+
+        <!-- Messages table (will be populated by JavaScript) -->
+        <div id="messages-table" class="hidden">
+          <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-muted/5 border-b">
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Time</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Model</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Provider</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Tokens</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Response Time</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-left font-medium text-xs uppercase tracking-wider">Preview</th>
+                </tr>
+              </thead>
+              <tbody id="messages-tbody" class="bg-background">
+                <!-- Rows will be populated by JavaScript -->
+              </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div id="pagination" class="flex items-center justify-between px-4 py-3 bg-muted/5 border-t">
+              <div class="text-sm text-muted">
+                Showing <span id="pagination-start">0</span> to <span id="pagination-end">0</span>
+                of <span id="pagination-total">0</span> messages
+              </div>
+              <div class="flex items-center gap-1">
+                <button id="prev-btn" class="btn btn-sm" disabled>Previous</button>
+                <div id="page-numbers" class="flex items-center gap-1"></div>
+                <button id="next-btn" class="btn btn-sm" disabled>Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
