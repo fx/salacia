@@ -10,52 +10,52 @@ import '../styles/global.css';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Salacia - Home</title>
   </head>
-  <body class="w-full h-screen m-0 p-0 overflow-hidden">
+  <body data-body="terminal">
     <Layout client:idle>
-      <div class="w-full h-full flex flex-col">
+      <div data-page="home">
         <!-- Terminal-style welcome header -->
-        <div box-="square" class="bg-surface-subtle mb-4 shrink-0">
-          <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold text-sm tracking-wider">WELCOME TO SALACIA</span>
+        <div box-="square" data-panel="welcome">
+          <div data-panel-header>
+            <span data-panel-title>WELCOME TO SALACIA</span>
           </div>
-          <div class="px-4 py-2">
-            <span class="text-foreground text-sm">
+          <div data-panel-content>
+            <span>
               LLM inference API proxy with database recording capabilities
             </span>
           </div>
         </div>
 
         <!-- Terminal-style system info -->
-        <div box-="square" class="bg-surface-subtle mb-4 shrink-0">
-          <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold text-sm tracking-wider">SYSTEM STATUS</span>
+        <div box-="square" data-panel="status">
+          <div data-panel-header>
+            <span data-panel-title>SYSTEM STATUS</span>
           </div>
-          <div class="px-4 py-2 space-y-1">
-            <div class="text-foreground text-sm">
-              Status: <span class="text-green-400">ONLINE</span>
+          <div data-panel-content>
+            <div data-status-item>
+              Status: <span data-status="online">ONLINE</span>
             </div>
-            <div class="text-foreground text-sm">
-              Database: <span class="text-green-400">CONNECTED</span>
+            <div data-status-item>
+              Database: <span data-status="online">CONNECTED</span>
             </div>
-            <div class="text-foreground text-sm">
-              Theme: <span class="text-yellow-400">CATPPUCCIN-MOCHA</span>
+            <div data-status-item>
+              Theme: <span data-status="info">CATPPUCCIN-MOCHA</span>
             </div>
           </div>
         </div>
 
         <!-- Terminal-style quick actions -->
-        <div box-="square" class="bg-surface-subtle shrink-0">
-          <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold text-sm tracking-wider">QUICK ACTIONS</span>
+        <div box-="square" data-panel="actions">
+          <div data-panel-header>
+            <span data-panel-title>QUICK ACTIONS</span>
           </div>
-          <div class="px-4 py-2 space-y-1">
-            <div>
-              <a href="/messages" class="text-blue-400 hover:text-blue-300 text-sm underline">
+          <div data-panel-content>
+            <div data-action-item>
+              <a href="/messages" data-action-link>
                 [1] View Messages Database →
               </a>
             </div>
-            <div>
-              <span class="text-foreground-muted text-sm">
+            <div data-action-item>
+              <span data-action-disabled>
                 [2] API Documentation (Coming Soon)
               </span>
             </div>

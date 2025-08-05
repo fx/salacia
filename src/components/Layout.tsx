@@ -22,12 +22,10 @@ interface LayoutProps {
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div className="w-full h-screen flex flex-col bg-surface text-foreground overflow-hidden">
+    <div data-layout="terminal">
       <Navigation />
-      <main className="flex-1 p-4 overflow-auto">
-        <div className="w-full h-full">
-          {children}
-        </div>
+      <main data-content="main">
+        {children}
       </main>
     </div>
   );

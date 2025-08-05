@@ -100,9 +100,10 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **Theme**: Uses `@webtui/theme-catppuccin` with `catppuccin-mocha` variant for consistent dark terminal aesthetic
 - **Fonts**: Uses `@webtui/plugin-nf` with Hack Nerd Font as primary monospace font family
 - **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
-- **Styling Guidelines**: Contain any custom styling within components that directly use WebTUI or very simple CSS based on WebTUI patterns
+- **Styling Guidelines**: Use WebTUI utilities and data attributes for styling. NO Tailwind CSS classes are used in this project
 - **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
-- **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
+- **Design Tokens**: Use WebTUI's design tokens and CSS custom properties for consistent spacing, typography, and colors
+- **Data Attributes**: Use semantic data attributes (e.g., `data-nav="terminal"`, `data-panel="header"`) for component styling instead of utility classes
 
 #### CSS Unit Standards
 
