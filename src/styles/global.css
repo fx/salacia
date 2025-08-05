@@ -22,3 +22,25 @@
 @import "@webtui/css/components/button.css";
 @import "@webtui/css/components/typography.css";
 @import "@webtui/css/components/table.css";
+
+/* Custom font configuration for terminal theme */
+@layer base {
+  /* Hack Nerd Font configuration */
+  :root {
+    --font-mono: "Hack Nerd Font", "Symbols Nerd Font", "Hack", "SF Mono", "Monaco", "Inconsolata", "Fira Code", "Fira Mono", "Droid Sans Mono", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
+    --font-ui: "Hack Nerd Font", "Symbols Nerd Font", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  
+  /* Apply monospace font to body for terminal aesthetic */
+  html, body {
+    font-family: var(--font-mono);
+    font-size: 1lh;
+    line-height: 1.2lh;
+    font-variant-ligatures: none;
+  }
+  
+  /* Ensure text elements use the terminal font */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    font-family: var(--font-mono);
+  }
+}
