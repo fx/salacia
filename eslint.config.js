@@ -61,5 +61,43 @@ export default [
       'prefer-const': 'error',
     },
   },
+  // Browser JavaScript files configuration
+  {
+    files: ['public/**/*.js'],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'script',
+      },
+      globals: {
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        alert: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
+        navigator: 'readonly',
+        // Custom globals for the app
+        MESSAGES_API_ENDPOINT: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off', // Allow console in browser scripts
+      'prefer-const': 'error',
+      'no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+    },
+  },
   ...astroPlugin.configs.recommended,
 ];
