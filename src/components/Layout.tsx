@@ -13,8 +13,14 @@ interface LayoutProps {
 
 /**
  * Main layout component that provides the overall structure for the application.
- * Creates a terminal-like interface with a boxed container, navigation header,
- * and main content area using WebTUI styling patterns.
+ * Creates a terminal-like interface following WebTUI patterns with semantic attributes,
+ * character-based units (ch/lh), and proper CSS layers.
+ * 
+ * Features:
+ * - Full viewport terminal-style layout
+ * - WebTUI semantic attribute styling
+ * - Character-based spacing and sizing
+ * - Terminal box container with navigation
  * 
  * @param props - The layout props
  * @param props.children - The main content to be rendered
@@ -22,29 +28,13 @@ interface LayoutProps {
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div style={{ 
-      width: '100vw', 
-      height: '100vh', 
-      padding: '1ch', 
-      display: 'flex', 
-      flexDirection: 'column' 
-    }}>
+    <div layout-="terminal">
       <div 
-        box-="square" 
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          display: 'flex', 
-          flexDirection: 'column',
-          padding: '1ch'
-        }}
+        box-="square"
+        layout-="terminal-content"
       >
         <Navigation />
-        <main style={{ 
-          flex: '1', 
-          overflow: 'auto',
-          marginTop: '1ch'
-        }}>
+        <main layout-="terminal-main">
           {children}
         </main>
       </div>

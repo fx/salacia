@@ -104,12 +104,24 @@ This project uses WebTUI as the primary design system and CSS framework:
 
 #### WebTUI Style Guide Requirements
 
-Follow the WebTUI style guide strictly:
+Follow the WebTUI style guide strictly based on https://webtui.ironclad.sh/contributing/style-guide/:
 
 - **CSS Units**: Use only `ch` and `lh` units for measurements - avoid `em`, `px`, `rem`, `%`, or other units not related to character width or line height
-- **Selectors**: Use CSS `@layer` blocks for components and utilities - do not use classes or IDs for styling
+- **Selectors**: Use CSS `@layer` blocks (only `components` or `utils` layers) - avoid classes and IDs for styling
 - **Attribute Selectors**: Use custom attribute selectors with a dash suffix, such as `[is-~="<component-name>"]` for custom components
 - **Semantic HTML**: Use HTML tags and attributes to determine behavior and appearance, following WebTUI's semantic approach
+- **Documentation**: Always update documentation pages when modifying or adding components/utilities
+
+**Example selector pattern**:
+```css
+@layer components {
+    [is-~="tooltip"] {
+        /* styles */
+    }
+}
+```
+
+**Key principles**: semantic attribute-based styling, character-based units, and layer-based organization.
 
 ### Frontend Architecture
 

@@ -1,4 +1,5 @@
 /* WebTUI CSS - Global Styles */
+/* Following WebTUI style guide: use only ch/lh units, @layer blocks, semantic attributes */
 
 /* Define CSS layers for proper specificity */
 @layer base, utils, components;
@@ -20,9 +21,77 @@
 /* Import Nerd Font plugin */
 @import "@webtui/plugin-nf";
 
-/* Set up Nerd Font in font family */
+/* Base configuration following WebTUI patterns */
 @layer base {
   :root {
     --font-family: "Hack Nerd Font", ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace, "Symbols Nerd Font";
+    --font-size: 16px;
+    --line-height: 1.4;
+  }
+
+  /* Full viewport terminal-style layout */
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+/* Terminal-like full-screen layout utilities */
+@layer utils {
+  [layout-~="terminal"] {
+    width: 100vw;
+    height: 100vh;
+    padding: 1ch;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  [layout-~="terminal-content"] {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  [layout-~="terminal-main"] {
+    flex: 1;
+    overflow: auto;
+    margin-top: 1lh;
+  }
+}
+
+/* Terminal-style navigation components */
+@layer components {
+  [is-~="terminal-nav"] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1lh;
+    border-bottom: 1px solid;
+    border-color: var(--background2, #45475A);
+  }
+
+  [is-~="terminal-nav-brand"] {
+    display: flex;
+    align-items: center;
+    gap: 2ch;
+  }
+
+  [is-~="terminal-nav-links"] {
+    display: flex;
+    gap: 2ch;
+  }
+
+  [is-~="terminal-nav-link"] {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  [is-~="terminal-nav-link"]:hover {
+    text-decoration: underline;
   }
 }
