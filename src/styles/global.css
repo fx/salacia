@@ -38,4 +38,10 @@
     background: var(--webtui-color-surface-base);
     color: var(--webtui-color-text-primary);
   }
+  
+  /* Loading spinner animation */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 }

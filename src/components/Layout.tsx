@@ -38,7 +38,7 @@ export function Layout({ children }: Omit<LayoutProps, 'title'>) {
         fontSize: '1ch',
         letterSpacing: '0'
       }}>
-        ╭{'─'.repeat(Math.floor((typeof window !== 'undefined' ? window.innerWidth : 120) / 8) - 2)}╮
+        ╭{'─'.repeat(114)}╮
       </div>
       
       {/* Navigation area with side borders */}
@@ -97,7 +97,7 @@ export function Layout({ children }: Omit<LayoutProps, 'title'>) {
         fontSize: '1ch',
         letterSpacing: '0'
       }}>
-        ╰{'─'.repeat(Math.floor((typeof window !== 'undefined' ? window.innerWidth : 120) / 8) - 2)}╯
+        ╰{'─'.repeat(114)}╯
       </div>
     </div>
   );
