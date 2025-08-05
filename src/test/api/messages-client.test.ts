@@ -1,6 +1,6 @@
 /**
  * Unit tests for the messages API client.
- * 
+ *
  * Tests cover URL parameter building, response parsing, error handling,
  * and network request functionality using MSW for mocking.
  */
@@ -16,10 +16,10 @@ import {
   messagesClient,
   createMessagesClient,
 } from '../../lib/api/messages-client.js';
-import type { 
-  MessagesPaginationParams, 
+import type {
+  MessagesPaginationParams,
   MessagesFilterParams,
-  MessagesPaginatedResult 
+  MessagesPaginatedResult,
 } from '../../lib/types/messages.js';
 
 // Test data
@@ -109,7 +109,7 @@ afterAll(() => {
 describe('buildApiUrlParams', () => {
   it('should build URL params with pagination only', () => {
     const params = buildApiUrlParams(mockPaginationParams);
-    
+
     expect(params.get('page')).toBe('1');
     expect(params.get('pageSize')).toBe('20');
     expect(params.get('sortField')).toBe('createdAt');
@@ -118,13 +118,13 @@ describe('buildApiUrlParams', () => {
 
   it('should build URL params with pagination and filters', () => {
     const params = buildApiUrlParams(mockPaginationParams, mockFilterParams);
-    
+
     // Pagination params
     expect(params.get('page')).toBe('1');
     expect(params.get('pageSize')).toBe('20');
     expect(params.get('sortField')).toBe('createdAt');
     expect(params.get('sortDirection')).toBe('desc');
-    
+
     // Filter params
     expect(params.get('model')).toBe('gpt-4');
     expect(params.get('provider')).toBe('openai');
@@ -143,9 +143,9 @@ describe('buildApiUrlParams', () => {
       model: 'gpt-4',
       startDate: new Date('2024-01-01'),
     };
-    
+
     const params = buildApiUrlParams(mockPaginationParams, partialFilters);
-    
+
     expect(params.get('model')).toBe('gpt-4');
     expect(params.get('startDate')).toBe('2024-01-01');
     expect(params.get('provider')).toBeNull();
@@ -157,9 +157,9 @@ describe('buildApiUrlParams', () => {
     const filters: MessagesFilterParams = {
       hasError: false,
     };
-    
+
     const params = buildApiUrlParams(mockPaginationParams, filters);
-    
+
     expect(params.get('hasError')).toBe('false');
   });
 
@@ -168,9 +168,9 @@ describe('buildApiUrlParams', () => {
       minTokens: 0,
       minResponseTime: 0,
     };
-    
+
     const params = buildApiUrlParams(mockPaginationParams, filters);
-    
+
     expect(params.get('minTokens')).toBe('0');
     expect(params.get('minResponseTime')).toBe('0');
   });
@@ -187,9 +187,9 @@ describe('parseApiResponseDates', () => {
         },
       ],
     };
-    
+
     const parsed = parseApiResponseDates(rawResponse);
-    
+
     expect(parsed.messages[0].createdAt).toBeInstanceOf(Date);
     expect(parsed.messages[0].createdAt.toISOString()).toBe('2024-01-15T10:30:00.000Z');
   });
@@ -202,9 +202,9 @@ describe('parseApiResponseDates', () => {
         endDate: '2024-01-31',
       },
     };
-    
+
     const parsed = parseApiResponseDates(rawResponse);
-    
+
     expect(parsed.filters.startDate).toBeInstanceOf(Date);
     expect(parsed.filters.endDate).toBeInstanceOf(Date);
   });
@@ -215,9 +215,9 @@ describe('parseApiResponseDates', () => {
       messages: [],
       filters: {},
     };
-    
+
     const parsed = parseApiResponseDates(rawResponse);
-    
+
     expect(parsed.messages).toEqual([]);
     expect(parsed.filters).toEqual({});
   });
@@ -225,13 +225,8 @@ describe('parseApiResponseDates', () => {
 
 describe('MessagesApiError', () => {
   it('should create error with all properties', () => {
-    const error = new MessagesApiError(
-      'Test error',
-      400,
-      'VALIDATION_ERROR',
-      { field: 'model' }
-    );
-    
+    const error = new MessagesApiError('Test error', 400, 'VALIDATION_ERROR', { field: 'model' });
+
     expect(error.message).toBe('Test error');
     expect(error.status).toBe(400);
     expect(error.code).toBe('VALIDATION_ERROR');
@@ -268,7 +263,7 @@ describe('MessagesClient', () => {
       );
 
       const result = await client.getMessages(mockPaginationParams, mockFilterParams);
-      
+
       expect(result.messages).toHaveLength(1);
       expect(result.messages[0].id).toBe('123');
       expect(result.messages[0].createdAt).toBeInstanceOf(Date);
@@ -290,9 +285,7 @@ describe('MessagesClient', () => {
         })
       );
 
-      await expect(
-        client.getMessages(mockPaginationParams)
-      ).rejects.toThrow(MessagesApiError);
+      await expect(client.getMessages(mockPaginationParams)).rejects.toThrow(MessagesApiError);
 
       try {
         await client.getMessages(mockPaginationParams);
@@ -311,9 +304,7 @@ describe('MessagesClient', () => {
         })
       );
 
-      await expect(
-        client.getMessages(mockPaginationParams)
-      ).rejects.toThrow(MessagesApiError);
+      await expect(client.getMessages(mockPaginationParams)).rejects.toThrow(MessagesApiError);
 
       try {
         await client.getMessages(mockPaginationParams);
@@ -338,9 +329,9 @@ describe('MessagesClient', () => {
         })
       );
 
-      await expect(
-        shortTimeoutClient.getMessages(mockPaginationParams)
-      ).rejects.toThrow(MessagesApiError);
+      await expect(shortTimeoutClient.getMessages(mockPaginationParams)).rejects.toThrow(
+        MessagesApiError
+      );
 
       try {
         await shortTimeoutClient.getMessages(mockPaginationParams);
@@ -358,9 +349,7 @@ describe('MessagesClient', () => {
         })
       );
 
-      await expect(
-        client.getMessages(mockPaginationParams)
-      ).rejects.toThrow(MessagesApiError);
+      await expect(client.getMessages(mockPaginationParams)).rejects.toThrow(MessagesApiError);
 
       try {
         await client.getMessages(mockPaginationParams);
@@ -384,7 +373,7 @@ describe('MessagesClient', () => {
       );
 
       const result = await client.getMessage('123');
-      
+
       expect(result.id).toBe('123');
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.model).toBe('gpt-4');
@@ -403,9 +392,7 @@ describe('MessagesClient', () => {
         })
       );
 
-      await expect(
-        client.getMessage('nonexistent')
-      ).rejects.toThrow(MessagesApiError);
+      await expect(client.getMessage('nonexistent')).rejects.toThrow(MessagesApiError);
 
       try {
         await client.getMessage('nonexistent');
@@ -419,7 +406,7 @@ describe('MessagesClient', () => {
     it('should encode special characters in ID', async () => {
       const specialId = 'test/id with spaces';
       const encodedId = encodeURIComponent(specialId);
-      
+
       server.use(
         http.get(`http://localhost:3000/api/messages/${encodedId}`, () => {
           return HttpResponse.json({
@@ -446,7 +433,7 @@ describe('Default client and factory functions', () => {
       baseUrl: 'https://api.example.com',
       timeout: 10000,
     });
-    
+
     expect(customClient).toBeInstanceOf(MessagesClient);
     expect(customClient).not.toBe(messagesClient);
   });

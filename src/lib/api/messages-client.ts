@@ -1,18 +1,35 @@
 /**
  * API client utilities for fetching messages from the messages API endpoint.
- * 
+ *
  * This module provides a clean interface for making HTTP requests to the messages API,
  * handling URL parameter serialization, error handling, and response parsing.
- * 
+ *
  * @module MessagesClient
  */
 
-import type { 
-  MessagesPaginatedResult, 
-  MessagesPaginationParams, 
+import type {
+  MessagesPaginatedResult,
+  MessagesPaginationParams,
   MessagesFilterParams,
-  MessageDisplay
+  MessageDisplay,
 } from '../types/messages.js';
+
+/**
+ * Raw message response from API before date parsing.
+ * Used internally for type-safe parsing of API responses.
+ */
+interface MessageApiResponse extends Omit<MessageDisplay, 'createdAt'> {
+  /** createdAt as string before parsing to Date */
+  createdAt: string;
+}
+
+/**
+ * Raw API response structure before date parsing.
+ */
+interface RawApiResponse extends Omit<MessagesPaginatedResult, 'messages'> {
+  /** Messages with string dates that need parsing */
+  messages?: MessageApiResponse[];
+}
 
 /**
  * Error class for messages API client errors.
@@ -56,7 +73,7 @@ const DEFAULT_CONFIG: Required<MessagesClientConfig> = {
 /**
  * Builds URL search parameters from pagination and filter parameters.
  * Handles proper serialization of dates, numbers, and boolean values.
- * 
+ *
  * @param paginationParams - Pagination configuration
  * @param filterParams - Filter parameters (optional)
  * @returns URLSearchParams object ready for API request
@@ -113,21 +130,28 @@ export function buildApiUrlParams(
 /**
  * Parses dates in API response data, converting ISO strings back to Date objects.
  * Handles the MessagesPaginatedResult structure with nested MessageDisplay objects.
- * 
+ *
  * @param data - Raw API response data
  * @returns Parsed data with Date objects restored
  */
 export function parseApiResponseDates(data: unknown): MessagesPaginatedResult {
-  // Parse the outer structure
-  const result = { ...data } as MessagesPaginatedResult;
-
+  // Parse the outer structure  
+  const rawResult = data as RawApiResponse;
+  
   // Parse dates in each message
-  if (result.messages && Array.isArray(result.messages)) {
-    result.messages = result.messages.map((message: MessageDisplay & { createdAt: string }): MessageDisplay => ({
-      ...message,
-      createdAt: new Date(message.createdAt),
-    }));
-  }
+  const messages: MessageDisplay[] = rawResult.messages 
+    ? rawResult.messages.map(
+        (message: MessageApiResponse): MessageDisplay => ({
+          ...message,
+          createdAt: new Date(message.createdAt),
+        })
+      )
+    : [];
+
+  const result: MessagesPaginatedResult = {
+    ...rawResult,
+    messages,
+  };
 
   // Parse filter dates if present
   if (result.filters) {
@@ -151,7 +175,7 @@ export class MessagesClient {
 
   /**
    * Creates a new MessagesClient instance.
-   * 
+   *
    * @param config - Client configuration options
    */
   constructor(config: MessagesClientConfig = {}) {
@@ -160,7 +184,7 @@ export class MessagesClient {
 
   /**
    * Fetches paginated messages from the API.
-   * 
+   *
    * @param paginationParams - Pagination configuration
    * @param filterParams - Optional filter parameters
    * @returns Promise resolving to paginated message results
@@ -181,7 +205,7 @@ export class MessagesClient {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         signal: abortController.signal,
@@ -192,7 +216,11 @@ export class MessagesClient {
       if (!response.ok) {
         let errorData: { error?: string; code?: string; details?: unknown } = {};
         try {
-          errorData = await response.json() as { error?: string; code?: string; details?: unknown };
+          errorData = (await response.json()) as {
+            error?: string;
+            code?: string;
+            details?: unknown;
+          };
         } catch {
           // Response body is not JSON, use default error structure
         }
@@ -214,33 +242,19 @@ export class MessagesClient {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new MessagesApiError(
-            'Request timeout',
-            0,
-            'TIMEOUT_ERROR'
-          );
+          throw new MessagesApiError('Request timeout', 0, 'TIMEOUT_ERROR');
         }
 
-        throw new MessagesApiError(
-          `Network error: ${error.message}`,
-          0,
-          'NETWORK_ERROR',
-          error
-        );
+        throw new MessagesApiError(`Network error: ${error.message}`, 0, 'NETWORK_ERROR', error);
       }
 
-      throw new MessagesApiError(
-        'Unknown error occurred',
-        0,
-        'UNKNOWN_ERROR',
-        error
-      );
+      throw new MessagesApiError('Unknown error occurred', 0, 'UNKNOWN_ERROR', error);
     }
   }
 
   /**
    * Fetches a single message by ID.
-   * 
+   *
    * @param id - Message ID to fetch
    * @returns Promise resolving to message display data
    * @throws MessagesApiError for API failures
@@ -255,7 +269,7 @@ export class MessagesClient {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         signal: abortController.signal,
@@ -266,7 +280,11 @@ export class MessagesClient {
       if (!response.ok) {
         let errorData: { error?: string; code?: string; details?: unknown } = {};
         try {
-          errorData = await response.json() as { error?: string; code?: string; details?: unknown };
+          errorData = (await response.json()) as {
+            error?: string;
+            code?: string;
+            details?: unknown;
+          };
         } catch {
           // Response body is not JSON, use default error structure
         }
@@ -291,27 +309,13 @@ export class MessagesClient {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new MessagesApiError(
-            'Request timeout',
-            0,
-            'TIMEOUT_ERROR'
-          );
+          throw new MessagesApiError('Request timeout', 0, 'TIMEOUT_ERROR');
         }
 
-        throw new MessagesApiError(
-          `Network error: ${error.message}`,
-          0,
-          'NETWORK_ERROR',
-          error
-        );
+        throw new MessagesApiError(`Network error: ${error.message}`, 0, 'NETWORK_ERROR', error);
       }
 
-      throw new MessagesApiError(
-        'Unknown error occurred',
-        0,
-        'UNKNOWN_ERROR',
-        error
-      );
+      throw new MessagesApiError('Unknown error occurred', 0, 'UNKNOWN_ERROR', error);
     }
   }
 }
@@ -324,7 +328,7 @@ export const messagesClient = new MessagesClient();
 
 /**
  * Creates a new messages client with custom configuration.
- * 
+ *
  * @param config - Client configuration options
  * @returns New MessagesClient instance
  */

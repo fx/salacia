@@ -17,7 +17,7 @@
  * @module TableFilters
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, type JSX } from 'react';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**

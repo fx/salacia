@@ -15,7 +15,7 @@
  * @module Pagination
  */
 
-import React from 'react';
+import React, { type JSX } from 'react';
 import { MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
 /**
@@ -83,7 +83,6 @@ function calculatePageRange(currentPage: number, totalPages: number): number[] {
  */
 function formatPageInfo(
   currentPage: number,
-  totalPages: number,
   totalItems: number,
   pageSize: number
 ): string {
@@ -112,7 +111,7 @@ export function Pagination({
   const pageNumbers = calculatePageRange(currentPage, totalPages);
   const hasPrevious = currentPage > 1;
   const hasNext = currentPage < totalPages;
-  const pageInfo = formatPageInfo(currentPage, totalPages, totalItems, pageSize);
+  const pageInfo = formatPageInfo(currentPage, totalItems, pageSize);
 
   // Don't render pagination if there's only one page or no items
   if (totalPages <= 1 || totalItems === 0) {

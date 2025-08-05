@@ -15,14 +15,13 @@
  * @module MessagesTable
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, type JSX } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   createColumnHelper,
   flexRender,
-  type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
@@ -107,7 +106,7 @@ export function MessagesTable({
    * Column definitions for the messages table.
    * Memoized to prevent unnecessary re-renders.
    */
-  const columns = useMemo<ColumnDef<MessageDisplay>[]>(() => [
+  const columns = useMemo(() => [
     columnHelper.accessor('createdAt', {
       header: 'Created',
       cell: (info) => (
