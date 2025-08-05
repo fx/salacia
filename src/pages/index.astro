@@ -14,95 +14,50 @@ import '../styles/global.css';
     <Layout client:idle>
       <div class="w-full h-full flex flex-col">
         <!-- Terminal-style welcome header -->
-        <div class="border-2 border-primary bg-surface-subtle mb-4 shrink-0">
+        <div box-="square" class="bg-surface-subtle mb-4 shrink-0">
           <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold">┌─</span>
-            <span class="text-primary font-bold text-sm tracking-wider mx-2">WELCOME TO SALACIA</span>
-            <span class="text-primary font-bold">─┐</span>
+            <span class="text-primary font-bold text-sm tracking-wider">WELCOME TO SALACIA</span>
           </div>
           <div class="px-4 py-2">
-            <span class="text-primary">│</span>
-            <span class="text-foreground text-sm mx-2">
+            <span class="text-foreground text-sm">
               LLM inference API proxy with database recording capabilities
             </span>
-            <span class="text-primary ml-auto">│</span>
-          </div>
-          <div class="px-4 py-1">
-            <div class="flex items-center">
-              <span class="text-primary font-bold">└─</span>
-              <div class="flex-1 border-t border-primary mx-1"></div>
-              <span class="text-primary font-bold">─┘</span>
-            </div>
           </div>
         </div>
 
         <!-- Terminal-style system info -->
-        <div class="border-2 border-primary bg-surface-subtle mb-4 shrink-0">
+        <div box-="square" class="bg-surface-subtle mb-4 shrink-0">
           <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold">┌─</span>
-            <span class="text-primary font-bold text-sm tracking-wider mx-2">SYSTEM STATUS</span>
-            <span class="text-primary font-bold">─┐</span>
+            <span class="text-primary font-bold text-sm tracking-wider">SYSTEM STATUS</span>
           </div>
           <div class="px-4 py-2 space-y-1">
-            <div class="flex items-center">
-              <span class="text-primary">│</span>
-              <span class="text-foreground text-sm mx-2">
-                Status: <span class="text-green-400">ONLINE</span>
-              </span>
-              <span class="text-primary ml-auto">│</span>
+            <div class="text-foreground text-sm">
+              Status: <span class="text-green-400">ONLINE</span>
             </div>
-            <div class="flex items-center">
-              <span class="text-primary">│</span>
-              <span class="text-foreground text-sm mx-2">
-                Database: <span class="text-green-400">CONNECTED</span>
-              </span>
-              <span class="text-primary ml-auto">│</span>
+            <div class="text-foreground text-sm">
+              Database: <span class="text-green-400">CONNECTED</span>
             </div>
-            <div class="flex items-center">
-              <span class="text-primary">│</span>
-              <span class="text-foreground text-sm mx-2">
-                Theme: <span class="text-yellow-400">CATPPUCCIN-MOCHA</span>
-              </span>
-              <span class="text-primary ml-auto">│</span>
-            </div>
-          </div>
-          <div class="px-4 py-1">
-            <div class="flex items-center">
-              <span class="text-primary font-bold">└─</span>
-              <div class="flex-1 border-t border-primary mx-1"></div>
-              <span class="text-primary font-bold">─┘</span>
+            <div class="text-foreground text-sm">
+              Theme: <span class="text-yellow-400">CATPPUCCIN-MOCHA</span>
             </div>
           </div>
         </div>
 
         <!-- Terminal-style quick actions -->
-        <div class="border-2 border-primary bg-surface-subtle shrink-0">
+        <div box-="square" class="bg-surface-subtle shrink-0">
           <div class="flex items-center px-4 py-2 border-b border-primary bg-surface">
-            <span class="text-primary font-bold">┌─</span>
-            <span class="text-primary font-bold text-sm tracking-wider mx-2">QUICK ACTIONS</span>
-            <span class="text-primary font-bold">─┐</span>
+            <span class="text-primary font-bold text-sm tracking-wider">QUICK ACTIONS</span>
           </div>
           <div class="px-4 py-2 space-y-1">
-            <div class="flex items-center">
-              <span class="text-primary">│</span>
-              <a href="/messages" class="text-blue-400 hover:text-blue-300 text-sm mx-2 underline">
+            <div>
+              <a href="/messages" class="text-blue-400 hover:text-blue-300 text-sm underline">
                 [1] View Messages Database →
               </a>
-              <span class="text-primary ml-auto">│</span>
             </div>
-            <div class="flex items-center">
-              <span class="text-primary">│</span>
-              <span class="text-foreground-muted text-sm mx-2">
+            <div>
+              <span class="text-foreground-muted text-sm">
                 [2] API Documentation (Coming Soon)
               </span>
-              <span class="text-primary ml-auto">│</span>
-            </div>
-          </div>
-          <div class="px-4 py-1">
-            <div class="flex items-center">
-              <span class="text-primary font-bold">└─</span>
-              <div class="flex-1 border-t border-primary mx-1"></div>
-              <span class="text-primary font-bold">─┘</span>
             </div>
           </div>
         </div>

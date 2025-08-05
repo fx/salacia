@@ -12,16 +12,8 @@
 /* Import Nerd Font plugin */
 @import "@webtui/plugin-nf";
 
-/* Import WebTUI utilities */
-@import "@webtui/css/utils/box.css";
-@import "@webtui/css/utils/layout.css";
-@import "@webtui/css/utils/spacing.css";
-@import "@webtui/css/utils/typography.css";
-
-/* Import WebTUI components */
-@import "@webtui/css/components/button.css";
-@import "@webtui/css/components/typography.css";
-@import "@webtui/css/components/table.css";
+/* Import WebTUI full CSS to include all utilities */
+@import "@webtui/css/full.css";
 
 /* Custom font configuration for terminal theme */
 @layer base {
