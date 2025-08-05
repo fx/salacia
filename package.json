@@ -22,25 +22,31 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
     "@ai-sdk/openai": "^2.0.0",
+    "@astrojs/react": "^4.3.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@webtui/css": "^0.1.4",
     "ai": "^5.0.0",
     "astro": "^5.12.8",
     "drizzle-orm": "^0.44.4",
     "postgres": "^3.4.5",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^9.3.3",
+    "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.18.0",
     "eslint-plugin-astro": "^1.2.4",
+    "msw": "^2.8.2",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.8.3",
-    "@types/node": "^22.10.5",
-    "msw": "^2.8.2",
     "vitest": "^2.1.9"
   }
 }
