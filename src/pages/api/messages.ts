@@ -4,7 +4,7 @@ export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1');
   const limit = parseInt(url.searchParams.get('limit') || '20');
-  
+
   // Sample data for development
   const sampleMessages = Array.from({ length: 100 }, (_, i) => ({
     id: `msg-${i + 1}`,
@@ -17,20 +17,23 @@ export const GET: APIRoute = async ({ request }) => {
     prompt: `Sample prompt ${i + 1}`,
     response: `Sample response ${i + 1}...`,
   }));
-  
+
   const start = (page - 1) * limit;
   const end = start + limit;
   const paginatedMessages = sampleMessages.slice(start, end);
-  
-  return new Response(JSON.stringify({
-    messages: paginatedMessages,
-    total: sampleMessages.length,
-    page,
-    limit,
-  }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+
+  return new Response(
+    JSON.stringify({
+      messages: paginatedMessages,
+      total: sampleMessages.length,
+      page,
+      limit,
+    }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 };
