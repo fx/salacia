@@ -99,32 +99,19 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **Documentation**: Always refer to https://webtui.ironclad.sh/start/intro/ for WebTUI documentation
 - **Theme**: Uses `@webtui/theme-catppuccin` with `catppuccin-mocha` variant for consistent dark terminal aesthetic
 - **Fonts**: Uses `@webtui/plugin-nf` with Hack Nerd Font as primary monospace font family
-- **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
-- **Styling Guidelines**: Use WebTUI utilities and data attributes for styling. NO Tailwind CSS classes are used in this project
-- **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
-- **Design Tokens**: Use WebTUI's design tokens and CSS custom properties for consistent spacing, typography, and colors
-- **Data Attributes**: Use semantic data attributes (e.g., `data-nav="terminal"`, `data-panel="header"`) for component styling instead of utility classes
 
-#### CSS Unit Standards
+#### Styling Approach
 
-For consistency with terminal-style interfaces, follow these strict unit conventions:
+**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
 
-- **Allowed Units**: Use only `ch` (character width) units for sizing in custom CSS
-- **Forbidden Units**: Do not use `px`, `em`, `rem`, `%`, `vw`, `vh`, or `lh` in custom CSS
-- **Exception**: WebTUI utilities may use other units internally - this restriction applies only to custom CSS
+- **NO Tailwind**: This project does not use Tailwind CSS classes
+- **NO Custom CSS**: Avoid adding custom styles - let WebTUI and Catppuccin handle all styling
+- **NO Inline Styles**: Do not use style attributes or custom data attributes for styling
+- **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
+- **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
 
-#### CSS Selector Conventions
-
-- **Class Names**: Use WebTUI utility classes exclusively when possible
-- **Custom Selectors**: When custom CSS is necessary, use semantic class names that describe function, not appearance
-- **Specificity**: Keep specificity low and rely on CSS layer ordering for proper cascade
-
-#### Terminal UI Patterns
-
-- **ASCII Borders**: Use Unicode box-drawing characters (┌─┐│└─┘) for terminal-style borders
-- **Monospace Layout**: All text should use monospace fonts for consistent character alignment
-- **Color Scheme**: Rely on Catppuccin color palette through WebTUI design tokens
-- **Spacing**: Use consistent character-based spacing (multiples of `1ch`) for terminal alignment
+The Catppuccin theme provides all necessary colors, spacing, and typography through WebTUI's CSS.
 
 ### Frontend Architecture
 
