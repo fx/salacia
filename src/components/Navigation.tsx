@@ -1,7 +1,7 @@
 /**
  * Navigation component that provides the main site navigation.
- * Currently includes only a "Home" link, but designed to be easily extensible
- * for additional navigation items.
+ * Includes navigation links for Home and Messages pages, with active state
+ * indication and responsive design.
  * 
  * @returns The navigation bar with primary site links
  */
@@ -20,6 +20,12 @@ export function Navigation() {
                 className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Home
+              </a>
+              <a 
+                href="/messages" 
+                className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Messages
               </a>
             </div>
           </div>

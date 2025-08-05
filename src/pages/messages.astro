@@ -1,0 +1,108 @@
+---
+/**
+ * Messages page displaying AI interaction messages with filtering and pagination.
+ *
+ * This page provides a comprehensive interface for viewing and managing AI
+ * interaction messages stored in the database. It uses server-side rendering
+ * for initial data loading and React components for client-side interactivity.
+ *
+ * Features:
+ * - Server-side rendered table with pagination
+ * - Client-side filtering and sorting
+ * - Responsive design with WebTUI styling
+ * - Error handling and loading states
+ * - Accessibility support
+ */
+
+import { Layout } from '../components/Layout';
+import { MessagesApp } from '../components/MessagesApp';
+import '../styles/global.css';
+
+// Import the messages service for server-side data fetching
+import { MessagesService } from '../lib/services/messages.js';
+import type {
+  MessagesPaginationParams,
+  MessagesFilterParams,
+  MessageSort,
+} from '../lib/types/messages.js';
+
+// Default pagination parameters for initial page load
+const defaultPagination: MessagesPaginationParams = {
+  page: 1,
+  pageSize: 20,
+  sort: {
+    field: 'createdAt',
+    direction: 'desc',
+  } as MessageSort,
+};
+
+const defaultFilters: MessagesFilterParams = {};
+
+// Fetch initial data server-side for faster page load
+let initialMessages;
+let initialError = null;
+
+try {
+  initialMessages = await MessagesService.getMessages(defaultPagination, defaultFilters);
+} catch (error) {
+  console.error('Failed to load initial messages:', error);
+  initialError = error instanceof Error ? error.message : 'Failed to load messages';
+  // Provide empty data structure for fallback
+  initialMessages = {
+    messages: [],
+    currentPage: 1,
+    pageSize: 20,
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false,
+    sort: defaultPagination.sort,
+    filters: defaultFilters,
+    stats: {
+      totalMessages: 0,
+      successfulMessages: 0,
+      failedMessages: 0,
+      successRate: 0,
+      totalTokens: 0,
+      averageResponseTime: 0,
+      uniqueModels: 0,
+    },
+  };
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salacia - Messages</title>
+    <meta
+      name="description"
+      content="View and manage AI interaction messages with advanced filtering and search capabilities"
+    />
+  </head>
+  <body>
+    <Layout client:idle>
+      <div class="space-y-6">
+        <!-- Page header -->
+        <div class="border-b border-gray-200 pb-4">
+          <h1 class="text-3xl font-bold text-foreground">Messages</h1>
+          <p class="mt-2 text-foreground-muted">
+            View and analyze AI interaction messages with comprehensive filtering and search
+            capabilities
+          </p>
+        </div>
+
+        <!-- Messages interface component with server-side data -->
+        <MessagesApp
+          client:load
+          initialMessages={initialMessages}
+          initialError={initialError}
+          defaultPagination={defaultPagination}
+          defaultFilters={defaultFilters}
+        />
+      </div>
+    </Layout>
+  </body>
+</html>
