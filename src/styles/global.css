@@ -6,33 +6,37 @@
 /* Import WebTUI base styles first */
 @import "@webtui/css/base.css";
 
-/* Import Catppuccin theme */
+/* Import WebTUI utilities */
+@import "@webtui/css/utils/box.css";
+
+/* Import WebTUI components */
+@import "@webtui/css/components/button.css";
+@import "@webtui/css/components/typography.css";
+@import "@webtui/css/components/badge.css";
+@import "@webtui/css/components/input.css";
+@import "@webtui/css/components/textarea.css";
+@import "@webtui/css/components/separator.css";
+@import "@webtui/css/components/table.css";
+
+/* Import themes and plugins */
 @import "@webtui/theme-catppuccin";
-
-/* Import Nerd Font plugin */
 @import "@webtui/plugin-nf";
-
-/* Import WebTUI full CSS to include all utilities */
-@import "@webtui/css/full.css";
 
 /* Custom font configuration for terminal theme */
 @layer base {
-  /* Hack Nerd Font configuration */
   :root {
-    --font-mono: "Hack Nerd Font", "Symbols Nerd Font", "Hack", "SF Mono", "Monaco", "Inconsolata", "Fira Code", "Fira Mono", "Droid Sans Mono", "Consolas", "Liberation Mono", "Menlo", "Courier", monospace;
-    --font-ui: "Hack Nerd Font", "Symbols Nerd Font", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-family: "Hack Nerd Font", "JetBrains Mono", Menlo, Monaco, monospace, "Symbols Nerd Font";
+    --font-size: 16px;
+    --line-height: 1.4;
+    --box-border-color: var(--background1);
   }
-  
-  /* Apply monospace font to body for terminal aesthetic */
-  html, body {
-    font-family: var(--font-mono);
-    font-size: 1rem;
-    line-height: 1.2;
-    font-variant-ligatures: none;
-  }
-  
-  /* Ensure text elements use the terminal font */
-  h1, h2, h3, h4, h5, h6, p, span, div {
-    font-family: var(--font-mono);
+
+  body, html {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
   }
 }
