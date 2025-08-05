@@ -1,558 +1,387 @@
 ---
-/**
- * Messages Dashboard - WebTUI Foundation
- * Phase 3 Part 1: Basic structure and styling setup
- */
+import Layout from '../layouts/Layout.astro';
 export const prerender = false;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Messages Dashboard - Salacia</title>
-
-    <style>
-      /* Terminal-style CSS Framework */
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        padding: 0;
-        font-family:
-          'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-        background-color: #0a0a0a;
-        color: #00ff00;
-        line-height: 1.4;
-        font-size: 14px;
-      }
-
-      /* Terminal-style utility classes */
-      .terminal-bg {
-        background-color: #0a0a0a;
-      }
-      .terminal-text {
-        color: #00ff00;
-      }
-      .terminal-dim {
-        color: #888888;
-      }
-      .terminal-bright {
-        color: #ffffff;
-      }
-      .terminal-error {
-        color: #ff4444;
-      }
-      .terminal-warning {
-        color: #ffaa00;
-      }
-      .terminal-success {
-        color: #00ff00;
-      }
-
-      /* Layout utilities */
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 1rem;
-      }
-      .text-center {
-        text-align: center;
-      }
-      .text-left {
-        text-align: left;
-      }
-      .flex {
-        display: flex;
-      }
-      .flex-col {
-        flex-direction: column;
-      }
-      .items-center {
-        align-items: center;
-      }
-      .justify-center {
-        justify-content: center;
-      }
-      .w-full {
-        width: 100%;
-      }
-      .h-12 {
-        height: 3rem;
-      }
-      .w-12 {
-        width: 3rem;
-      }
-      .mt-1 {
-        margin-top: 0.25rem;
-      }
-      .mt-2 {
-        margin-top: 0.5rem;
-      }
-      .mt-3 {
-        margin-top: 0.75rem;
-      }
-      .mb-2 {
-        margin-bottom: 0.5rem;
-      }
-      .mb-3 {
-        margin-bottom: 0.75rem;
-      }
-      .px-6 {
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-      }
-      .py-3 {
-        padding-top: 0.75rem;
-        padding-bottom: 0.75rem;
-      }
-      .py-4 {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-      }
-      .py-8 {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-      }
-
-      /* Terminal-style messages dashboard */
-      .messages-header {
-        background-color: #1a1a1a;
-        border-bottom: 2px solid #00ff00;
-        padding: 1.5rem 0;
-        margin-bottom: 2rem;
-      }
-
-      .messages-title {
-        font-size: 2rem;
-        font-weight: normal;
-        margin: 0;
-        color: #00ff00;
-        text-shadow: 0 0 10px #00ff00;
-      }
-
-      .messages-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 1rem;
-      }
-
-      .table-container {
-        background-color: #111111;
-        border: 1px solid #333333;
-        overflow: hidden;
-      }
-
-      .table-header {
-        background-color: #1a1a1a;
-        border-bottom: 1px solid #333333;
-        padding: 1rem 1.5rem;
-      }
-
-      .table-title {
-        font-size: 1.125rem;
-        font-weight: normal;
-        color: #ffffff;
-        margin: 0;
-      }
-
-      .table-subtitle {
-        font-size: 0.875rem;
-        color: #888888;
-        margin: 0.25rem 0 0 0;
-      }
-
-      /* Terminal-style table */
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #111111;
-      }
-
-      th {
-        background-color: #1a1a1a;
-        color: #ffffff;
-        padding: 0.75rem 1.5rem;
-        text-align: left;
-        font-size: 0.75rem;
-        font-weight: normal;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid #333333;
-      }
-
-      td {
-        padding: 1.5rem;
-        border-bottom: 1px solid #222222;
-        color: #888888;
-      }
-
-      /* Terminal-style placeholder */
-      .placeholder-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 3rem 1.5rem;
-      }
-
-      .placeholder-icon {
-        width: 3rem;
-        height: 3rem;
-        background-color: #222222;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-      }
-
-      .placeholder-icon svg {
-        width: 1.5rem;
-        height: 1.5rem;
-        color: #666666;
-      }
-
-      .placeholder-title {
-        font-size: 1.125rem;
-        font-weight: normal;
-        color: #ffffff;
-        margin: 0 0 0.5rem 0;
-      }
-
-      .placeholder-text {
-        font-size: 0.875rem;
-        color: #888888;
-        margin: 0;
-      }
-
-      /* Terminal glow effects */
-      .terminal-glow {
-        text-shadow: 0 0 5px currentColor;
-      }
-
-      /* Status indicators */
-      .status-success {
-        color: #00ff00;
-        font-weight: bold;
-      }
-      .status-error {
-        color: #ff4444;
-        font-weight: bold;
-      }
-      .status-loading {
-        color: #ffaa00;
-      }
-
-      /* Loading states */
-      .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #333333;
-        border-radius: 50%;
-        border-top-color: #00ff00;
-        animation: spin 1s ease-in-out infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Pagination controls */
-      .pagination-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        padding: 1.5rem;
-        background-color: #1a1a1a;
-        border-top: 1px solid #333333;
-      }
-
-      .pagination-button {
-        background-color: #222222;
-        color: #00ff00;
-        border: 1px solid #333333;
-        padding: 0.5rem 1rem;
-        font-family: inherit;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .pagination-button:hover {
-        background-color: #333333;
-        border-color: #00ff00;
-      }
-
-      .pagination-button:disabled {
-        background-color: #111111;
-        color: #666666;
-        border-color: #222222;
-        cursor: not-allowed;
-      }
-
-      .pagination-info {
-        color: #888888;
-        font-size: 0.875rem;
-      }
-
-      /* Responsive design */
-      @media (max-width: 768px) {
-        .messages-title {
-          font-size: 1.5rem;
-        }
-
-        .container {
-          padding: 0 0.5rem;
-        }
-
-        th,
-        td {
-          padding: 0.75rem;
-        }
-      }
-    </style>
-  </head>
-
-  <body class="terminal-bg">
-    <!-- Header Section -->
-    <header class="messages-header">
-      <div class="messages-container">
-        <h1 class="messages-title terminal-glow">Messages Dashboard</h1>
-        <p class="terminal-dim mt-2">View and manage AI conversation messages</p>
-      </div>
+<Layout title="Messages Dashboard - Salacia">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Messages Dashboard</h1>
+      <p class="text-muted">View and manage AI conversation messages</p>
     </header>
 
-    <!-- Main Content -->
-    <main class="messages-container">
-      <!-- Table Container -->
-      <div class="table-container">
-        <!-- Table Header -->
-        <div class="table-header">
-          <h2 class="table-title">Recent Messages</h2>
-          <p class="table-subtitle" id="table-subtitle">Loading message data...</p>
+    <!-- Main content -->
+    <main>
+      <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+        <!-- Table header -->
+        <div class="bg-muted/5 border-b px-6 py-4">
+          <h2 class="text-lg font-semibold">Recent Messages</h2>
+          <p class="text-sm text-muted mt-1" id="table-subtitle">Loading message data...</p>
         </div>
 
-        <!-- Table Skeleton -->
-        <div>
-          <table class="w-full">
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
             <thead>
-              <tr>
-                <th>Time</th>
-                <th>Model</th>
-                <th>Provider</th>
-                <th>Tokens</th>
-                <th>Response Time</th>
-                <th>Status</th>
+              <tr class="bg-muted/5 border-b">
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Time</th>
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Model</th>
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Provider</th>
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Tokens</th>
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Response Time</th>
+                <th class="px-6 py-3 text-left font-medium text-xs uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody id="messages-tbody">
+            <tbody id="messages-tbody" class="bg-background divide-y divide-border">
               <!-- Messages will be loaded here -->
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="pagination-controls" id="pagination-controls" style="display: none;">
-          <button class="pagination-button" id="prev-button" disabled>Previous</button>
-          <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
-          <button class="pagination-button" id="next-button" disabled>Next</button>
+        <!-- Pagination -->
+        <div class="flex items-center justify-between px-6 py-4 bg-muted/5 border-t" id="pagination-controls" style="display: none;">
+          <button 
+            class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            id="prev-button" 
+            disabled
+          >
+            Previous
+          </button>
+          <span class="text-sm text-muted" id="pagination-info">Page 1 of 1</span>
+          <button 
+            class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            id="next-button" 
+            disabled
+          >
+            Next
+          </button>
         </div>
       </div>
     </main>
+  </div>
 
-    <script is:inline>
-      // WebTUI Messages Dashboard - Client-side JavaScript
-      class MessagesUI {
-        constructor() {
-          this.currentPage = 1;
-          this.pageSize = 20;
-          this.totalPages = 1;
-          this.isLoading = false;
-          this.init();
-        }
+  <!-- Modal for message details -->
+  <dialog id="message-dialog" class="p-0 rounded-lg shadow-xl backdrop:bg-black/50 max-w-2xl w-full">
+    <div class="bg-card">
+      <div class="flex items-center justify-between p-6 border-b">
+        <h3 class="text-lg font-semibold">Message Details</h3>
+        <button 
+          onclick="document.getElementById('message-dialog').close()"
+          class="text-muted hover:text-foreground"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="message-details" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <!-- Message details will be loaded here -->
+      </div>
+    </div>
+  </dialog>
 
-        init() {
-          this.bindEvents();
-          this.loadMessages();
-        }
+  <script is:inline>
+    class MessagesUI {
+      constructor() {
+        this.currentPage = 1;
+        this.pageSize = 20;
+        this.totalPages = 1;
+        this.isLoading = false;
+        this.messages = [];
+        this.eventSource = null;
+        this.init();
+      }
 
-        bindEvents() {
-          document.getElementById('prev-button').addEventListener('click', () => {
-            if (this.currentPage > 1) {
-              this.currentPage--;
-              this.loadMessages();
-            }
-          });
+      init() {
+        this.bindEvents();
+        this.loadMessages();
+        this.setupRealTimeUpdates();
+      }
 
-          document.getElementById('next-button').addEventListener('click', () => {
-            if (this.currentPage < this.totalPages) {
-              this.currentPage++;
-              this.loadMessages();
-            }
-          });
-        }
-
-        async loadMessages() {
-          if (this.isLoading) return;
-
-          this.isLoading = true;
-          this.showLoading();
-
-          try {
-            const url = `/api/messages?page=${this.currentPage}&pageSize=${this.pageSize}`;
-            const response = await fetch(url);
-
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            this.renderMessages(data);
-            this.updatePagination(data);
-            this.showSuccess(data);
-          } catch (error) {
-            console.error('Failed to load messages:', error);
-            this.showError(error.message);
-          } finally {
-            this.isLoading = false;
+      bindEvents() {
+        document.getElementById('prev-button').addEventListener('click', () => {
+          if (this.currentPage > 1) {
+            this.currentPage--;
+            this.loadMessages();
           }
-        }
+        });
 
-        showLoading() {
-          const subtitle = document.getElementById('table-subtitle');
-          const tbody = document.getElementById('messages-tbody');
-          const pagination = document.getElementById('pagination-controls');
-
-          subtitle.innerHTML = '<span class="loading-spinner"></span> Loading messages...';
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="6" style="text-align: center; padding: 3rem;">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                  <span class="loading-spinner"></span>
-                  <span class="terminal-dim">Fetching message data...</span>
-                </div>
-              </td>
-            </tr>
-          `;
-          pagination.style.display = 'none';
-        }
-
-        showError(message) {
-          const subtitle = document.getElementById('table-subtitle');
-          const tbody = document.getElementById('messages-tbody');
-          const pagination = document.getElementById('pagination-controls');
-
-          subtitle.innerHTML = `<span class="terminal-error">Error loading messages</span>`;
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="6" style="text-align: center; padding: 3rem;">
-                <div style="color: #ff4444;">
-                  <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">⚠ Failed to load messages</div>
-                  <div style="color: #888888; font-size: 0.875rem;">${message}</div>
-                </div>
-              </td>
-            </tr>
-          `;
-          pagination.style.display = 'none';
-        }
-
-        showSuccess(data) {
-          const subtitle = document.getElementById('table-subtitle');
-          subtitle.innerHTML = `Showing ${data.messages.length} of ${data.totalItems} messages`;
-        }
-
-        renderMessages(data) {
-          const tbody = document.getElementById('messages-tbody');
-
-          if (!data.messages || data.messages.length === 0) {
-            tbody.innerHTML = `
-              <tr>
-                <td colspan="6" style="text-align: center; padding: 3rem;">
-                  <div class="terminal-dim">
-                    <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">No messages found</div>
-                    <div style="font-size: 0.875rem;">No AI interactions have been recorded yet</div>
-                  </div>
-                </td>
-              </tr>
-            `;
-            return;
+        document.getElementById('next-button').addEventListener('click', () => {
+          if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.loadMessages();
           }
+        });
+      }
 
-          tbody.innerHTML = data.messages
-            .map(
-              message => `
-            <tr>
-              <td>${this.formatDate(message.createdAt)}</td>
-              <td class="terminal-bright">${message.model}</td>
-              <td class="terminal-dim">${message.provider || 'Unknown'}</td>
-              <td>${this.formatTokens(message.totalTokens)}</td>
-              <td>${this.formatResponseTime(message.responseTime)}</td>
-              <td>${this.formatStatus(message.isSuccess, message.error)}</td>
-            </tr>
-          `
-            )
-            .join('');
-        }
+      setupRealTimeUpdates() {
+        // Set up Server-Sent Events for real-time updates
+        this.eventSource = new EventSource('/api/messages/stream');
+        
+        this.eventSource.onmessage = (event) => {
+          const message = JSON.parse(event.data);
+          this.handleRealTimeUpdate(message);
+        };
 
-        updatePagination(data) {
-          const pagination = document.getElementById('pagination-controls');
-          const prevButton = document.getElementById('prev-button');
-          const nextButton = document.getElementById('next-button');
-          const paginationInfo = document.getElementById('pagination-info');
+        this.eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+        };
+      }
 
-          this.totalPages = data.totalPages;
-
-          prevButton.disabled = !data.hasPreviousPage;
-          nextButton.disabled = !data.hasNextPage;
-          paginationInfo.textContent = `Page ${data.currentPage} of ${data.totalPages}`;
-
-          pagination.style.display = data.totalPages > 1 ? 'flex' : 'none';
-        }
-
-        formatDate(dateString) {
-          const date = new Date(dateString);
-          return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          });
-        }
-
-        formatTokens(tokens) {
-          if (!tokens) return '<span class="terminal-dim">—</span>';
-          return `<span class="terminal-bright">${tokens.toLocaleString()}</span>`;
-        }
-
-        formatResponseTime(responseTime) {
-          if (!responseTime) return '<span class="terminal-dim">—</span>';
-          const formatted =
-            responseTime < 1000 ? `${responseTime}ms` : `${(responseTime / 1000).toFixed(1)}s`;
-          return `<span class="terminal-bright">${formatted}</span>`;
-        }
-
-        formatStatus(isSuccess, error) {
-          if (isSuccess) {
-            return '<span class="status-success">✓ Success</span>';
-          } else {
-            const errorText = error ? ` (${error.substring(0, 30)}...)` : '';
-            return `<span class="status-error">✗ Error${errorText}</span>`;
+      handleRealTimeUpdate(message) {
+        // If we're on the first page, prepend the new message
+        if (this.currentPage === 1) {
+          this.messages.unshift(message);
+          if (this.messages.length > this.pageSize) {
+            this.messages.pop();
           }
+          this.renderMessages({ messages: this.messages, totalItems: this.messages.length });
         }
       }
 
-      // Initialize the UI when the page loads
-      document.addEventListener('DOMContentLoaded', () => {
-        new MessagesUI();
-      });
-    </script>
-  </body>
-</html>
+      async loadMessages() {
+        if (this.isLoading) return;
+
+        this.isLoading = true;
+        this.showLoading();
+
+        try {
+          const url = `/api/messages?page=${this.currentPage}&pageSize=${this.pageSize}`;
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          this.messages = data.messages;
+          this.renderMessages(data);
+          this.updatePagination(data);
+          this.showSuccess(data);
+        } catch (error) {
+          console.error('Failed to load messages:', error);
+          this.showError(error.message);
+        } finally {
+          this.isLoading = false;
+        }
+      }
+
+      showLoading() {
+        const subtitle = document.getElementById('table-subtitle');
+        const tbody = document.getElementById('messages-tbody');
+        const pagination = document.getElementById('pagination-controls');
+
+        subtitle.innerHTML = '<span class="animate-pulse">Loading messages...</span>';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="flex items-center justify-center gap-2">
+                <div class="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+                <span class="text-muted">Fetching message data...</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        pagination.style.display = 'none';
+      }
+
+      showError(message) {
+        const subtitle = document.getElementById('table-subtitle');
+        const tbody = document.getElementById('messages-tbody');
+        const pagination = document.getElementById('pagination-controls');
+
+        subtitle.innerHTML = '<span class="text-destructive">Error loading messages</span>';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="text-destructive">
+                <div class="text-lg font-semibold mb-1">Failed to load messages</div>
+                <div class="text-sm text-muted">${message}</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        pagination.style.display = 'none';
+      }
+
+      showSuccess(data) {
+        const subtitle = document.getElementById('table-subtitle');
+        subtitle.innerHTML = `Showing ${data.messages.length} of ${data.totalItems} messages`;
+      }
+
+      renderMessages(data) {
+        const tbody = document.getElementById('messages-tbody');
+
+        if (!data.messages || data.messages.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-12">
+                <div class="text-muted">
+                  <div class="text-lg font-semibold mb-1">No messages found</div>
+                  <div class="text-sm">No AI interactions have been recorded yet</div>
+                </div>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = data.messages
+          .map(
+            (message, index) => `
+            <tr class="hover:bg-muted/5 cursor-pointer transition-colors" onclick="messagesUI.showMessageDetails(${index})">
+              <td class="px-6 py-4">${this.formatDate(message.createdAt)}</td>
+              <td class="px-6 py-4 font-medium">${message.model}</td>
+              <td class="px-6 py-4 text-muted">${message.provider || 'Unknown'}</td>
+              <td class="px-6 py-4">${this.formatTokens(message.totalTokens)}</td>
+              <td class="px-6 py-4">${this.formatResponseTime(message.responseTime)}</td>
+              <td class="px-6 py-4">${this.formatStatus(message.isSuccess, message.error)}</td>
+            </tr>
+          `
+          )
+          .join('');
+      }
+
+      showMessageDetails(index) {
+        const message = this.messages[index];
+        const dialog = document.getElementById('message-dialog');
+        const details = document.getElementById('message-details');
+
+        details.innerHTML = `
+          <div class="space-y-4">
+            <div>
+              <h4 class="text-sm font-medium text-muted mb-1">Message ID</h4>
+              <p class="font-mono text-sm">${message.id}</p>
+            </div>
+            
+            <div>
+              <h4 class="text-sm font-medium text-muted mb-1">Timestamp</h4>
+              <p>${new Date(message.createdAt).toLocaleString()}</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Model</h4>
+                <p>${message.model}</p>
+              </div>
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Provider</h4>
+                <p>${message.provider || 'Unknown'}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Total Tokens</h4>
+                <p>${message.totalTokens || '—'}</p>
+              </div>
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Response Time</h4>
+                <p>${this.formatResponseTime(message.responseTime)}</p>
+              </div>
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Status</h4>
+                <p>${this.formatStatus(message.isSuccess, message.error)}</p>
+              </div>
+            </div>
+
+            ${message.promptTemplate ? `
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Prompt Template</h4>
+                <pre class="bg-muted/5 p-3 rounded-md text-xs overflow-x-auto"><code>${message.promptTemplate}</code></pre>
+              </div>
+            ` : ''}
+
+            ${message.messages && message.messages.length > 0 ? `
+              <div>
+                <h4 class="text-sm font-medium text-muted mb-1">Messages</h4>
+                <div class="space-y-2">
+                  ${message.messages.map(msg => `
+                    <div class="bg-muted/5 p-3 rounded-md">
+                      <div class="text-xs font-medium text-muted mb-1">${msg.role}</div>
+                      <div class="text-sm whitespace-pre-wrap">${msg.content}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${message.error ? `
+              <div>
+                <h4 class="text-sm font-medium text-destructive mb-1">Error</h4>
+                <pre class="bg-destructive/5 p-3 rounded-md text-xs text-destructive overflow-x-auto"><code>${message.error}</code></pre>
+              </div>
+            ` : ''}
+          </div>
+        `;
+
+        dialog.showModal();
+      }
+
+      updatePagination(data) {
+        const pagination = document.getElementById('pagination-controls');
+        const prevButton = document.getElementById('prev-button');
+        const nextButton = document.getElementById('next-button');
+        const paginationInfo = document.getElementById('pagination-info');
+
+        this.totalPages = data.totalPages;
+
+        prevButton.disabled = !data.hasPreviousPage;
+        nextButton.disabled = !data.hasNextPage;
+        paginationInfo.textContent = `Page ${data.currentPage} of ${data.totalPages}`;
+
+        pagination.style.display = data.totalPages > 1 ? 'flex' : 'none';
+      }
+
+      formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+      }
+
+      formatTokens(tokens) {
+        if (!tokens) return '—';
+        return tokens.toLocaleString();
+      }
+
+      formatResponseTime(responseTime) {
+        if (!responseTime) return '—';
+        return responseTime < 1000 ? `${responseTime}ms` : `${(responseTime / 1000).toFixed(1)}s`;
+      }
+
+      formatStatus(isSuccess, error) {
+        if (isSuccess) {
+          return '<span class="text-success">✓ Success</span>';
+        } else {
+          const errorText = error ? ` (${error.substring(0, 30)}...)` : '';
+          return `<span class="text-destructive">✗ Error${errorText}</span>`;
+        }
+      }
+
+      destroy() {
+        if (this.eventSource) {
+          this.eventSource.close();
+        }
+      }
+    }
+
+    // Initialize the UI when the page loads
+    let messagesUI;
+    document.addEventListener('DOMContentLoaded', () => {
+      messagesUI = new MessagesUI();
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      if (messagesUI) {
+        messagesUI.destroy();
+      }
+    });
+  </script>
+</Layout>
