@@ -38,6 +38,8 @@ export default [
         beforeEach: 'readonly',
         afterEach: 'readonly',
         globalThis: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
       },
     },
     plugins: {
