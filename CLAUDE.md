@@ -7,6 +7,8 @@ This project uses the following core technologies:
 - **PostgreSQL** - Primary database system
 - **TypeScript** - 100% TypeScript codebase, no JavaScript
 - **Astro** - Web framework for building the application
+- **React** - Frontend components and interactivity
+- **WebTUI** - Design system and CSS framework
 - **Drizzle ORM** - Database ORM and migration management
 
 ## Development Standards
@@ -87,3 +89,22 @@ All commits and pull request titles must follow the Conventional Commits specifi
   - `feat(auth): add user authentication system`
   - `fix(database): resolve connection pool timeout issue`
   - `docs(readme): update installation instructions`
+
+## UI/UX Standards
+
+### WebTUI Design System
+
+This project uses WebTUI as the primary design system and CSS framework:
+
+- **Documentation**: Always refer to https://webtui.ironclad.sh/start/intro/ for WebTUI documentation
+- **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
+- **Styling Guidelines**: Contain any custom styling within components that directly use WebTUI or very simple CSS based on WebTUI patterns
+- **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
+- **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
+
+### Frontend Architecture
+
+- **React Components**: All interactive UI components should be built with React and TypeScript
+- **Astro Integration**: Use Astro's React integration for server-side rendering and hydration
+- **Global Styles**: Import WebTUI CSS in global styles file and include in layout components
+- **Component Documentation**: All React components must include comprehensive TSDoc documentation
