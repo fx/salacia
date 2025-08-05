@@ -1,11 +1,11 @@
 ---
 /**
  * Messages page displaying AI interaction messages with filtering and pagination.
- * 
+ *
  * This page provides a comprehensive interface for viewing and managing AI
  * interaction messages stored in the database. It uses server-side rendering
  * for initial data loading and React components for client-side interactivity.
- * 
+ *
  * Features:
  * - Server-side rendered table with pagination
  * - Client-side filtering and sorting
@@ -20,10 +20,10 @@ import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
-import type { 
+import type {
   MessagesPaginationParams,
   MessagesFilterParams,
-  MessageSort
+  MessageSort,
 } from '../lib/types/messages.js';
 
 // Default pagination parameters for initial page load
@@ -32,8 +32,8 @@ const defaultPagination: MessagesPaginationParams = {
   pageSize: 20,
   sort: {
     field: 'createdAt',
-    direction: 'desc'
-  } as MessageSort
+    direction: 'desc',
+  } as MessageSort,
 };
 
 const defaultFilters: MessagesFilterParams = {};
@@ -65,8 +65,8 @@ try {
       successRate: 0,
       totalTokens: 0,
       averageResponseTime: 0,
-      uniqueModels: 0
-    }
+      uniqueModels: 0,
+    },
   };
 }
 ---
@@ -77,7 +77,10 @@ try {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Salacia - Messages</title>
-    <meta name="description" content="View and manage AI interaction messages with advanced filtering and search capabilities" />
+    <meta
+      name="description"
+      content="View and manage AI interaction messages with advanced filtering and search capabilities"
+    />
   </head>
   <body>
     <Layout client:idle>
@@ -86,12 +89,13 @@ try {
         <div class="border-b border-gray-200 pb-4">
           <h1 class="text-3xl font-bold text-foreground">Messages</h1>
           <p class="mt-2 text-foreground-muted">
-            View and analyze AI interaction messages with comprehensive filtering and search capabilities
+            View and analyze AI interaction messages with comprehensive filtering and search
+            capabilities
           </p>
         </div>
 
         <!-- Messages interface component with server-side data -->
-        <MessagesApp 
+        <MessagesApp
           client:load
           initialMessages={initialMessages}
           initialError={initialError}
