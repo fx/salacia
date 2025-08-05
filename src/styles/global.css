@@ -1,0 +1,14 @@
+/* WebTUI CSS - Global Styles */
+
+/* Define CSS layers for proper specificity */
+@layer base, utils, components;
+
+/* Import WebTUI base styles */
+@import "@webtui/css/base.css";
+
+/* Import WebTUI utilities */
+@import "@webtui/css/utils/box.css";
+
+/* Import WebTUI components */
+@import "@webtui/css/components/button.css";
+@import "@webtui/css/components/typography.css";
