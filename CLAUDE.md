@@ -108,8 +108,8 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 For consistency with terminal-style interfaces, follow these strict unit conventions:
 
-- **Allowed Units**: Use only `ch` (character width) and `lh` (line height) units for sizing
-- **Forbidden Units**: Do not use `px`, `em`, `rem`, `%`, `vw`, `vh` in custom CSS
+- **Allowed Units**: Use only `ch` (character width) units for sizing in custom CSS
+- **Forbidden Units**: Do not use `px`, `em`, `rem`, `%`, `vw`, `vh`, or `lh` in custom CSS
 - **Exception**: WebTUI utilities may use other units internally - this restriction applies only to custom CSS
 
 #### CSS Selector Conventions
