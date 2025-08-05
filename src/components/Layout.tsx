@@ -13,30 +13,19 @@ interface LayoutProps {
 
 /**
  * Main layout component that provides the overall structure for the application.
- * Includes the HTML document structure, navigation, and content area.
+ * Includes navigation and content area within a flex layout.
  * 
  * @param props - The layout props
  * @param props.children - The main content to be rendered
- * @param props.title - Optional page title, defaults to "Salacia"
- * @returns The complete page layout with navigation and content
+ * @returns The page layout with navigation and content
  */
-export function Layout({ children, title = 'Salacia' }: LayoutProps) {
+export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{title}</title>
-      </head>
-      <body>
-        <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <main className="flex-1 container mx-auto px-4 py-8">
-            {children}
-          </main>
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        {children}
+      </main>
+    </div>
   );
 }
