@@ -102,6 +102,15 @@ This project uses WebTUI as the primary design system and CSS framework:
 - **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
 - **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
 
+#### WebTUI Style Guide Requirements
+
+Follow the WebTUI style guide strictly:
+
+- **CSS Units**: Use only `ch` and `lh` units for measurements - avoid `em`, `px`, `rem`, `%`, or other units not related to character width or line height
+- **Selectors**: Use CSS `@layer` blocks for components and utilities - do not use classes or IDs for styling
+- **Attribute Selectors**: Use custom attribute selectors with a dash suffix, such as `[is-~="<component-name>"]` for custom components
+- **Semantic HTML**: Use HTML tags and attributes to determine behavior and appearance, following WebTUI's semantic approach
+
 ### Frontend Architecture
 
 - **React Components**: All interactive UI components should be built with React and TypeScript

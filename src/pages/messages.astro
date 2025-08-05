@@ -71,7 +71,7 @@ try {
 }
 ---
 
-<html lang="en">
+<html lang="en" data-webtui-theme="catppuccin-mocha">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -84,13 +84,12 @@ try {
   </head>
   <body>
     <Layout client:idle>
-      <div class="space-y-6">
+      <div>
         <!-- Page header -->
-        <div class="border-b border-gray-200 pb-4">
-          <h1 class="text-3xl font-bold text-foreground">Messages</h1>
-          <p class="mt-2 text-foreground-muted">
-            View and analyze AI interaction messages with comprehensive filtering and search
-            capabilities
+        <div style={{ paddingBottom: '1lh', borderBottom: '1px solid var(--background2, #45475A)', marginBottom: '2lh' }}>
+          <h1>Messages</h1>
+          <p style={{ marginTop: '1lh' }}>
+            View and analyze AI interaction messages with comprehensive filtering and search capabilities
           </p>
         </div>
 

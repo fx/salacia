@@ -13,3 +13,16 @@
 @import "@webtui/css/components/button.css";
 @import "@webtui/css/components/typography.css";
 @import "@webtui/css/components/table.css";
+
+/* Import Catppuccin theme */
+@import "@webtui/theme-catppuccin";
+
+/* Import Nerd Font plugin */
+@import "@webtui/plugin-nf";
+
+/* Set up Nerd Font in font family */
+@layer base {
+  :root {
+    --font-family: "Hack Nerd Font", ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace, "Symbols Nerd Font";
+  }
+}
