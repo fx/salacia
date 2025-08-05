@@ -10,56 +10,34 @@ import '../styles/global.css';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Salacia - Home</title>
   </head>
-  <body data-body="terminal">
+  <body>
     <Layout client:idle>
-      <div data-page="home">
+      <div>
         <!-- Terminal-style welcome header -->
-        <div box-="square" data-panel="welcome">
-          <div data-panel-header>
-            <span data-panel-title>WELCOME TO SALACIA</span>
-          </div>
-          <div data-panel-content>
-            <span>
+        <div box-="square">
+          <h2>WELCOME TO SALACIA</h2>
+          <p>
               LLM inference API proxy with database recording capabilities
-            </span>
-          </div>
+          </p>
         </div>
 
         <!-- Terminal-style system info -->
-        <div box-="square" data-panel="status">
-          <div data-panel-header>
-            <span data-panel-title>SYSTEM STATUS</span>
-          </div>
-          <div data-panel-content>
-            <div data-status-item>
-              Status: <span data-status="online">ONLINE</span>
-            </div>
-            <div data-status-item>
-              Database: <span data-status="online">CONNECTED</span>
-            </div>
-            <div data-status-item>
-              Theme: <span data-status="info">CATPPUCCIN-MOCHA</span>
-            </div>
-          </div>
+        <div box-="square">
+          <h3>SYSTEM STATUS</h3>
+          <ul>
+            <li>Status: <strong>ONLINE</strong></li>
+            <li>Database: <strong>CONNECTED</strong></li>
+            <li>Theme: <strong>CATPPUCCIN-MOCHA</strong></li>
+          </ul>
         </div>
 
         <!-- Terminal-style quick actions -->
-        <div box-="square" data-panel="actions">
-          <div data-panel-header>
-            <span data-panel-title>QUICK ACTIONS</span>
-          </div>
-          <div data-panel-content>
-            <div data-action-item>
-              <a href="/messages" data-action-link>
-                [1] View Messages Database →
-              </a>
-            </div>
-            <div data-action-item>
-              <span data-action-disabled>
-                [2] API Documentation (Coming Soon)
-              </span>
-            </div>
-          </div>
+        <div box-="square">
+          <h3>QUICK ACTIONS</h3>
+          <ul>
+            <li><a href="/messages">[1] View Messages Database →</a></li>
+            <li>[2] API Documentation (Coming Soon)</li>
+          </ul>
         </div>
       </div>
     </Layout>

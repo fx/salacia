@@ -7,21 +7,13 @@
  */
 export function Navigation() {
   return (
-    <nav data-nav="terminal">
-      <div data-nav-container>
-        {/* Terminal-style header box using WebTUI box utility */}
-        <div box-="square">
-          {/* Title and version header */}
-          <div data-nav-header>
-            <span data-nav-title>SALACIA</span>
-            <div data-nav-version>v0.0.1</div>
-          </div>
-          
-          {/* Navigation links */}
-          <div data-nav-links>
-            <a href="/" data-nav-link>[1] Home</a>
-            <a href="/messages" data-nav-link>[2] Messages</a>
-          </div>
+    <nav>
+      <div box-="square">
+        <div>
+          <strong>SALACIA</strong> <small>v0.0.1</small>
+        </div>
+        <div>
+          <a href="/">[1] Home</a> | <a href="/messages">[2] Messages</a>
         </div>
       </div>
     </nav>

@@ -82,23 +82,19 @@ try {
       content="View and manage AI interaction messages with advanced filtering and search capabilities"
     />
   </head>
-  <body data-body="terminal">
+  <body>
     <Layout client:idle>
-      <div data-page="messages">
+      <div>
         <!-- Terminal-style page header -->
-        <div box-="square" data-panel="header">
-          <div data-panel-header>
-            <span data-panel-title>MESSAGES MODULE</span>
-          </div>
-          <div data-panel-content>
-            <span>
+        <div box-="square">
+          <h2>MESSAGES MODULE</h2>
+          <p>
               AI interaction messages with filtering and search capabilities
-            </span>
-          </div>
+          </p>
         </div>
 
         <!-- Messages interface component with server-side data -->
-        <div data-messages-container>
+        <div>
           <MessagesApp
             client:load
             initialMessages={initialMessages}

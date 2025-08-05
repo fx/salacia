@@ -22,11 +22,11 @@ interface LayoutProps {
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div data-layout="terminal">
+    <>
       <Navigation />
-      <main data-content="main">
+      <main>
         {children}
       </main>
-    </div>
+    </>
   );
 }
