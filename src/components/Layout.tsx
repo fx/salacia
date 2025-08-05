@@ -21,6 +21,9 @@ interface LayoutProps {
  * @returns Terminal-style page layout with ASCII box navigation and content area
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
+  // Fixed border width to avoid SSR hydration mismatches
+  const borderWidth = 116;
+  
   return (
     <div data-webtui-box="terminal-layout" style={{
       height: '100vh',
@@ -38,7 +41,7 @@ export function Layout({ children }: Omit<LayoutProps, 'title'>) {
         fontSize: '1ch',
         letterSpacing: '0'
       }}>
-        ╭{'─'.repeat(114)}╮
+        ╭{'─'.repeat(borderWidth)}╮
       </div>
       
       {/* Navigation area with side borders */}
@@ -97,7 +100,7 @@ export function Layout({ children }: Omit<LayoutProps, 'title'>) {
         fontSize: '1ch',
         letterSpacing: '0'
       }}>
-        ╰{'─'.repeat(114)}╯
+        ╰{'─'.repeat(borderWidth)}╯
       </div>
     </div>
   );
