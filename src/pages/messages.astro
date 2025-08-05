@@ -71,7 +71,7 @@ try {
 }
 ---
 
-<html lang="en">
+<html lang="en" data-webtui-theme="catppuccin-mocha">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -82,16 +82,20 @@ try {
       content="View and manage AI interaction messages with advanced filtering and search capabilities"
     />
   </head>
-  <body>
+  <body data-webtui-theme="catppuccin-mocha">
     <Layout client:idle>
-      <div class="space-y-6">
+      <div data-webtui-page="messages" style="display: flex; flex-direction: column; gap: 2lh; font-family: 'Hack Nerd Font', 'Hack', 'Symbols Nerd Font', monospace;">
         <!-- Page header -->
-        <div class="border-b border-gray-200 pb-4">
-          <h1 class="text-3xl font-bold text-foreground">Messages</h1>
-          <p class="mt-2 text-foreground-muted">
-            View and analyze AI interaction messages with comprehensive filtering and search
-            capabilities
+        <div data-webtui-header="messages" style="border-bottom: 1px solid var(--webtui-color-border); padding-bottom: 2lh;">
+          <h1 data-webtui-text="page-title" style="font-size: 3ch; font-weight: bold; color: var(--webtui-color-text-primary);">
+            ╔══ MESSAGES ══╗
+          </h1>
+          <p data-webtui-text="page-desc" style="margin-top: 1lh; color: var(--webtui-color-text-secondary); font-size: 1ch; line-height: 1.5lh;">
+            ║ AI INTERACTION ANALYSIS WITH FILTERING & SEARCH ║
           </p>
+          <div data-webtui-text="header-decoration" style="color: var(--webtui-color-text-tertiary); font-size: 1ch;">
+            ╚═══════════════════════════════════════════════════╝
+          </div>
         </div>
 
         <!-- Messages interface component with server-side data -->

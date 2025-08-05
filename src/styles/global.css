@@ -6,6 +6,10 @@
 /* Import WebTUI base styles */
 @import "@webtui/css/base.css";
 
+/* Import theme and plugins after base styles */
+@import "@webtui/theme-catppuccin";
+@import "@webtui/plugin-nf";
+
 /* Import WebTUI utilities */
 @import "@webtui/css/utils/box.css";
 
@@ -13,3 +17,25 @@
 @import "@webtui/css/components/button.css";
 @import "@webtui/css/components/typography.css";
 @import "@webtui/css/components/table.css";
+
+@layer base {
+  /* Configure Hack Nerd Font with proper fallback stack */
+  html {
+    font-family: "Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace;
+  }
+  
+  /* Full viewport usage for terminal feel */
+  html, body {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  /* Terminal-like styling */
+  body {
+    background: var(--webtui-color-surface-base);
+    color: var(--webtui-color-text-primary);
+  }
+}

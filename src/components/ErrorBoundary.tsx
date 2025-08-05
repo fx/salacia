@@ -68,62 +68,146 @@ function DefaultErrorFallback(
 
   return (
     <div 
-      className="p-6 bg-red-50 border border-red-200 rounded-lg"
+      data-webtui-error="boundary"
       role="alert"
       aria-live="assertive"
+      style={{
+        padding: '2lh 3ch',
+        backgroundColor: 'var(--webtui-color-error-surface)',
+        border: '1px solid var(--webtui-color-error-border)',
+        borderRadius: '1ch',
+        fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+      }}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">
-          <span className="text-red-500 text-xl" aria-hidden="true">⚠️</span>
+      <div data-webtui-error="content" style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '2ch'
+      }}>
+        <div data-webtui-error="icon" style={{ flexShrink: 0 }}>
+          <span style={{ color: 'var(--webtui-color-error)', fontSize: '2ch' }} aria-hidden="true">⚠️</span>
         </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-medium text-red-800 mb-2">
-            Something went wrong {context && `in ${context}`}
+        <div data-webtui-error="message" style={{ flex: 1 }}>
+          <h3 data-webtui-text="error-title" style={{
+            fontSize: '2ch',
+            fontWeight: 'bold',
+            color: 'var(--webtui-color-error-text)',
+            marginBottom: '1lh'
+          }}>
+            ERROR {context && `IN ${context.toUpperCase()}`}
           </h3>
-          <p className="text-red-700 mb-4">
-            An unexpected error occurred while rendering this component. 
-            The error has been logged and reported.
+          <p data-webtui-text="error-desc" style={{
+            color: 'var(--webtui-color-error-text)',
+            marginBottom: '2lh',
+            lineHeight: '1.5lh'
+          }}>
+            COMPONENT RENDERING FAILED - ERROR LOGGED
           </p>
           
           {isDevelopment && (
-            <details className="mb-4">
-              <summary className="cursor-pointer text-sm font-medium text-red-800 hover:text-red-900">
-                Error Details (Development)
+            <details data-webtui-error="details" style={{ marginBottom: '2lh' }}>
+              <summary data-webtui-error="summary" style={{
+                cursor: 'pointer',
+                fontSize: '1ch',
+                fontWeight: 'bold',
+                color: 'var(--webtui-color-error-text)',
+                userSelect: 'none'
+              }}>
+                ► ERROR DETAILS (DEV)
               </summary>
-              <div className="mt-2 p-3 bg-red-100 rounded border border-red-300">
-                <pre className="text-sm text-red-800 whitespace-pre-wrap font-mono">
+              <div data-webtui-error="stack" style={{
+                marginTop: '1lh',
+                padding: '1lh 2ch',
+                backgroundColor: 'var(--webtui-color-error-surface-dim)',
+                border: '1px solid var(--webtui-color-error-border)',
+                borderRadius: '1ch'
+              }}>
+                <pre data-webtui-text="mono" style={{
+                  fontSize: '1ch',
+                  color: 'var(--webtui-color-error-text)',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace',
+                  lineHeight: '1.2lh',
+                  margin: 0
+                }}>
                   {error.message}
-                  {error.stack && `\n\nStack trace:\n${error.stack}`}
-                  {errorInfo.componentStack && `\n\nComponent stack:${errorInfo.componentStack}`}
+                  {error.stack && `\n\n>>> STACK TRACE:\n${error.stack}`}
+                  {errorInfo.componentStack && `\n\n>>> COMPONENT STACK:${errorInfo.componentStack}`}
                 </pre>
               </div>
             </details>
           )}
 
-          <div className="flex flex-wrap gap-2">
+          <div data-webtui-error="actions" style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2ch'
+          }}>
             <button
               type="button"
               onClick={retry}
-              className="wui-button wui-button-primary"
+              data-webtui-button="error-retry"
               aria-describedby="retry-help"
+              style={{
+                padding: '0.5lh 2ch',
+                backgroundColor: 'var(--webtui-color-error)',
+                color: 'var(--webtui-color-error-contrast)',
+                border: 'none',
+                borderRadius: '0.5ch',
+                fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace',
+                fontSize: '1ch',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.8';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
             >
-              Try Again
+              [RETRY]
             </button>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="wui-button wui-button-secondary"
+              data-webtui-button="error-reload"
               aria-describedby="reload-help"
+              style={{
+                padding: '0.5lh 2ch',
+                backgroundColor: 'transparent',
+                color: 'var(--webtui-color-error)',
+                border: '1px solid var(--webtui-color-error)',
+                borderRadius: '0.5ch',
+                fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace',
+                fontSize: '1ch',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--webtui-color-error)';
+                e.currentTarget.style.color = 'var(--webtui-color-error-contrast)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--webtui-color-error)';
+              }}
             >
-              Reload Page
+              [RELOAD]
             </button>
           </div>
           
-          <div className="mt-2 text-sm text-red-600">
-            <p id="retry-help" className="sr-only">
+          <div data-webtui-error="help" style={{
+            marginTop: '1lh',
+            fontSize: '1ch',
+            color: 'var(--webtui-color-error-text-dim)'
+          }}>
+            <p id="retry-help" style={{ position: 'absolute', left: '-10000px' }}>
               Try again to re-render the component
             </p>
-            <p id="reload-help" className="sr-only">
+            <p id="reload-help" style={{ position: 'absolute', left: '-10000px' }}>
               Reload the entire page to reset the application state
             </p>
           </div>
@@ -213,7 +297,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render(): ReactNode {
     const { hasError, error, errorInfo } = this.state;
-    const { children, fallback, context, className = '' } = this.props;
+    const { children, fallback, context } = this.props;
 
     if (hasError && error && errorInfo) {
       // Use custom fallback if provided, otherwise use default
@@ -222,7 +306,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         : DefaultErrorFallback(error, errorInfo, this.retry, context);
 
       return (
-        <div className={className}>
+        <div data-webtui-error="wrapper" style={{
+          fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+        }}>
           {fallbackContent}
         </div>
       );
@@ -230,7 +316,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Use key to force remount on retry
     return (
-      <div key={this.state.retryCount} className={className}>
+      <div key={this.state.retryCount} data-webtui-boundary="container">
         {children}
       </div>
     );

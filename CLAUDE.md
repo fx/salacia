@@ -98,9 +98,32 @@ This project uses WebTUI as the primary design system and CSS framework:
 
 - **Documentation**: Always refer to https://webtui.ironclad.sh/start/intro/ for WebTUI documentation
 - **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
-- **Styling Guidelines**: Contain any custom styling within components that directly use WebTUI or very simple CSS based on WebTUI patterns
 - **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
 - **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
+
+#### WebTUI Style Guide Requirements
+
+**CRITICAL CSS UNIT RESTRICTIONS:**
+- Use ONLY `ch` and `lh` units for all measurements
+- **ch unit**: Character width (1ch = width of the '0' character)
+- **lh unit**: Line height (1lh = computed line-height value)
+- **FORBIDDEN**: `rem`, `em`, `px`, `%`, `vw`, `vh` units in component styles
+- **EXCEPTION**: `vw`/`vh` only permitted for full-viewport layouts
+
+**SELECTOR REQUIREMENTS:**
+- Use ONLY attribute selectors with dash suffix pattern: `[data-webtui-*="component-name"]`
+- **FORBIDDEN**: Class selectors (`.className`) or ID selectors (`#id`)
+- **Example**: `[data-webtui-button="primary"]` instead of `.btn-primary`
+
+**TYPOGRAPHY GUIDELINES:**
+- Default font: `"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace`
+- Terminal-style interface with ASCII box drawing characters
+- Dense but clear information hierarchy similar to Claude Code interface
+
+**LAYOUT PATTERNS:**
+- Full viewport usage (100vw/100vh) for terminal feel
+- ASCII box drawing characters for UI structure
+- Consistent spacing using ch/lh units for monospace alignment
 
 ### Frontend Architecture
 

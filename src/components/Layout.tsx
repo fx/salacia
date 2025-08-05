@@ -12,20 +12,93 @@ interface LayoutProps {
 }
 
 /**
- * Main layout component that provides the overall structure for the application.
- * Includes navigation and content area within a flex layout.
+ * Main layout component providing terminal-style ASCII box layout structure.
+ * Creates a full-viewport terminal interface with ASCII box drawing characters
+ * similar to Claude Code's interface aesthetic.
  * 
  * @param props - The layout props
  * @param props.children - The main content to be rendered
- * @returns The page layout with navigation and content
+ * @returns Terminal-style page layout with ASCII box navigation and content area
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div data-webtui-box="terminal-layout" style={{
+      height: '100vh',
+      width: '100vw',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+    }}>
+      {/* Terminal top border */}
+      <div data-webtui-border="top" style={{
+        height: '1lh',
+        lineHeight: '1lh',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        fontSize: '1ch',
+        letterSpacing: '0'
+      }}>
+        ╭{'─'.repeat(Math.floor((typeof window !== 'undefined' ? window.innerWidth : 120) / 8) - 2)}╮
+      </div>
+      
+      {/* Navigation area with side borders */}
       <Navigation />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        {children}
+      
+      {/* Content area with side borders and padding */}
+      <main data-webtui-content="main" style={{
+        flex: '1',
+        display: 'flex',
+        minHeight: '0',
+        overflow: 'hidden'
+      }}>
+        {/* Left border */}
+        <div data-webtui-border="left" style={{
+          width: '1ch',
+          fontSize: '1ch',
+          lineHeight: '1lh',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{ flex: '1', writingMode: 'vertical-lr', textOrientation: 'mixed' }}>
+            {'│'.repeat(50)}
+          </div>
+        </div>
+        
+        {/* Content with terminal padding */}
+        <div data-webtui-content="body" style={{
+          flex: '1',
+          padding: '1lh 2ch',
+          overflow: 'auto',
+          minHeight: '0'
+        }}>
+          {children}
+        </div>
+        
+        {/* Right border */}
+        <div data-webtui-border="right" style={{
+          width: '1ch',
+          fontSize: '1ch',
+          lineHeight: '1lh',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{ flex: '1', writingMode: 'vertical-lr', textOrientation: 'mixed' }}>
+            {'│'.repeat(50)}
+          </div>
+        </div>
       </main>
+      
+      {/* Terminal bottom border */}
+      <div data-webtui-border="bottom" style={{
+        height: '1lh',
+        lineHeight: '1lh',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        fontSize: '1ch',
+        letterSpacing: '0'
+      }}>
+        ╰{'─'.repeat(Math.floor((typeof window !== 'undefined' ? window.innerWidth : 120) / 8) - 2)}╯
+      </div>
     </div>
   );
 }

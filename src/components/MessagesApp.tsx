@@ -155,9 +155,14 @@ export function MessagesApp({
     : [];
 
   return (
-    <div className="space-y-6">
+    <div data-webtui-messages="app" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '2lh',
+      fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+    }}>
       {/* Filters section */}
-      <ErrorBoundary context="Table Filters">
+      <ErrorBoundary context="TABLE_FILTERS">
         <TableFilters
           filters={state.filters}
           onFiltersChange={handleFiltersChange}
@@ -168,27 +173,66 @@ export function MessagesApp({
       </ErrorBoundary>
 
       {/* Main content area */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div data-webtui-messages="content" style={{
+        backgroundColor: 'var(--webtui-color-surface-base)',
+        borderRadius: '1ch',
+        border: '1px solid var(--webtui-color-border)',
+        overflow: 'hidden'
+      }}>
         {/* Error state */}
         {state.error && (
-          <div className="p-6 text-center" role="alert" aria-live="polite">
-            <div className="text-red-600 mb-4">
-              <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
-              <p className="text-sm">{state.error}</p>
+          <div data-webtui-messages="error" style={{
+            padding: '3lh 4ch',
+            textAlign: 'center'
+          }} role="alert" aria-live="polite">
+            <div data-webtui-error="content" style={{
+              color: 'var(--webtui-color-error)',
+              marginBottom: '2lh'
+            }}>
+              <h3 data-webtui-text="error-title" style={{
+                fontSize: '2ch',
+                fontWeight: 'bold',
+                marginBottom: '1lh'
+              }}>
+                ▲ MESSAGES LOADING FAILED
+              </h3>
+              <p data-webtui-text="error-detail" style={{
+                fontSize: '1ch',
+                opacity: 0.8
+              }}>
+                {state.error}
+              </p>
             </div>
             <button
               onClick={handleRetry}
-              className="wui-button wui-button-primary"
+              data-webtui-button="retry"
               type="button"
+              style={{
+                padding: '1lh 3ch',
+                backgroundColor: 'var(--webtui-color-primary)',
+                color: 'var(--webtui-color-primary-contrast)',
+                border: 'none',
+                borderRadius: '0.5ch',
+                fontSize: '1ch',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.8';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
             >
-              Try Again
+              [RETRY_LOAD]
             </button>
           </div>
         )}
 
         {/* Messages table */}
         {!state.error && (
-          <ErrorBoundary context="Messages Table">
+          <ErrorBoundary context="MESSAGES_TABLE">
             <MessagesTable
               messages={state.data?.messages || []}
               isLoading={state.isLoading}
@@ -201,7 +245,7 @@ export function MessagesApp({
 
         {/* Pagination */}
         {!state.error && state.data && (
-          <ErrorBoundary context="Pagination">
+          <ErrorBoundary context="PAGINATION">
             <Pagination
               currentPage={state.data.currentPage}
               totalPages={state.data.totalPages}
@@ -217,16 +261,53 @@ export function MessagesApp({
       {/* Loading overlay for better UX */}
       {state.isLoading && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50"
+          data-webtui-loading="overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            fontFamily: '"Hack Nerd Font", "Hack", "Symbols Nerd Font", monospace'
+          }}
           role="status"
           aria-live="polite"
         >
-          <div className="bg-white rounded-lg p-6 shadow-lg flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-gray-700">Loading messages...</span>
+          <div data-webtui-loading="dialog" style={{
+            backgroundColor: 'var(--webtui-color-surface-base)',
+            borderRadius: '1ch',
+            padding: '2lh 4ch',
+            border: '1px solid var(--webtui-color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2ch'
+          }}>
+            <div data-webtui-loading="spinner" style={{
+              width: '2ch',
+              height: '2ch',
+              border: '2px solid var(--webtui-color-border)',
+              borderTop: '2px solid var(--webtui-color-primary)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <span data-webtui-loading="text" style={{
+              color: 'var(--webtui-color-text-primary)',
+              fontSize: '1ch'
+            }}>
+              LOADING_MESSAGES...
+            </span>
           </div>
         </div>
       )}
+      
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

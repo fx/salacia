@@ -3,20 +3,25 @@ import { Layout } from '../components/Layout';
 import '../styles/global.css';
 ---
 
-<html lang="en">
+<html lang="en" data-webtui-theme="catppuccin-mocha">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Salacia - Home</title>
   </head>
-  <body>
+  <body data-webtui-theme="catppuccin-mocha">
     <Layout client:idle>
-      <div>
-        <h1 class="text-3xl font-bold text-foreground mb-6">Welcome to Salacia</h1>
-        <p class="text-foreground-muted text-lg">
-          LLM inference API proxy with database recording capabilities
+      <div data-webtui-page="home" style="font-family: 'Hack Nerd Font', 'Hack', 'Symbols Nerd Font', monospace;">
+        <h1 data-webtui-text="title" style="font-size: 3ch; font-weight: bold; color: var(--webtui-color-text-primary); margin-bottom: 2lh;">
+          ╔══ SALACIA ══╗
+        </h1>
+        <p data-webtui-text="subtitle" style="color: var(--webtui-color-text-secondary); font-size: 1.2ch; line-height: 1.5lh;">
+          ║ LLM INFERENCE API PROXY WITH DATABASE RECORDING ║
         </p>
+        <div data-webtui-text="decoration" style="margin-top: 1lh; color: var(--webtui-color-text-tertiary); font-size: 1ch;">
+          ╚══════════════════════════════════════════════════╝
+        </div>
       </div>
     </Layout>
   </body>
