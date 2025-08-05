@@ -117,13 +117,13 @@ export function buildApiUrlParams(
  * @param data - Raw API response data
  * @returns Parsed data with Date objects restored
  */
-export function parseApiResponseDates(data: any): MessagesPaginatedResult {
+export function parseApiResponseDates(data: unknown): MessagesPaginatedResult {
   // Parse the outer structure
-  const result = { ...data };
+  const result = { ...data } as MessagesPaginatedResult;
 
   // Parse dates in each message
   if (result.messages && Array.isArray(result.messages)) {
-    result.messages = result.messages.map((message: any): MessageDisplay => ({
+    result.messages = result.messages.map((message: MessageDisplay & { createdAt: string }): MessageDisplay => ({
       ...message,
       createdAt: new Date(message.createdAt),
     }));
@@ -190,9 +190,9 @@ export class MessagesClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        let errorData: any = {};
+        let errorData: { error?: string; code?: string; details?: unknown } = {};
         try {
-          errorData = await response.json();
+          errorData = await response.json() as { error?: string; code?: string; details?: unknown };
         } catch {
           // Response body is not JSON, use default error structure
         }
@@ -264,9 +264,9 @@ export class MessagesClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        let errorData: any = {};
+        let errorData: { error?: string; code?: string; details?: unknown } = {};
         try {
-          errorData = await response.json();
+          errorData = await response.json() as { error?: string; code?: string; details?: unknown };
         } catch {
           // Response body is not JSON, use default error structure
         }

@@ -27,6 +27,9 @@ export default [
         Math: 'readonly',
         JSON: 'readonly',
         URLSearchParams: 'readonly',
+        fetch: 'readonly',
+        AbortController: 'readonly',
+        clearTimeout: 'readonly',
         // Vitest globals
         describe: 'readonly',
         it: 'readonly',
