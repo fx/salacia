@@ -1,0 +1,57 @@
+import type {
+  MessagesCursorPaginationParams,
+  MessagesCursorPaginationResponse,
+} from '../types/cursor.js';
+import type { MessageDisplay, MessagesFilterParams } from '../types/messages.js';
+
+/**
+ * Client for interacting with the messages API endpoints.
+ * Provides methods for fetching messages with cursor-based pagination.
+ */
+export class MessagesClient {
+  private baseUrl = '/api/v1/messages';
+
+  /**
+   * Fetches messages using cursor-based pagination.
+   *
+   * @param params - Cursor pagination parameters
+   * @param filters - Optional filtering criteria
+   * @returns Promise resolving to cursor-paginated response
+   * @throws Error if the API request fails
+   */
+  async getMessagesWithCursor(
+    params: MessagesCursorPaginationParams = {},
+    filters: MessagesFilterParams = {}
+  ): Promise<MessagesCursorPaginationResponse<MessageDisplay>> {
+    const queryParams = new URLSearchParams();
+
+    // Add pagination parameters
+    if (params.limit) queryParams.set('limit', params.limit.toString());
+    if (params.cursor) queryParams.set('cursor', params.cursor);
+    if (params.sortBy) queryParams.set('sortBy', params.sortBy);
+    if (params.sortDirection) queryParams.set('sortDirection', params.sortDirection);
+
+    // Add filter parameters
+    if (filters.model) queryParams.set('model', filters.model);
+    if (filters.startDate) queryParams.set('startDate', filters.startDate.toISOString());
+    if (filters.endDate) queryParams.set('endDate', filters.endDate.toISOString());
+    if (filters.hasError !== undefined) queryParams.set('hasError', filters.hasError.toString());
+    if (filters.minTokens !== undefined) queryParams.set('minTokens', filters.minTokens.toString());
+    if (filters.maxTokens !== undefined) queryParams.set('maxTokens', filters.maxTokens.toString());
+    if (filters.searchTerm) queryParams.set('searchTerm', filters.searchTerm);
+
+    const response = await fetch(`${this.baseUrl}/cursor?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+}
