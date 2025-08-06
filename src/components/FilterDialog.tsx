@@ -169,6 +169,7 @@ export function FilterDialog({
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
       position-="center"
+      box-="square"
     >
       <div onClick={(e) => e.stopPropagation()}>
         <h2>Filters</h2>
