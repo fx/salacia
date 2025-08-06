@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { 
   MessageDisplay, 
   MessagesCursorPaginatedResult 
@@ -73,7 +73,7 @@ const DEFAULT_OPTIONS: Required<UseMessagesOptions> = {
  */
 export function useMessages(options: UseMessagesOptions = {}): UseMessagesReturn {
   const config = { ...DEFAULT_OPTIONS, ...options };
-  const client = new MessagesClient();
+  const client = useMemo(() => new MessagesClient(), []);
 
   // State management
   const [state, setState] = useState<UseMessagesState>({
@@ -207,7 +207,7 @@ export function useMessages(options: UseMessagesOptions = {}): UseMessagesReturn
     if (config.autoLoad) {
       loadMessages();
     }
-  }, []); // Only run on mount
+  }, [loadMessages, config.autoLoad]);
 
   return {
     // State
