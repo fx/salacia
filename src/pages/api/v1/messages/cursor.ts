@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ url }) => {
     };
 
     // Validate limit
-    if (params.limit < 1 || params.limit > 100) {
+    if (!params.limit || params.limit < 1 || params.limit > 100) {
       return new Response(JSON.stringify({ error: 'Invalid limit parameter' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
