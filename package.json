@@ -22,11 +22,16 @@
     "astro": "^5.12.8",
     "drizzle-orm": "^0.44.4",
     "postgres": "^3.4.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^9.3.3",
+    "@astrojs/react": "^4.1.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "drizzle-kit": "^0.31.4",
