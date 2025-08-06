@@ -155,7 +155,7 @@ export function MessagesApp({
     : [];
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2ch' }}>
       {/* Filters section */}
       <ErrorBoundary context="Table Filters">
         <TableFilters
@@ -168,17 +168,18 @@ export function MessagesApp({
       </ErrorBoundary>
 
       {/* Main content area */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div>
         {/* Error state */}
         {state.error && (
-          <div className="p-6 text-center" role="alert" aria-live="polite">
-            <div className="text-red-600 mb-4">
-              <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
-              <p className="text-sm">{state.error}</p>
+          <div style={{ padding: '2ch', textAlign: 'center' }} role="alert" aria-live="polite">
+            <div style={{ marginBottom: '2ch' }}>
+              <h3 style={{ marginBottom: '1ch' }}>Error Loading Messages</h3>
+              <p><small>{state.error}</small></p>
             </div>
             <button
               onClick={handleRetry}
-              className="wui-button wui-button-primary"
+              is-="button"
+              variant-="primary"
               type="button"
             >
               Try Again
@@ -217,13 +218,20 @@ export function MessagesApp({
       {/* Loading overlay for better UX */}
       {state.isLoading && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50"
+          style={{ 
+            position: 'fixed', 
+            inset: '0', 
+            backgroundColor: 'rgba(0, 0, 0, 0.2)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: '50' 
+          }}
           role="status"
           aria-live="polite"
         >
-          <div className="bg-white rounded-lg p-6 shadow-lg flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-gray-700">Loading messages...</span>
+          <div style={{ padding: '2ch', display: 'flex', alignItems: 'center', gap: '1ch' }}>
+            <span>Loading messages...</span>
           </div>
         </div>
       )}
