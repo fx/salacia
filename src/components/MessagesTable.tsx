@@ -1,17 +1,17 @@
 /**
  * MessagesTable component for displaying paginated AI interaction messages.
- * 
+ *
  * This component uses TanStack React Table for advanced table functionality including
  * sorting, filtering, and pagination. It integrates with WebTUI design system for
  * consistent styling and accessibility.
- * 
+ *
  * Features:
  * - Sortable columns with visual indicators
  * - Column resizing and reordering
  * - Responsive design with mobile-friendly layouts
  * - Accessibility support with ARIA attributes
  * - Error handling with fallback UI
- * 
+ *
  * @module MessagesTable
  */
 
@@ -51,7 +51,7 @@ const columnHelper = createColumnHelper<MessageDisplay>();
 
 /**
  * Formats a date to a human-readable string.
- * 
+ *
  * @param date - Date to format
  * @returns Formatted date string
  */
@@ -67,7 +67,7 @@ function formatDate(date: Date): string {
 
 /**
  * Formats a number with proper thousands separators.
- * 
+ *
  * @param num - Number to format
  * @returns Formatted number string
  */
@@ -77,7 +77,7 @@ function formatNumber(num: number): string {
 
 /**
  * Truncates text to specified length with ellipsis.
- * 
+ *
  * @param text - Text to truncate
  * @param maxLength - Maximum length before truncation
  * @returns Truncated text with ellipsis if needed
@@ -90,7 +90,7 @@ function truncateText(text: string, maxLength: number = 50): string {
 /**
  * MessagesTable component for displaying AI interaction messages in a sortable table.
  * Provides comprehensive message information with responsive design and accessibility.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the messages table
  */
@@ -106,137 +106,110 @@ export function MessagesTable({
    * Column definitions for the messages table.
    * Memoized to prevent unnecessary re-renders.
    */
-  const columns = useMemo(() => [
-    columnHelper.accessor('createdAt', {
-      header: 'Created',
-      cell: (info) => (
-        <time
-          dateTime={info.getValue().toISOString()}
-          title={formatDate(info.getValue())}
-        >
-          <small>{formatDate(info.getValue())}</small>
-        </time>
-      ),
-      sortingFn: 'datetime',
-      enableSorting: true,
-    }),
-    columnHelper.accessor('model', {
-      header: 'Model',
-      cell: (info) => (
-        <strong title={info.getValue()}>
-          {info.getValue()}
-        </strong>
-      ),
-      enableSorting: true,
-    }),
-    columnHelper.accessor('provider', {
-      header: 'Provider',
-      cell: (info) => {
-        const provider = info.getValue();
-        return provider ? (
-          <small title={provider}>
-            {provider}
-          </small>
-        ) : (
-          <small>—</small>
-        );
-      },
-      enableSorting: false,
-    }),
-    columnHelper.accessor('isSuccess', {
-      header: 'Status',
-      cell: (info) => {
-        const isSuccess = info.getValue();
-        const statusCode = info.row.original.statusCode;
-        const error = info.row.original.error;
-        
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
-            <span
-              box-="square"
-              variant-={isSuccess ? 'success' : 'error'}
-              title={error || `HTTP ${statusCode}`}
-            >
-              <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
-            </span>
-            {statusCode && (
-              <small title={`HTTP Status: ${statusCode}`}>
-                {statusCode}
-              </small>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-    }),
-    columnHelper.accessor('totalTokens', {
-      header: 'Tokens',
-      cell: (info) => {
-        const tokens = info.getValue();
-        return tokens ? (
-          <small title={`Total tokens: ${formatNumber(tokens)}`}>
-            {formatNumber(tokens)}
-          </small>
-        ) : (
-          <small>—</small>
-        );
-      },
-      enableSorting: true,
-    }),
-    columnHelper.accessor('responseTime', {
-      header: 'Response Time',
-      cell: (info) => {
-        const responseTime = info.getValue();
-        return responseTime ? (
-          <small
-            title={`Response time: ${responseTime}ms`}
-          >
-            {responseTime}ms
-          </small>
-        ) : (
-          <small>—</small>
-        );
-      },
-      enableSorting: true,
-    }),
-    columnHelper.accessor('requestPreview', {
-      header: 'Request Preview',
-      cell: (info) => (
-        <code
-          title={info.getValue()}
-        >
-          {truncateText(info.getValue(), 40)}
-        </code>
-      ),
-      enableSorting: false,
-    }),
-    columnHelper.accessor('responsePreview', {
-      header: 'Response Preview',
-      cell: (info) => {
-        const preview = info.getValue();
-        return preview ? (
-          <code
-            title={preview}
-          >
-            {truncateText(preview, 40)}
-          </code>
-        ) : (
-          <small>—</small>
-        );
-      },
-      enableSorting: false,
-    }),
-  ], []);
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('createdAt', {
+        header: 'Created',
+        cell: info => (
+          <time dateTime={info.getValue().toISOString()} title={formatDate(info.getValue())}>
+            <small>{formatDate(info.getValue())}</small>
+          </time>
+        ),
+        sortingFn: 'datetime',
+        enableSorting: true,
+      }),
+      columnHelper.accessor('model', {
+        header: 'Model',
+        cell: info => <strong title={info.getValue()}>{info.getValue()}</strong>,
+        enableSorting: true,
+      }),
+      columnHelper.accessor('provider', {
+        header: 'Provider',
+        cell: info => {
+          const provider = info.getValue();
+          return provider ? <small title={provider}>{provider}</small> : <small>—</small>;
+        },
+        enableSorting: false,
+      }),
+      columnHelper.accessor('isSuccess', {
+        header: 'Status',
+        cell: info => {
+          const isSuccess = info.getValue();
+          const statusCode = info.row.original.statusCode;
+          const error = info.row.original.error;
+
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
+              <span
+                box-="square"
+                variant-={isSuccess ? 'success' : 'error'}
+                title={error || `HTTP ${statusCode}`}
+              >
+                <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
+              </span>
+              {statusCode && <small title={`HTTP Status: ${statusCode}`}>{statusCode}</small>}
+            </div>
+          );
+        },
+        enableSorting: false,
+      }),
+      columnHelper.accessor('totalTokens', {
+        header: 'Tokens',
+        cell: info => {
+          const tokens = info.getValue();
+          return tokens ? (
+            <small title={`Total tokens: ${formatNumber(tokens)}`}>{formatNumber(tokens)}</small>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('responseTime', {
+        header: 'Response Time',
+        cell: info => {
+          const responseTime = info.getValue();
+          return responseTime ? (
+            <small title={`Response time: ${responseTime}ms`}>{responseTime}ms</small>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('requestPreview', {
+        header: 'Request Preview',
+        cell: info => <code title={info.getValue()}>{truncateText(info.getValue(), 40)}</code>,
+        enableSorting: false,
+      }),
+      columnHelper.accessor('responsePreview', {
+        header: 'Response Preview',
+        cell: info => {
+          const preview = info.getValue();
+          return preview ? (
+            <code title={preview}>{truncateText(preview, 40)}</code>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: false,
+      }),
+    ],
+    []
+  );
 
   /**
    * Convert our sort format to TanStack Table format.
    */
-  const sorting = useMemo<SortingState>(() => [
-    {
-      id: sort.field,
-      desc: sort.direction === 'desc',
-    },
-  ], [sort.field, sort.direction]);
+  const sorting = useMemo<SortingState>(
+    () => [
+      {
+        id: sort.field,
+        desc: sort.direction === 'desc',
+      },
+    ],
+    [sort.field, sort.direction]
+  );
 
   /**
    * TanStack Table instance with configuration.
@@ -249,7 +222,7 @@ export function MessagesTable({
     state: {
       sorting,
     },
-    onSortingChange: (updater) => {
+    onSortingChange: updater => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
       const newSort = newSorting[0];
       if (newSort) {
@@ -269,7 +242,9 @@ export function MessagesTable({
       <div role="alert" aria-live="polite">
         <div variant-="error" box-="square" style={{ textAlign: 'center' }}>
           <h3>Error Loading Messages</h3>
-          <p><small>{error}</small></p>
+          <p>
+            <small>{error}</small>
+          </p>
         </div>
       </div>
     );
@@ -279,9 +254,11 @@ export function MessagesTable({
   if (isLoading) {
     return (
       <div aria-busy="true" aria-live="polite">
-        <div style={{ padding: '1lh', textAlign: 'center' }}>
-          <div style={{ marginBottom: '1lh' }}>⟳</div>
-          <p><small>Loading messages...</small></p>
+        <div style={{ textAlign: 'center' }}>
+          <div>⟳</div>
+          <p>
+            <small>Loading messages...</small>
+          </p>
         </div>
       </div>
     );
@@ -291,9 +268,11 @@ export function MessagesTable({
   if (messages.length === 0) {
     return (
       <div role="status" aria-live="polite">
-        <div style={{ padding: '1lh', textAlign: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
           <h3>No Messages Found</h3>
-          <p><small>There are no messages matching your current filters.</small></p>
+          <p>
+            <small>There are no messages matching your current filters.</small>
+          </p>
         </div>
       </div>
     );
@@ -301,21 +280,21 @@ export function MessagesTable({
 
   return (
     <div role="region" aria-label="Messages table">
-      <table is-="table" role="table">
+      <table is-="table" role="table" style={{ width: '100%' }}>
         <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
+          {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} role="row">
-              {headerGroup.headers.map((header) => (
+              {headerGroup.headers.map(header => (
                 <th
                   key={header.id}
                   role="columnheader"
                   style={{
                     cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                    userSelect: 'none'
+                    userSelect: 'none',
                   }}
                   onClick={header.column.getToggleSortingHandler()}
                   tabIndex={header.column.getCanSort() ? 0 : -1}
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
                       e.preventDefault();
                       header.column.getToggleSortingHandler()?.(e);
@@ -327,8 +306,8 @@ export function MessagesTable({
                         ? 'descending'
                         : 'ascending'
                       : header.column.getCanSort()
-                      ? 'none'
-                      : undefined
+                        ? 'none'
+                        : undefined
                   }
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
@@ -336,11 +315,11 @@ export function MessagesTable({
                     {header.column.getCanSort() && (
                       <span aria-hidden="true">
                         <small>
-                          {header.column.getIsSorted() === 'desc' 
-                            ? '↓' 
-                            : header.column.getIsSorted() === 'asc' 
-                            ? '↑' 
-                            : '↕'}
+                          {header.column.getIsSorted() === 'desc'
+                            ? '↓'
+                            : header.column.getIsSorted() === 'asc'
+                              ? '↑'
+                              : '↕'}
                         </small>
                       </span>
                     )}
@@ -351,9 +330,9 @@ export function MessagesTable({
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row) => (
+          {table.getRowModel().rows.map(row => (
             <tr key={row.id} role="row">
-              {row.getVisibleCells().map((cell) => (
+              {row.getVisibleCells().map(cell => (
                 <td key={cell.id} role="gridcell">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>

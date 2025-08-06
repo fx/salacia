@@ -140,7 +140,7 @@ export function Pagination({
 
   return (
     <nav
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1ch', padding: '1lh' }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1ch' }}
       role="navigation"
       aria-label="Pagination navigation"
     >
@@ -181,7 +181,7 @@ export function Pagination({
               1
             </button>
             {pageNumbers[0] > 2 && (
-              <span style={{ padding: '0 1ch' }} aria-hidden="true">
+              <span aria-hidden="true">
                 <small>…</small>
               </span>
             )}
@@ -214,7 +214,7 @@ export function Pagination({
         {pageNumbers[pageNumbers.length - 1] < totalPages && (
           <>
             {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-              <span style={{ padding: '0 1ch' }} aria-hidden="true">
+              <span aria-hidden="true">
                 <small>…</small>
               </span>
             )}

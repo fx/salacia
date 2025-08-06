@@ -70,7 +70,6 @@ function DefaultErrorFallback(
     <div
       variant-="error"
       box-="square"
-      style={{ padding: '1lh' }}
       role="alert"
       aria-live="assertive"
     >
@@ -79,20 +78,20 @@ function DefaultErrorFallback(
           <span aria-hidden="true">⚠️</span>
         </div>
         <div style={{ flex: 1 }}>
-          <h3 style={{ marginBottom: '1lh' }}>
+          <h3>
             Something went wrong {context && `in ${context}`}
           </h3>
-          <p style={{ marginBottom: '1lh' }}>
+          <p>
             An unexpected error occurred while rendering this component. 
             The error has been logged and reported.
           </p>
           
           {isDevelopment && (
-            <details style={{ marginBottom: '1lh' }}>
+            <details>
               <summary style={{ cursor: 'pointer' }}>
                 <small><strong>Error Details (Development)</strong></small>
               </summary>
-              <div variant-="error" box-="square" style={{ marginTop: '1lh' }}>
+              <div variant-="error" box-="square">
                 <pre>
                   <code>
                     {error.message}
@@ -125,7 +124,7 @@ function DefaultErrorFallback(
             </button>
           </div>
           
-          <div style={{ marginTop: '1lh' }}>
+          <div>
             <p id="retry-help" style={{ position: 'absolute', left: '-10000px' }}>
               <small>Try again to re-render the component</small>
             </p>

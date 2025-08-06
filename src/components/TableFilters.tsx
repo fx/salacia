@@ -1,10 +1,10 @@
 /**
  * TableFilters component for filtering messages table data.
- * 
+ *
  * This component provides a comprehensive filtering interface for the messages table,
  * including text search, date ranges, model selection, and numerical filters.
  * Uses WebTUI design system for consistent styling and accessibility.
- * 
+ *
  * Features:
  * - Text search with debounced input
  * - Date range picker for filtering by creation date
@@ -13,7 +13,7 @@
  * - Success/error status toggle
  * - Clear all filters functionality
  * - Accessible form controls with proper labeling
- * 
+ *
  * @module TableFilters
  */
 
@@ -40,7 +40,7 @@ export interface TableFiltersProps {
 
 /**
  * Hook for debouncing input values to avoid excessive API calls.
- * 
+ *
  * @param value - Value to debounce
  * @param delay - Delay in milliseconds
  * @returns Debounced value
@@ -63,7 +63,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 /**
  * Formats a date to YYYY-MM-DD format for HTML date inputs.
- * 
+ *
  * @param date - Date to format
  * @returns Formatted date string
  */
@@ -74,7 +74,7 @@ function formatDateForInput(date: Date): string {
 /**
  * TableFilters component providing comprehensive filtering controls for messages.
  * Integrates with WebTUI design system and includes debounced inputs for performance.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the filter controls
  */
@@ -90,8 +90,12 @@ export function TableFilters({
   const [localSearchTerm, setLocalSearchTerm] = useState(filters.searchTerm || '');
   const [localMinTokens, setLocalMinTokens] = useState(filters.minTokens?.toString() || '');
   const [localMaxTokens, setLocalMaxTokens] = useState(filters.maxTokens?.toString() || '');
-  const [localMinResponseTime, setLocalMinResponseTime] = useState(filters.minResponseTime?.toString() || '');
-  const [localMaxResponseTime, setLocalMaxResponseTime] = useState(filters.maxResponseTime?.toString() || '');
+  const [localMinResponseTime, setLocalMinResponseTime] = useState(
+    filters.minResponseTime?.toString() || ''
+  );
+  const [localMaxResponseTime, setLocalMaxResponseTime] = useState(
+    filters.maxResponseTime?.toString() || ''
+  );
 
   // Debounced values to reduce API calls
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
@@ -109,18 +113,21 @@ export function TableFilters({
       searchTerm: debouncedSearchTerm || undefined,
       minTokens: debouncedMinTokens ? parseInt(debouncedMinTokens, 10) : undefined,
       maxTokens: debouncedMaxTokens ? parseInt(debouncedMaxTokens, 10) : undefined,
-      minResponseTime: debouncedMinResponseTime ? parseInt(debouncedMinResponseTime, 10) : undefined,
-      maxResponseTime: debouncedMaxResponseTime ? parseInt(debouncedMaxResponseTime, 10) : undefined,
+      minResponseTime: debouncedMinResponseTime
+        ? parseInt(debouncedMinResponseTime, 10)
+        : undefined,
+      maxResponseTime: debouncedMaxResponseTime
+        ? parseInt(debouncedMaxResponseTime, 10)
+        : undefined,
     };
 
     // Only update if something actually changed
-    const hasChanges = (
+    const hasChanges =
       newFilters.searchTerm !== filters.searchTerm ||
       newFilters.minTokens !== filters.minTokens ||
       newFilters.maxTokens !== filters.maxTokens ||
       newFilters.minResponseTime !== filters.minResponseTime ||
-      newFilters.maxResponseTime !== filters.maxResponseTime
-    );
+      newFilters.maxResponseTime !== filters.maxResponseTime;
 
     if (hasChanges) {
       onFiltersChange(newFilters);
@@ -138,13 +145,13 @@ export function TableFilters({
   /**
    * Handles direct filter updates (non-debounced inputs).
    */
-  const updateFilter = useCallback(<K extends keyof MessagesFilterParams>(
-    key: K,
-    value: MessagesFilterParams[K]
-  ) => {
-    const newFilters = { ...filters, [key]: value };
-    onFiltersChange(newFilters);
-  }, [filters, onFiltersChange]);
+  const updateFilter = useCallback(
+    <K extends keyof MessagesFilterParams>(key: K, value: MessagesFilterParams[K]) => {
+      const newFilters = { ...filters, [key]: value };
+      onFiltersChange(newFilters);
+    },
+    [filters, onFiltersChange]
+  );
 
   /**
    * Clears all filters and resets local state.
@@ -161,13 +168,13 @@ export function TableFilters({
   /**
    * Counts the number of active filters for UI display.
    */
-  const activeFiltersCount = Object.values(filters).filter(value => 
-    value !== undefined && value !== null && value !== ''
+  const activeFiltersCount = Object.values(filters).filter(
+    value => value !== undefined && value !== null && value !== ''
   ).length;
 
   return (
     <div box-="square">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1lh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h3>Filters</h3>
         {activeFiltersCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
@@ -187,18 +194,26 @@ export function TableFilters({
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1lh' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1lh',
+        }}
+      >
         {/* Search term */}
         <div>
           <label htmlFor="search-term">
-            <small><strong>Search</strong></small>
+            <small>
+              <strong>Search</strong>
+            </small>
           </label>
           <input
             id="search-term"
             is-="input"
             type="text"
             value={localSearchTerm}
-            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            onChange={e => setLocalSearchTerm(e.target.value)}
             placeholder="Search messages..."
             disabled={disabled}
             aria-describedby="search-term-help"
@@ -211,17 +226,19 @@ export function TableFilters({
         {/* Model filter */}
         <div>
           <label htmlFor="model-filter">
-            <small><strong>Model</strong></small>
+            <small>
+              <strong>Model</strong>
+            </small>
           </label>
           <select
             id="model-filter"
             is-="select"
             value={filters.model || ''}
-            onChange={(e) => updateFilter('model', e.target.value || undefined)}
+            onChange={e => updateFilter('model', e.target.value || undefined)}
             disabled={disabled}
           >
             <option value="">All models</option>
-            {availableModels.map((model) => (
+            {availableModels.map(model => (
               <option key={model} value={model}>
                 {model}
               </option>
@@ -232,17 +249,19 @@ export function TableFilters({
         {/* Provider filter */}
         <div>
           <label htmlFor="provider-filter">
-            <small><strong>Provider</strong></small>
+            <small>
+              <strong>Provider</strong>
+            </small>
           </label>
           <select
             id="provider-filter"
             is-="select"
             value={filters.provider || ''}
-            onChange={(e) => updateFilter('provider', e.target.value || undefined)}
+            onChange={e => updateFilter('provider', e.target.value || undefined)}
             disabled={disabled}
           >
             <option value="">All providers</option>
-            {availableProviders.map((provider) => (
+            {availableProviders.map(provider => (
               <option key={provider} value={provider}>
                 {provider}
               </option>
@@ -253,28 +272,36 @@ export function TableFilters({
         {/* Date range */}
         <div>
           <label htmlFor="start-date">
-            <small><strong>Start Date</strong></small>
+            <small>
+              <strong>Start Date</strong>
+            </small>
           </label>
           <input
             id="start-date"
             is-="input"
             type="date"
             value={filters.startDate ? formatDateForInput(filters.startDate) : ''}
-            onChange={(e) => updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+            onChange={e =>
+              updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)
+            }
             disabled={disabled}
           />
         </div>
 
         <div>
           <label htmlFor="end-date">
-            <small><strong>End Date</strong></small>
+            <small>
+              <strong>End Date</strong>
+            </small>
           </label>
           <input
             id="end-date"
             is-="input"
             type="date"
             value={filters.endDate ? formatDateForInput(filters.endDate) : ''}
-            onChange={(e) => updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)}
+            onChange={e =>
+              updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)
+            }
             disabled={disabled}
           />
         </div>
@@ -282,13 +309,15 @@ export function TableFilters({
         {/* Status filter */}
         <div>
           <label htmlFor="status-filter">
-            <small><strong>Status</strong></small>
+            <small>
+              <strong>Status</strong>
+            </small>
           </label>
           <select
             id="status-filter"
             is-="select"
             value={filters.hasError === undefined ? '' : filters.hasError ? 'error' : 'success'}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               updateFilter('hasError', value === '' ? undefined : value === 'error');
             }}
@@ -303,7 +332,9 @@ export function TableFilters({
         {/* Token range */}
         <div>
           <label htmlFor="min-tokens">
-            <small><strong>Min Tokens</strong></small>
+            <small>
+              <strong>Min Tokens</strong>
+            </small>
           </label>
           <input
             id="min-tokens"
@@ -311,7 +342,7 @@ export function TableFilters({
             type="number"
             min="0"
             value={localMinTokens}
-            onChange={(e) => setLocalMinTokens(e.target.value)}
+            onChange={e => setLocalMinTokens(e.target.value)}
             placeholder="0"
             disabled={disabled}
           />
@@ -319,7 +350,9 @@ export function TableFilters({
 
         <div>
           <label htmlFor="max-tokens">
-            <small><strong>Max Tokens</strong></small>
+            <small>
+              <strong>Max Tokens</strong>
+            </small>
           </label>
           <input
             id="max-tokens"
@@ -327,7 +360,7 @@ export function TableFilters({
             type="number"
             min="0"
             value={localMaxTokens}
-            onChange={(e) => setLocalMaxTokens(e.target.value)}
+            onChange={e => setLocalMaxTokens(e.target.value)}
             placeholder="Unlimited"
             disabled={disabled}
           />
@@ -336,7 +369,9 @@ export function TableFilters({
         {/* Response time range */}
         <div>
           <label htmlFor="min-response-time">
-            <small><strong>Min Response Time (ms)</strong></small>
+            <small>
+              <strong>Min Response Time (ms)</strong>
+            </small>
           </label>
           <input
             id="min-response-time"
@@ -344,7 +379,7 @@ export function TableFilters({
             type="number"
             min="0"
             value={localMinResponseTime}
-            onChange={(e) => setLocalMinResponseTime(e.target.value)}
+            onChange={e => setLocalMinResponseTime(e.target.value)}
             placeholder="0"
             disabled={disabled}
           />
@@ -352,7 +387,9 @@ export function TableFilters({
 
         <div>
           <label htmlFor="max-response-time">
-            <small><strong>Max Response Time (ms)</strong></small>
+            <small>
+              <strong>Max Response Time (ms)</strong>
+            </small>
           </label>
           <input
             id="max-response-time"
@@ -360,7 +397,7 @@ export function TableFilters({
             type="number"
             min="0"
             value={localMaxResponseTime}
-            onChange={(e) => setLocalMaxResponseTime(e.target.value)}
+            onChange={e => setLocalMaxResponseTime(e.target.value)}
             placeholder="Unlimited"
             disabled={disabled}
           />

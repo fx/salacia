@@ -171,9 +171,9 @@ export function MessagesApp({
       <div>
         {/* Error state */}
         {state.error && (
-          <div style={{ padding: '1ch', textAlign: 'center' }} role="alert" aria-live="polite">
-            <div style={{ marginBottom: '1lh' }}>
-              <h3 style={{ marginBottom: '1lh' }}>Error Loading Messages</h3>
+          <div style={{ textAlign: 'center' }} role="alert" aria-live="polite">
+            <div>
+              <h3>Error Loading Messages</h3>
               <p><small>{state.error}</small></p>
             </div>
             <button
@@ -230,7 +230,7 @@ export function MessagesApp({
           role="status"
           aria-live="polite"
         >
-          <div style={{ padding: '1ch', display: 'flex', alignItems: 'center', gap: '1ch' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
             <span>Loading messages...</span>
           </div>
         </div>
