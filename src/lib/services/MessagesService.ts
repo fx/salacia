@@ -12,11 +12,7 @@ import type {
   SortField,
   SortDirection,
 } from '../types/pagination.js';
-import {
-  validatePaginationParams,
-  encodeCursor,
-  createCursor,
-} from '../utils/cursor.js';
+import { validatePaginationParams, encodeCursor, createCursor } from '../utils/cursor.js';
 
 /**
  * Service class for handling AI interaction message queries with cursor pagination.
@@ -32,17 +28,17 @@ export class MessagesService {
   ): Promise<CursorPaginationResponse<AiInteraction>> {
     const validatedParams = validatePaginationParams(params);
     const { limit, sortBy, sortDirection, cursor } = validatedParams;
-    
+
     // Build the query with proper sorting and filtering
     const query = this.buildQuery(sortBy, sortDirection, cursor, limit + 1);
-    
+
     // Execute query
     const results = await query;
-    
+
     // Determine if there are more results
     const hasMore = results.length > limit;
     const items = hasMore ? results.slice(0, limit) : results;
-    
+
     // Create pagination metadata
     const pagination = await this.createPaginationMetadata(
       items,
@@ -51,13 +47,13 @@ export class MessagesService {
       hasMore,
       cursor
     );
-    
+
     return {
       data: items,
       pagination,
     };
   }
-  
+
   /**
    * Builds the database query with cursor-based filtering and sorting.
    * @param sortBy Field to sort by
@@ -73,29 +69,25 @@ export class MessagesService {
     limit?: number
   ) {
     let queryBuilder = db.select().from(aiInteractions);
-    
+
     // Apply cursor filtering if provided
     if (cursor) {
-      const cursorCondition = this.buildCursorCondition(
-        sortBy,
-        sortDirection,
-        cursor
-      );
+      const cursorCondition = this.buildCursorCondition(sortBy, sortDirection, cursor);
       queryBuilder = queryBuilder.where(cursorCondition) as any;
     }
-    
+
     // Apply sorting
     const orderByClause = this.buildOrderByClause(sortBy, sortDirection);
     queryBuilder = queryBuilder.orderBy(...orderByClause) as any;
-    
+
     // Apply limit
     if (limit) {
       queryBuilder = queryBuilder.limit(limit) as any;
     }
-    
+
     return queryBuilder;
   }
-  
+
   /**
    * Builds cursor filtering condition for the query.
    * @param sortBy Sort field
@@ -103,56 +95,43 @@ export class MessagesService {
    * @param cursor Cursor data
    * @returns SQL condition for cursor filtering
    */
-  private buildCursorCondition(
-    sortBy: SortField,
-    sortDirection: SortDirection,
-    cursor: any
-  ): SQL {
+  private buildCursorCondition(sortBy: SortField, sortDirection: SortDirection, cursor: any): SQL {
     const field = this.getFieldColumn(sortBy);
     const isAscending = sortDirection === 'asc';
     const cursorValue = cursor.value;
     const cursorId = cursor.id;
-    
+
     // For cursor pagination, we need to handle ties in the sort field
     // by also comparing the ID field
     if (isAscending) {
       // For ascending sort: field > cursor_value OR (field = cursor_value AND id > cursor_id)
       return or(
         gt(field, cursorValue),
-        and(
-          eq(field, cursorValue),
-          gt(aiInteractions.id, cursorId)
-        )
+        and(eq(field, cursorValue), gt(aiInteractions.id, cursorId))
       )!;
     } else {
       // For descending sort: field < cursor_value OR (field = cursor_value AND id > cursor_id)
       return or(
         lt(field, cursorValue),
-        and(
-          eq(field, cursorValue),
-          gt(aiInteractions.id, cursorId)
-        )
+        and(eq(field, cursorValue), gt(aiInteractions.id, cursorId))
       )!;
     }
   }
-  
+
   /**
    * Builds ORDER BY clause for the query.
    * @param sortBy Sort field
    * @param sortDirection Sort direction
    * @returns Array of order by expressions
    */
-  private buildOrderByClause(
-    sortBy: SortField,
-    sortDirection: SortDirection
-  ) {
+  private buildOrderByClause(sortBy: SortField, sortDirection: SortDirection) {
     const field = this.getFieldColumn(sortBy);
     const sortFn = sortDirection === 'asc' ? asc : desc;
-    
+
     // Always include ID as secondary sort for consistent ordering
     return [sortFn(field), asc(aiInteractions.id)];
   }
-  
+
   /**
    * Gets the database column for a sort field.
    * @param sortBy Sort field name
@@ -172,7 +151,7 @@ export class MessagesService {
         throw new Error(`Unsupported sort field: ${sortBy}`);
     }
   }
-  
+
   /**
    * Creates pagination metadata including cursors.
    * @param items Current page items
@@ -191,7 +170,7 @@ export class MessagesService {
   ) {
     const count = items.length;
     const hasNext = hasMore;
-    
+
     // Check if there are previous items by running a reverse query
     let hasPrev = false;
     if (currentCursor) {
@@ -208,27 +187,23 @@ export class MessagesService {
       const reverseResults = await reverseQuery;
       hasPrev = reverseResults.length > 0;
     }
-    
+
     // Generate cursors
     let nextCursor: string | undefined;
     let prevCursor: string | undefined;
-    
+
     if (hasNext && items.length > 0) {
       const lastItem = items[items.length - 1];
       const cursorData = createCursor(lastItem, sortBy, sortDirection);
       nextCursor = encodeCursor(cursorData);
     }
-    
+
     if (hasPrev && items.length > 0) {
       const firstItem = items[0];
-      const cursorData = createCursor(
-        firstItem,
-        sortBy,
-        sortDirection === 'asc' ? 'desc' : 'asc'
-      );
+      const cursorData = createCursor(firstItem, sortBy, sortDirection === 'asc' ? 'desc' : 'asc');
       prevCursor = encodeCursor(cursorData);
     }
-    
+
     return {
       nextCursor,
       prevCursor,

@@ -16,21 +16,13 @@ import type {
  * Validation schema for cursor pagination requests.
  */
 const paginationRequestSchema = z.object({
-  limit: z
-    .number()
-    .min(1)
-    .max(100)
-    .optional()
-    .default(50),
+  limit: z.number().min(1).max(100).optional().default(50),
   cursor: z.string().optional(),
   sortBy: z
     .enum(['createdAt', 'model', 'totalTokens', 'responseTime'])
     .optional()
     .default('createdAt'),
-  sortDirection: z
-    .enum(['asc', 'desc'])
-    .optional()
-    .default('desc'),
+  sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
 /**
@@ -52,11 +44,9 @@ export function encodeCursor(cursorData: CursorData): string {
   const payload = {
     ...cursorData,
     // Convert Date to ISO string for JSON serialization
-    value: cursorData.value instanceof Date 
-      ? cursorData.value.toISOString() 
-      : cursorData.value,
+    value: cursorData.value instanceof Date ? cursorData.value.toISOString() : cursorData.value,
   };
-  
+
   const jsonString = JSON.stringify(payload);
   return Buffer.from(jsonString, 'utf8').toString('base64url');
 }
@@ -71,12 +61,12 @@ export function decodeCursor(cursor: string): CursorData {
   try {
     const jsonString = Buffer.from(cursor, 'base64url').toString('utf8');
     const parsed = JSON.parse(jsonString);
-    
+
     // Convert ISO string back to Date if the field is createdAt
     if (parsed.field === 'createdAt' && typeof parsed.value === 'string') {
       parsed.value = new Date(parsed.value);
     }
-    
+
     const validated = cursorDataSchema.parse(parsed);
     return validated;
   } catch {
@@ -95,23 +85,25 @@ export function validatePaginationParams(
 ): ValidatedPaginationParams {
   try {
     const validated = paginationRequestSchema.parse(params);
-    
+
     const result: ValidatedPaginationParams = {
       limit: validated.limit,
       sortBy: validated.sortBy,
       sortDirection: validated.sortDirection,
     };
-    
+
     if (validated.cursor) {
       result.cursor = decodeCursor(validated.cursor);
-      
+
       // Ensure cursor sort field matches request sort field
-      if (result.cursor.field !== result.sortBy || 
-          result.cursor.direction !== result.sortDirection) {
+      if (
+        result.cursor.field !== result.sortBy ||
+        result.cursor.direction !== result.sortDirection
+      ) {
         throw new Error('Cursor sort parameters do not match request parameters');
       }
     }
-    
+
     return result;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -134,7 +126,7 @@ export function createCursor(
   direction: SortDirection
 ): CursorData {
   let value: string | number | Date;
-  
+
   switch (field) {
     case 'createdAt':
       value = item.createdAt;
@@ -151,7 +143,7 @@ export function createCursor(
     default:
       throw new Error(`Unsupported sort field: ${field}`);
   }
-  
+
   return {
     value,
     id: item.id,

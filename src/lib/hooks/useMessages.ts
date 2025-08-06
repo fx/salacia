@@ -69,10 +69,10 @@ export interface UseMessagesReturn {
 
 /**
  * React hook for managing AI interaction messages with cursor pagination.
- * 
+ *
  * @param config Hook configuration options
  * @returns Hook state and control functions
- * 
+ *
  * @example
  * ```tsx
  * function MessagesComponent() {
@@ -90,11 +90,11 @@ export interface UseMessagesReturn {
  *     initialSortBy: 'createdAt',
  *     initialSortDirection: 'desc'
  *   });
- *   
+ *
  *   useEffect(() => {
  *     loadMessages();
  *   }, [loadMessages]);
- *   
+ *
  *   return (
  *     <div>
  *       {error && <div>Error: {error.error}</div>}
@@ -113,13 +113,10 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
     autoLoad = false,
     client,
   } = config;
-  
+
   // Memoize client instance
-  const messagesClient = useMemo(
-    () => client || new MessagesClient(),
-    [client]
-  );
-  
+  const messagesClient = useMemo(() => client || new MessagesClient(), [client]);
+
   // State management
   const [messages, setMessages] = useState<AiInteraction[]>([]);
   const [loading, setLoading] = useState<LoadingState>('idle');
@@ -134,26 +131,24 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
     sortBy: initialSortBy,
     sortDirection: initialSortDirection,
   });
-  
+
   /**
    * Handles API responses and updates state.
    */
-  const handleResponse = useCallback((
-    response: CursorPaginationResponse<AiInteraction>,
-    append = false
-  ) => {
-    setMessages(prevMessages => 
-      append ? [...prevMessages, ...response.data] : response.data
-    );
-    setNextCursor(response.pagination.nextCursor);
-    setPagination({
-      hasNext: response.pagination.hasNext,
-      hasPrev: response.pagination.hasPrev,
-      count: response.pagination.count,
-    });
-    setError(null);
-  }, []);
-  
+  const handleResponse = useCallback(
+    (response: CursorPaginationResponse<AiInteraction>, append = false) => {
+      setMessages(prevMessages => (append ? [...prevMessages, ...response.data] : response.data));
+      setNextCursor(response.pagination.nextCursor);
+      setPagination({
+        hasNext: response.pagination.hasNext,
+        hasPrev: response.pagination.hasPrev,
+        count: response.pagination.count,
+      });
+      setError(null);
+    },
+    []
+  );
+
   /**
    * Handles API errors.
    */
@@ -161,41 +156,44 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
     setError(apiError);
     setLoading('idle');
   }, []);
-  
+
   /**
    * Generic fetch function with error handling.
    */
-  const fetchMessages = useCallback(async (
-    params: CursorPaginationRequest,
-    append = false,
-    loadingState: LoadingState = 'loading'
-  ) => {
-    try {
-      setLoading(loadingState);
-      setError(null);
-      
-      const response = await messagesClient.getMessages({
-        limit: initialLimit,
-        sortBy: sort.sortBy,
-        sortDirection: sort.sortDirection,
-        ...params,
-      });
-      
-      handleResponse(response, append);
-    } catch (err) {
-      handleError(err as ApiError);
-    } finally {
-      setLoading('idle');
-    }
-  }, [messagesClient, initialLimit, sort, handleResponse, handleError]);
-  
+  const fetchMessages = useCallback(
+    async (
+      params: CursorPaginationRequest,
+      append = false,
+      loadingState: LoadingState = 'loading'
+    ) => {
+      try {
+        setLoading(loadingState);
+        setError(null);
+
+        const response = await messagesClient.getMessages({
+          limit: initialLimit,
+          sortBy: sort.sortBy,
+          sortDirection: sort.sortDirection,
+          ...params,
+        });
+
+        handleResponse(response, append);
+      } catch (err) {
+        handleError(err as ApiError);
+      } finally {
+        setLoading('idle');
+      }
+    },
+    [messagesClient, initialLimit, sort, handleResponse, handleError]
+  );
+
   /**
    * Loads initial messages (replaces current messages).
    */
   const loadMessages = useCallback(async () => {
     await fetchMessages({}, false, 'loading');
   }, [fetchMessages]);
-  
+
   /**
    * Loads more messages (appends to current messages).
    */
@@ -203,36 +201,44 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
     if (!nextCursor || loading !== 'idle') {
       return;
     }
-    
-    await fetchMessages({
-      cursor: nextCursor,
-    }, true, 'loadingMore');
+
+    await fetchMessages(
+      {
+        cursor: nextCursor,
+      },
+      true,
+      'loadingMore'
+    );
   }, [fetchMessages, nextCursor, loading]);
-  
+
   /**
    * Refreshes messages (replaces current messages).
    */
   const refresh = useCallback(async () => {
     await fetchMessages({}, false, 'refreshing');
   }, [fetchMessages]);
-  
+
   /**
    * Changes sort parameters and reloads messages.
    */
-  const changeSortAndReload = useCallback(async (
-    sortBy: SortField,
-    sortDirection: SortDirection
-  ) => {
-    setSort({ sortBy, sortDirection });
-    setMessages([]);
-    setNextCursor(undefined);
-    
-    await fetchMessages({
-      sortBy,
-      sortDirection,
-    }, false, 'loading');
-  }, [fetchMessages]);
-  
+  const changeSortAndReload = useCallback(
+    async (sortBy: SortField, sortDirection: SortDirection) => {
+      setSort({ sortBy, sortDirection });
+      setMessages([]);
+      setNextCursor(undefined);
+
+      await fetchMessages(
+        {
+          sortBy,
+          sortDirection,
+        },
+        false,
+        'loading'
+      );
+    },
+    [fetchMessages]
+  );
+
   /**
    * Clears all messages and resets state.
    */
@@ -243,7 +249,7 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
     setNextCursor(undefined);
     setPagination({ hasNext: false, hasPrev: false, count: 0 });
   }, []);
-  
+
   /**
    * Auto-load on mount if enabled.
    */
@@ -252,7 +258,7 @@ export function useMessages(config: UseMessagesConfig = {}): UseMessagesReturn {
       loadMessages();
     }
   }, [autoLoad, loadMessages]);
-  
+
   return {
     messages,
     loading,
