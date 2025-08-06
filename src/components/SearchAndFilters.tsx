@@ -123,7 +123,7 @@ export function SearchAndFilters({
 
   return (
     <>
-      <div>
+      <div box-="square" style={{ padding: '1ch' }}>
         {/* Search input with label on left and Filters button */}
         <label htmlFor="message-search">
           <strong>Search: </strong>
@@ -153,31 +153,31 @@ export function SearchAndFilters({
             )}
           </button>
         </label>
-      </div>
 
-      {/* Active filters summary */}
-      {totalActiveFilters > 0 && (
-        <div>
-          <small>
-            {totalActiveFilters} filter{totalActiveFilters === 1 ? '' : 's'} active
-            {filters.searchTerm && ` • Search: "${filters.searchTerm}"`}
-            {filters.model && ` • Model: ${filters.model}`}
-            {filters.provider && ` • Provider: ${filters.provider}`}
-            {filters.hasError !== undefined && ` • Status: ${filters.hasError ? 'Error' : 'Success'}`}
-            {filters.startDate && ` • From: ${filters.startDate.toLocaleDateString()}`}
-            {filters.endDate && ` • To: ${filters.endDate.toLocaleDateString()}`}
-          </small>
-          {' '}
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            disabled={disabled}
-            size-="small"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+        {/* Active filters summary */}
+        {totalActiveFilters > 0 && (
+          <div style={{ marginTop: '1lh' }}>
+            <small>
+              {totalActiveFilters} filter{totalActiveFilters === 1 ? '' : 's'} active
+              {filters.searchTerm && ` • Search: "${filters.searchTerm}"`}
+              {filters.model && ` • Model: ${filters.model}`}
+              {filters.provider && ` • Provider: ${filters.provider}`}
+              {filters.hasError !== undefined && ` • Status: ${filters.hasError ? 'Error' : 'Success'}`}
+              {filters.startDate && ` • From: ${filters.startDate.toLocaleDateString()}`}
+              {filters.endDate && ` • To: ${filters.endDate.toLocaleDateString()}`}
+            </small>
+            {' '}
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              disabled={disabled}
+              size-="small"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Filter dialog */}
       <FilterDialog
