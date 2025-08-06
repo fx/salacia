@@ -38,7 +38,6 @@ export function useMessages(
 
     try {
       const result = await client.getMessagesWithCursor(params, filters);
-      // Transform SimplifiedCursorResponse to match expected format
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
