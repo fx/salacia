@@ -2,27 +2,51 @@ import { z } from 'zod';
 
 /**
  * Base64 encoding/decoding utilities for browser and Node.js environments.
+ * Includes error handling for malformed input and cross-environment compatibility.
  */
 const base64 = {
   encode(str: string): string {
-    // Browser environment
-    if (typeof btoa !== 'undefined') {
-      // eslint-disable-next-line no-undef
-      return btoa(str);
+    try {
+      // Browser environment
+      if (typeof btoa !== 'undefined') {
+        // eslint-disable-next-line no-undef
+        return btoa(str);
+      }
+      // Node.js environment
+      if (typeof Buffer !== 'undefined') {
+        // eslint-disable-next-line no-undef
+        return Buffer.from(str).toString('base64');
+      }
+      throw new Error('Base64 encoding not available in this environment');
+    } catch (error) {
+      throw new Error(
+        `Base64 encoding failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
-    // Node.js environment
-    // eslint-disable-next-line no-undef
-    return Buffer.from(str).toString('base64');
   },
   decode(str: string): string {
-    // Browser environment
-    if (typeof atob !== 'undefined') {
-      // eslint-disable-next-line no-undef
-      return atob(str);
+    try {
+      // Validate base64 string format
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) {
+        throw new Error('Invalid base64 string format');
+      }
+
+      // Browser environment
+      if (typeof atob !== 'undefined') {
+        // eslint-disable-next-line no-undef
+        return atob(str);
+      }
+      // Node.js environment
+      if (typeof Buffer !== 'undefined') {
+        // eslint-disable-next-line no-undef
+        return Buffer.from(str, 'base64').toString('utf-8');
+      }
+      throw new Error('Base64 decoding not available in this environment');
+    } catch (error) {
+      throw new Error(
+        `Base64 decoding failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
-    // Node.js environment
-    // eslint-disable-next-line no-undef
-    return Buffer.from(str, 'base64').toString('utf-8');
   },
 };
 

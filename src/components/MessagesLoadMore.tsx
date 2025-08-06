@@ -97,11 +97,8 @@ export function MessagesLoadMore({
   /**
    * Handles sort changes by reloading messages from the beginning.
    */
-  const handleSortChange = useCallback((field: string) => {
-    setSort(prev => ({
-      field: field as 'createdAt' | 'model' | 'totalTokens' | 'responseTime',
-      direction: prev.field === field && prev.direction === 'desc' ? 'asc' : 'desc',
-    }));
+  const handleSortChange = useCallback((sort: MessageSort) => {
+    setSort(sort);
   }, []);
 
   // Reload messages when filters or sort changes

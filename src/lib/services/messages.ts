@@ -386,7 +386,8 @@ export class MessagesService {
         sortDirection === 'desc' ? desc(aiInteractions.id) : asc(aiInteractions.id)
       );
 
-      // Fetch one extra item to determine hasMore
+      // For bidirectional cursor navigation, we need to check if there are items before and after
+      // First, get the main results plus one extra to check hasMore
       const results = await db
         .select()
         .from(aiInteractions)
@@ -401,16 +402,77 @@ export class MessagesService {
       let nextCursor: string | undefined;
       let prevCursor: string | undefined;
 
+      // Generate next cursor if there are more items
       if (hasMore && items.length > 0) {
         const lastItem = items[items.length - 1];
         const sortValue = sortBy === 'createdAt' ? lastItem.createdAt : lastItem.id;
         nextCursor = CursorUtils.encode(sortValue, lastItem.id, sortBy);
       }
 
+      // Generate previous cursor if we're not on the first page
+      // We can determine this by checking if we have a cursor parameter
       if (params.cursor && items.length > 0) {
+        // For proper bidirectional pagination, we need to check if there are items
+        // before the current page by querying in reverse direction
         const firstItem = items[0];
-        const sortValue = sortBy === 'createdAt' ? firstItem.createdAt : firstItem.id;
-        prevCursor = CursorUtils.encode(sortValue, firstItem.id, sortBy);
+
+        // Build reverse query conditions to check for previous items
+        const reverseWhereConditions = [];
+
+        if (filterConditions) {
+          reverseWhereConditions.push(filterConditions);
+        }
+
+        // Add reverse cursor conditions
+        if (sortBy === 'createdAt') {
+          const firstItemDate = firstItem.createdAt;
+          const firstItemTimestamp = firstItemDate.toISOString();
+          if (sortDirection === 'desc') {
+            // For desc order, previous items have createdAt > current first item
+            reverseWhereConditions.push(
+              or(
+                sql`${aiInteractions.createdAt} > ${firstItemTimestamp}::timestamp`,
+                and(
+                  sql`${aiInteractions.createdAt} = ${firstItemTimestamp}::timestamp`,
+                  gt(aiInteractions.id, firstItem.id)
+                )
+              )
+            );
+          } else {
+            // For asc order, previous items have createdAt < current first item
+            reverseWhereConditions.push(
+              or(
+                sql`${aiInteractions.createdAt} < ${firstItemTimestamp}::timestamp`,
+                and(
+                  sql`${aiInteractions.createdAt} = ${firstItemTimestamp}::timestamp`,
+                  lt(aiInteractions.id, firstItem.id)
+                )
+              )
+            );
+          }
+        } else if (sortBy === 'id') {
+          if (sortDirection === 'desc') {
+            reverseWhereConditions.push(gt(aiInteractions.id, firstItem.id));
+          } else {
+            reverseWhereConditions.push(lt(aiInteractions.id, firstItem.id));
+          }
+        }
+
+        // Check if there are previous items
+        const reverseWhere =
+          reverseWhereConditions.length > 0 ? and(...reverseWhereConditions) : undefined;
+        const previousExists = await db
+          .select({ id: aiInteractions.id })
+          .from(aiInteractions)
+          .where(reverseWhere)
+          .limit(1);
+
+        if (previousExists.length > 0) {
+          // Create a cursor that when used will return the previous page
+          // This is done by creating a cursor from the first item of current page
+          const sortValue = sortBy === 'createdAt' ? firstItem.createdAt : firstItem.id;
+          prevCursor = CursorUtils.encode(sortValue, firstItem.id, sortBy);
+        }
       }
 
       return {

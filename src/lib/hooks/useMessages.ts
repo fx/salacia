@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type {
-  MessagesCursorPaginationParams,
-  MessagesCursorPaginationResponse,
-} from '../types/cursor.js';
-import type { MessageDisplay, MessagesFilterParams } from '../types/messages.js';
-import { MessagesClient } from '../api/messages.js';
+import type { MessagesCursorPaginationParams } from '../types/cursor.js';
+import type { MessagesFilterParams } from '../types/messages.js';
+import { MessagesClient, type SimplifiedCursorResponse } from '../api/messages.js';
 
 /**
  * React hook for managing paginated message data with cursor pagination.
@@ -18,7 +15,7 @@ export function useMessages(
   initialParams: MessagesCursorPaginationParams = {},
   initialFilters: MessagesFilterParams = {}
 ) {
-  const [data, setData] = useState<MessagesCursorPaginationResponse<MessageDisplay> | null>(null);
+  const [data, setData] = useState<SimplifiedCursorResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [params, setParams] = useState<MessagesCursorPaginationParams>({
@@ -41,6 +38,7 @@ export function useMessages(
 
     try {
       const result = await client.getMessagesWithCursor(params, filters);
+      // Transform SimplifiedCursorResponse to match expected format
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
@@ -54,19 +52,19 @@ export function useMessages(
    * Navigates to the next page of results.
    */
   const nextPage = useCallback(() => {
-    if (data?.cursors.next) {
-      setParams(prev => ({ ...prev, cursor: data.cursors.next }));
+    if (data?.nextCursor) {
+      setParams(prev => ({ ...prev, cursor: data.nextCursor }));
     }
-  }, [data?.cursors.next]);
+  }, [data?.nextCursor]);
 
   /**
    * Navigates to the previous page of results.
    */
   const prevPage = useCallback(() => {
-    if (data?.cursors.prev) {
-      setParams(prev => ({ ...prev, cursor: data.cursors.prev }));
+    if (data?.prevCursor) {
+      setParams(prev => ({ ...prev, cursor: data.prevCursor }));
     }
-  }, [data?.cursors.prev]);
+  }, [data?.prevCursor]);
 
   /**
    * Resets pagination to the first page.
@@ -112,7 +110,7 @@ export function useMessages(
     updateParams,
     updateFilters,
     refresh,
-    hasNext: data?.meta.hasMore ?? false,
+    hasNext: data?.hasMore ?? false,
     hasPrev: !!params.cursor,
   };
 }

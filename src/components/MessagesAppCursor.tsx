@@ -47,14 +47,18 @@ export function MessagesAppCursor({
     prevPage,
     resetPagination,
     updateParams,
-    updateFilters,
     refresh,
     hasNext,
     hasPrev,
   } = useMessages(defaultPagination, defaultFilters);
 
-  // Use initial data if no data loaded yet
-  const displayData = data || initialMessages;
+  // Use initial data if no data loaded yet, handling different data structures
+  const displayData = data || {
+    items: initialMessages.data,
+    hasMore: initialMessages.meta.hasMore,
+    nextCursor: initialMessages.cursors.next,
+    prevCursor: initialMessages.cursors.prev,
+  };
   const displayError = error?.message || initialError;
 
   /**
@@ -71,13 +75,6 @@ export function MessagesAppCursor({
     updateParams({ sortBy: field, sortDirection: direction });
   };
 
-  /**
-   * Handle filter change.
-   */
-  const handleFilterChange = (newFilters: MessagesFilterParams) => {
-    updateFilters(newFilters);
-  };
-
   return (
     <ErrorBoundary context="MessagesApp">
       <div>
@@ -86,8 +83,8 @@ export function MessagesAppCursor({
           <h1>AI Interaction Messages</h1>
           <p>
             <small>
-              Showing {displayData.data.length} of{' '}
-              {displayData.meta.hasMore ? 'many' : displayData.data.length} messages
+              Showing {displayData.items.length} of{' '}
+              {displayData.hasMore ? 'many' : displayData.items.length} messages
             </small>
           </p>
         </header>
@@ -113,13 +110,13 @@ export function MessagesAppCursor({
             <div style={{ padding: '2rem', textAlign: 'center' }}>
               <p>Loading messages...</p>
             </div>
-          ) : displayData.data.length > 0 ? (
+          ) : displayData.items.length > 0 ? (
             <MessagesTable
-              messages={displayData.data}
+              messages={displayData.items}
               sort={
                 {
                   field: 'createdAt' as const,
-                  direction: displayData.meta.sortDirection,
+                  direction: defaultPagination.sortDirection || 'desc',
                 } as MessageSort
               }
               onSortChange={(sort: MessageSort) => {
@@ -144,7 +141,7 @@ export function MessagesAppCursor({
                 Items per page:
                 <select
                   id="page-size"
-                  value={displayData.meta.limit}
+                  value={defaultPagination.limit || 20}
                   onChange={e => handlePageSizeChange(Number(e.target.value))}
                   className="wui-input"
                   style={{ marginLeft: '0.5rem' }}
@@ -175,7 +172,7 @@ export function MessagesAppCursor({
             </div>
 
             <div>
-              <small>{displayData.meta.hasMore ? 'More pages available' : 'Last page'}</small>
+              <small>{displayData.hasMore ? 'More pages available' : 'Last page'}</small>
             </div>
           </div>
         </footer>

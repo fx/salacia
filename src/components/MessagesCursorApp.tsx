@@ -8,7 +8,7 @@ import React, { useState, useCallback } from 'react';
 import { MessagesTable } from './MessagesTable.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { SearchAndFilters } from './SearchAndFilters.js';
-import { MessagesClient } from '../lib/api/messages.js';
+import { MessagesClient, type SimplifiedCursorResponse } from '../lib/api/messages.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -40,6 +40,26 @@ export function MessagesCursorApp({
 }: MessagesCursorAppProps): React.ReactElement {
   const [data, setData] =
     useState<MessagesCursorPaginationResponse<MessageDisplay>>(initialMessages);
+
+  // Helper function to transform SimplifiedCursorResponse to MessagesCursorPaginationResponse
+  const transformResponse = (
+    response: SimplifiedCursorResponse
+  ): MessagesCursorPaginationResponse<MessageDisplay> => {
+    return {
+      data: response.items,
+      meta: {
+        count: response.items.length,
+        limit: params.limit || 20,
+        hasMore: response.hasMore,
+        sortBy: params.sortBy || 'createdAt',
+        sortDirection: params.sortDirection || 'desc',
+      },
+      cursors: {
+        next: response.nextCursor,
+        prev: response.prevCursor,
+      },
+    };
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [params, setParams] = useState<MessagesCursorPaginationParams>(defaultPagination);
@@ -57,7 +77,7 @@ export function MessagesCursorApp({
 
       try {
         const result = await client.getMessagesWithCursor(newParams, newFilters);
-        setData(result);
+        setData(transformResponse(result));
         setParams(newParams);
         setFilters(newFilters);
       } catch (err) {

@@ -46,11 +46,14 @@ export const GET: APIRoute = async ({ url }) => {
     };
 
     // Validate limit
-    if (!params.limit || params.limit < 1 || params.limit > 100) {
-      return new Response(JSON.stringify({ error: 'Invalid limit parameter' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!params.limit || Number.isNaN(params.limit) || params.limit < 1 || params.limit > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid limit parameter. Must be a number between 1 and 100.' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Parse filter parameters
