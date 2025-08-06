@@ -19,7 +19,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
-import './FilterDialog.css';
 
 /**
  * Props for the FilterDialog component.
@@ -169,32 +168,16 @@ export function FilterDialog({
       ref={dialogRef}
       onClose={handleDialogClose}
       onClick={handleBackdropClick}
-      position-="center center"
-      container-="auto"
-      size-="default"
-      data-filter-dialog
+      position-="center"
     >
-      <div box-="square" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <h2>Filters</h2>
-          <button
-            type="button"
-            onClick={handleCancel}
-            aria-label="Close dialog"
-          >
-            ×
-          </button>
-        </header>
-
-        <form>
-          <fieldset>
-            <legend>Filter Options</legend>
+      <div onClick={(e) => e.stopPropagation()}>
+        <h2>Filters</h2>
             
-            {/* Model filter */}
-            <div>
-              <label htmlFor="dialog-model-filter">
-                <strong>Model</strong>
-              </label>
+        {/* Model filter */}
+        <div>
+          <label htmlFor="dialog-model-filter">
+            <strong>Model</strong>
+          </label>
               <select
                 id="dialog-model-filter"
                 value={localFilters.model || ''}
@@ -208,10 +191,10 @@ export function FilterDialog({
                   </option>
                 ))}
               </select>
-            </div>
+        </div>
 
-            {/* Provider filter */}
-            <div>
+        {/* Provider filter */}
+        <div>
               <label htmlFor="dialog-provider-filter">
                 <strong>Provider</strong>
               </label>
@@ -228,10 +211,10 @@ export function FilterDialog({
                   </option>
                 ))}
               </select>
-            </div>
+        </div>
 
-            {/* Status filter */}
-            <div>
+        {/* Status filter */}
+        <div>
               <label htmlFor="dialog-status-filter">
                 <strong>Status</strong>
               </label>
@@ -248,10 +231,10 @@ export function FilterDialog({
                 <option value="success">Success only</option>
                 <option value="error">Errors only</option>
               </select>
-            </div>
+        </div>
 
-            {/* Start date */}
-            <div>
+        {/* Start date */}
+        <div>
               <label htmlFor="dialog-start-date">
                 <strong>Start Date</strong>
               </label>
@@ -262,10 +245,10 @@ export function FilterDialog({
                 onChange={(e) => updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)}
                 disabled={disabled}
               />
-            </div>
+        </div>
 
-            {/* End date */}
-            <div>
+        {/* End date */}
+        <div>
               <label htmlFor="dialog-end-date">
                 <strong>End Date</strong>
               </label>
@@ -276,10 +259,10 @@ export function FilterDialog({
                 onChange={(e) => updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)}
                 disabled={disabled}
               />
-            </div>
+        </div>
 
-            {/* Min tokens */}
-            <div>
+        {/* Min tokens */}
+        <div>
               <label htmlFor="dialog-min-tokens">
                 <strong>Min Tokens</strong>
               </label>
@@ -292,10 +275,10 @@ export function FilterDialog({
                 placeholder="0"
                 disabled={disabled}
               />
-            </div>
+        </div>
 
-            {/* Max tokens */}
-            <div>
+        {/* Max tokens */}
+        <div>
               <label htmlFor="dialog-max-tokens">
                 <strong>Max Tokens</strong>
               </label>
@@ -308,10 +291,10 @@ export function FilterDialog({
                 placeholder="Unlimited"
                 disabled={disabled}
               />
-            </div>
+        </div>
 
-            {/* Min response time */}
-            <div>
+        {/* Min response time */}
+        <div>
               <label htmlFor="dialog-min-response-time">
                 <strong>Min Response Time (ms)</strong>
               </label>
@@ -324,10 +307,10 @@ export function FilterDialog({
                 placeholder="0"
                 disabled={disabled}
               />
-            </div>
+        </div>
 
-            {/* Max response time */}
-            <div>
+        {/* Max response time */}
+        <div>
               <label htmlFor="dialog-max-response-time">
                 <strong>Max Response Time (ms)</strong>
               </label>
@@ -340,46 +323,46 @@ export function FilterDialog({
                 placeholder="Unlimited"
                 disabled={disabled}
               />
-            </div>
-          </fieldset>
-        </form>
+        </div>
 
-        <footer>
-          <div>
-            {activeFiltersCount > 0 && (
-              <>
-                <small>
-                  {activeFiltersCount} filter{activeFiltersCount === 1 ? '' : 's'} active
-                </small>
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  disabled={disabled}
-                  data-clear-all
-                >
-                  Clear all
-                </button>
-              </>
-            )}
-          </div>
-          
-          <div>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={disabled}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleApplyFilters}
-              disabled={disabled}
-            >
-              Apply
-            </button>
-          </div>
-        </footer>
+        <hr />
+
+        <div>
+          {activeFiltersCount > 0 && (
+            <>
+              <small>
+                {activeFiltersCount} filter{activeFiltersCount === 1 ? '' : 's'} active
+              </small>
+              {' '}
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                disabled={disabled}
+              >
+                Clear all
+              </button>
+            </>
+          )}
+        </div>
+        
+        <div>
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={disabled}
+          >
+            Cancel
+          </button>
+          {' '}
+          <button
+            type="button"
+            onClick={handleApplyFilters}
+            disabled={disabled}
+            variant-="primary"
+          >
+            Apply
+          </button>
+        </div>
       </div>
     </dialog>
   );
