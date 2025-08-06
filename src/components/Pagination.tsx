@@ -140,22 +140,21 @@ export function Pagination({
 
   return (
     <nav
-      className={`flex items-center justify-between gap-4 p-4 ${className}`}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1ch' }}
       role="navigation"
       aria-label="Pagination navigation"
     >
       {/* Page info */}
-      <div className="flex-1 text-sm text-gray-600" aria-live="polite">
-        {pageInfo}
+      <div style={{ flex: 1 }} aria-live="polite">
+        <small>{pageInfo}</small>
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center gap-2">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
         {/* Previous page button */}
         <button
-          className={`wui-button wui-button-secondary ${
-            !hasPrevious || disabled ? 'wui-button-disabled opacity-50 cursor-not-allowed' : ''
-          }`}
+          is-="button"
+          variant-="secondary"
           onClick={() => handlePageChange(currentPage - 1)}
           onKeyDown={(e) => handleKeyDown(e, currentPage - 1)}
           disabled={!hasPrevious || disabled}
@@ -170,9 +169,8 @@ export function Pagination({
         {pageNumbers[0] > 1 && (
           <>
             <button
-              className={`wui-button wui-button-outline ${
-                disabled ? 'wui-button-disabled opacity-50 cursor-not-allowed' : ''
-              }`}
+              is-="button"
+              variant-="outline"
               onClick={() => handlePageChange(1)}
               onKeyDown={(e) => handleKeyDown(e, 1)}
               disabled={disabled}
@@ -183,8 +181,8 @@ export function Pagination({
               1
             </button>
             {pageNumbers[0] > 2 && (
-              <span className="px-2 text-gray-400" aria-hidden="true">
-                …
+              <span aria-hidden="true">
+                <small>…</small>
               </span>
             )}
           </>
@@ -194,13 +192,8 @@ export function Pagination({
         {pageNumbers.map((pageNum) => (
           <button
             key={pageNum}
-            className={`wui-button ${
-              pageNum === currentPage
-                ? 'wui-button-primary'
-                : 'wui-button-outline'
-            } ${
-              disabled ? 'wui-button-disabled opacity-50 cursor-not-allowed' : ''
-            }`}
+            is-="button"
+            variant-={pageNum === currentPage ? 'primary' : 'outline'}
             onClick={() => handlePageChange(pageNum)}
             onKeyDown={(e) => handleKeyDown(e, pageNum)}
             disabled={disabled}
@@ -221,14 +214,13 @@ export function Pagination({
         {pageNumbers[pageNumbers.length - 1] < totalPages && (
           <>
             {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-              <span className="px-2 text-gray-400" aria-hidden="true">
-                …
+              <span aria-hidden="true">
+                <small>…</small>
               </span>
             )}
             <button
-              className={`wui-button wui-button-outline ${
-                disabled ? 'wui-button-disabled opacity-50 cursor-not-allowed' : ''
-              }`}
+              is-="button"
+              variant-="outline"
               onClick={() => handlePageChange(totalPages)}
               onKeyDown={(e) => handleKeyDown(e, totalPages)}
               disabled={disabled}
@@ -243,9 +235,8 @@ export function Pagination({
 
         {/* Next page button */}
         <button
-          className={`wui-button wui-button-secondary ${
-            !hasNext || disabled ? 'wui-button-disabled opacity-50 cursor-not-allowed' : ''
-          }`}
+          is-="button"
+          variant-="secondary"
           onClick={() => handlePageChange(currentPage + 1)}
           onKeyDown={(e) => handleKeyDown(e, currentPage + 1)}
           disabled={!hasNext || disabled}

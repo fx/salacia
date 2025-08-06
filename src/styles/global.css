@@ -17,6 +17,7 @@
 @import '@webtui/css/components/textarea.css';
 @import '@webtui/css/components/separator.css';
 @import '@webtui/css/components/table.css';
+@import '@webtui/css/components/dialog.css';
 
 /* Import themes and plugins */
 @import '@webtui/theme-catppuccin';
@@ -31,13 +32,25 @@
     --line-height: 1.4;
     --box-border-color: var(--background1);
   }
+}
 
-  body,
-  html {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    margin: 0;
+/* Accessibility utilities */
+@layer utils {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* Navigation specific flex layout */
+  nav {
+    display: flex;
+    justify-content: space-between;
   }
 }

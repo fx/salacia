@@ -1,10 +1,10 @@
 /**
  * TableFilters component for filtering messages table data.
- * 
+ *
  * This component provides a comprehensive filtering interface for the messages table,
  * including text search, date ranges, model selection, and numerical filters.
  * Uses WebTUI design system for consistent styling and accessibility.
- * 
+ *
  * Features:
  * - Text search with debounced input
  * - Date range picker for filtering by creation date
@@ -13,11 +13,12 @@
  * - Success/error status toggle
  * - Clear all filters functionality
  * - Accessible form controls with proper labeling
- * 
+ *
  * @module TableFilters
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDebounce } from '../hooks/useDebounce.js';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -34,36 +35,12 @@ export interface TableFiltersProps {
   availableProviders?: string[];
   /** Whether filters are disabled (e.g., during loading) */
   disabled?: boolean;
-  /** Optional CSS class name */
-  className?: string;
 }
 
-/**
- * Hook for debouncing input values to avoid excessive API calls.
- * 
- * @param value - Value to debounce
- * @param delay - Delay in milliseconds
- * @returns Debounced value
- */
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 /**
  * Formats a date to YYYY-MM-DD format for HTML date inputs.
- * 
+ *
  * @param date - Date to format
  * @returns Formatted date string
  */
@@ -74,7 +51,7 @@ function formatDateForInput(date: Date): string {
 /**
  * TableFilters component providing comprehensive filtering controls for messages.
  * Integrates with WebTUI design system and includes debounced inputs for performance.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the filter controls
  */
@@ -84,14 +61,17 @@ export function TableFilters({
   availableModels = [],
   availableProviders = [],
   disabled = false,
-  className = '',
 }: TableFiltersProps): React.ReactElement {
   // Local state for immediate UI updates
   const [localSearchTerm, setLocalSearchTerm] = useState(filters.searchTerm || '');
   const [localMinTokens, setLocalMinTokens] = useState(filters.minTokens?.toString() || '');
   const [localMaxTokens, setLocalMaxTokens] = useState(filters.maxTokens?.toString() || '');
-  const [localMinResponseTime, setLocalMinResponseTime] = useState(filters.minResponseTime?.toString() || '');
-  const [localMaxResponseTime, setLocalMaxResponseTime] = useState(filters.maxResponseTime?.toString() || '');
+  const [localMinResponseTime, setLocalMinResponseTime] = useState(
+    filters.minResponseTime?.toString() || ''
+  );
+  const [localMaxResponseTime, setLocalMaxResponseTime] = useState(
+    filters.maxResponseTime?.toString() || ''
+  );
 
   // Debounced values to reduce API calls
   const debouncedSearchTerm = useDebounce(localSearchTerm, 500);
@@ -109,18 +89,21 @@ export function TableFilters({
       searchTerm: debouncedSearchTerm || undefined,
       minTokens: debouncedMinTokens ? parseInt(debouncedMinTokens, 10) : undefined,
       maxTokens: debouncedMaxTokens ? parseInt(debouncedMaxTokens, 10) : undefined,
-      minResponseTime: debouncedMinResponseTime ? parseInt(debouncedMinResponseTime, 10) : undefined,
-      maxResponseTime: debouncedMaxResponseTime ? parseInt(debouncedMaxResponseTime, 10) : undefined,
+      minResponseTime: debouncedMinResponseTime
+        ? parseInt(debouncedMinResponseTime, 10)
+        : undefined,
+      maxResponseTime: debouncedMaxResponseTime
+        ? parseInt(debouncedMaxResponseTime, 10)
+        : undefined,
     };
 
     // Only update if something actually changed
-    const hasChanges = (
+    const hasChanges =
       newFilters.searchTerm !== filters.searchTerm ||
       newFilters.minTokens !== filters.minTokens ||
       newFilters.maxTokens !== filters.maxTokens ||
       newFilters.minResponseTime !== filters.minResponseTime ||
-      newFilters.maxResponseTime !== filters.maxResponseTime
-    );
+      newFilters.maxResponseTime !== filters.maxResponseTime;
 
     if (hasChanges) {
       onFiltersChange(newFilters);
@@ -138,13 +121,13 @@ export function TableFilters({
   /**
    * Handles direct filter updates (non-debounced inputs).
    */
-  const updateFilter = useCallback(<K extends keyof MessagesFilterParams>(
-    key: K,
-    value: MessagesFilterParams[K]
-  ) => {
-    const newFilters = { ...filters, [key]: value };
-    onFiltersChange(newFilters);
-  }, [filters, onFiltersChange]);
+  const updateFilter = useCallback(
+    <K extends keyof MessagesFilterParams>(key: K, value: MessagesFilterParams[K]) => {
+      const newFilters = { ...filters, [key]: value };
+      onFiltersChange(newFilters);
+    },
+    [filters, onFiltersChange]
+  );
 
   /**
    * Clears all filters and resets local state.
@@ -161,66 +144,77 @@ export function TableFilters({
   /**
    * Counts the number of active filters for UI display.
    */
-  const activeFiltersCount = Object.values(filters).filter(value => 
-    value !== undefined && value !== null && value !== ''
+  const activeFiltersCount = Object.values(filters).filter(
+    value => value !== undefined && value !== null && value !== ''
   ).length;
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg p-4 space-y-4 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Filters</h3>
+    <div box-="square">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3>Filters</h3>
         {activeFiltersCount > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
+            <small>
               {activeFiltersCount} filter{activeFiltersCount === 1 ? '' : 's'} active
-            </span>
+            </small>
             <button
               type="button"
+              is-="button"
+              variant-="link"
               onClick={clearAllFilters}
               disabled={disabled}
-              className="text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
             >
-              Clear all
+              <small>Clear all</small>
             </button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1lh',
+        }}
+      >
         {/* Search term */}
-        <div className="space-y-1">
-          <label htmlFor="search-term" className="block text-sm font-medium text-gray-700">
-            Search
+        <div>
+          <label htmlFor="search-term">
+            <small>
+              <strong>Search</strong>
+            </small>
           </label>
           <input
             id="search-term"
+            is-="input"
             type="text"
             value={localSearchTerm}
-            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            onChange={e => setLocalSearchTerm(e.target.value)}
             placeholder="Search messages..."
             disabled={disabled}
-            className="wui-input w-full"
             aria-describedby="search-term-help"
           />
-          <p id="search-term-help" className="text-xs text-gray-500">
-            Search in request and response content
+          <p id="search-term-help">
+            <small>Search in request and response content</small>
           </p>
         </div>
 
         {/* Model filter */}
-        <div className="space-y-1">
-          <label htmlFor="model-filter" className="block text-sm font-medium text-gray-700">
-            Model
+        <div>
+          <label htmlFor="model-filter">
+            <small>
+              <strong>Model</strong>
+            </small>
           </label>
           <select
             id="model-filter"
+            is-="select"
             value={filters.model || ''}
-            onChange={(e) => updateFilter('model', e.target.value || undefined)}
+            onChange={e => updateFilter('model', e.target.value || undefined)}
             disabled={disabled}
-            className="wui-select w-full"
           >
             <option value="">All models</option>
-            {availableModels.map((model) => (
+            {availableModels.map(model => (
               <option key={model} value={model}>
                 {model}
               </option>
@@ -229,19 +223,21 @@ export function TableFilters({
         </div>
 
         {/* Provider filter */}
-        <div className="space-y-1">
-          <label htmlFor="provider-filter" className="block text-sm font-medium text-gray-700">
-            Provider
+        <div>
+          <label htmlFor="provider-filter">
+            <small>
+              <strong>Provider</strong>
+            </small>
           </label>
           <select
             id="provider-filter"
+            is-="select"
             value={filters.provider || ''}
-            onChange={(e) => updateFilter('provider', e.target.value || undefined)}
+            onChange={e => updateFilter('provider', e.target.value || undefined)}
             disabled={disabled}
-            className="wui-select w-full"
           >
             <option value="">All providers</option>
-            {availableProviders.map((provider) => (
+            {availableProviders.map(provider => (
               <option key={provider} value={provider}>
                 {provider}
               </option>
@@ -250,48 +246,58 @@ export function TableFilters({
         </div>
 
         {/* Date range */}
-        <div className="space-y-1">
-          <label htmlFor="start-date" className="block text-sm font-medium text-gray-700">
-            Start Date
+        <div>
+          <label htmlFor="start-date">
+            <small>
+              <strong>Start Date</strong>
+            </small>
           </label>
           <input
             id="start-date"
+            is-="input"
             type="date"
             value={filters.startDate ? formatDateForInput(filters.startDate) : ''}
-            onChange={(e) => updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+            onChange={e =>
+              updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)
+            }
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="end-date" className="block text-sm font-medium text-gray-700">
-            End Date
+        <div>
+          <label htmlFor="end-date">
+            <small>
+              <strong>End Date</strong>
+            </small>
           </label>
           <input
             id="end-date"
+            is-="input"
             type="date"
             value={filters.endDate ? formatDateForInput(filters.endDate) : ''}
-            onChange={(e) => updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)}
+            onChange={e =>
+              updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)
+            }
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
 
         {/* Status filter */}
-        <div className="space-y-1">
-          <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
-            Status
+        <div>
+          <label htmlFor="status-filter">
+            <small>
+              <strong>Status</strong>
+            </small>
           </label>
           <select
             id="status-filter"
+            is-="select"
             value={filters.hasError === undefined ? '' : filters.hasError ? 'error' : 'success'}
-            onChange={(e) => {
+            onChange={e => {
               const value = e.target.value;
               updateFilter('hasError', value === '' ? undefined : value === 'error');
             }}
             disabled={disabled}
-            className="wui-select w-full"
           >
             <option value="">All statuses</option>
             <option value="success">Success only</option>
@@ -300,68 +306,76 @@ export function TableFilters({
         </div>
 
         {/* Token range */}
-        <div className="space-y-1">
-          <label htmlFor="min-tokens" className="block text-sm font-medium text-gray-700">
-            Min Tokens
+        <div>
+          <label htmlFor="min-tokens">
+            <small>
+              <strong>Min Tokens</strong>
+            </small>
           </label>
           <input
             id="min-tokens"
+            is-="input"
             type="number"
             min="0"
             value={localMinTokens}
-            onChange={(e) => setLocalMinTokens(e.target.value)}
+            onChange={e => setLocalMinTokens(e.target.value)}
             placeholder="0"
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="max-tokens" className="block text-sm font-medium text-gray-700">
-            Max Tokens
+        <div>
+          <label htmlFor="max-tokens">
+            <small>
+              <strong>Max Tokens</strong>
+            </small>
           </label>
           <input
             id="max-tokens"
+            is-="input"
             type="number"
             min="0"
             value={localMaxTokens}
-            onChange={(e) => setLocalMaxTokens(e.target.value)}
+            onChange={e => setLocalMaxTokens(e.target.value)}
             placeholder="Unlimited"
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
 
         {/* Response time range */}
-        <div className="space-y-1">
-          <label htmlFor="min-response-time" className="block text-sm font-medium text-gray-700">
-            Min Response Time (ms)
+        <div>
+          <label htmlFor="min-response-time">
+            <small>
+              <strong>Min Response Time (ms)</strong>
+            </small>
           </label>
           <input
             id="min-response-time"
+            is-="input"
             type="number"
             min="0"
             value={localMinResponseTime}
-            onChange={(e) => setLocalMinResponseTime(e.target.value)}
+            onChange={e => setLocalMinResponseTime(e.target.value)}
             placeholder="0"
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="max-response-time" className="block text-sm font-medium text-gray-700">
-            Max Response Time (ms)
+        <div>
+          <label htmlFor="max-response-time">
+            <small>
+              <strong>Max Response Time (ms)</strong>
+            </small>
           </label>
           <input
             id="max-response-time"
+            is-="input"
             type="number"
             min="0"
             value={localMaxResponseTime}
-            onChange={(e) => setLocalMaxResponseTime(e.target.value)}
+            onChange={e => setLocalMaxResponseTime(e.target.value)}
             placeholder="Unlimited"
             disabled={disabled}
-            className="wui-input w-full"
           />
         </div>
       </div>

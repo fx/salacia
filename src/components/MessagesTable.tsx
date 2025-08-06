@@ -1,17 +1,17 @@
 /**
  * MessagesTable component for displaying paginated AI interaction messages.
- * 
+ *
  * This component uses TanStack React Table for advanced table functionality including
  * sorting, filtering, and pagination. It integrates with WebTUI design system for
  * consistent styling and accessibility.
- * 
+ *
  * Features:
  * - Sortable columns with visual indicators
  * - Column resizing and reordering
  * - Responsive design with mobile-friendly layouts
  * - Accessibility support with ARIA attributes
  * - Error handling with fallback UI
- * 
+ *
  * @module MessagesTable
  */
 
@@ -51,7 +51,7 @@ const columnHelper = createColumnHelper<MessageDisplay>();
 
 /**
  * Formats a date to a human-readable string.
- * 
+ *
  * @param date - Date to format
  * @returns Formatted date string
  */
@@ -67,7 +67,7 @@ function formatDate(date: Date): string {
 
 /**
  * Formats a number with proper thousands separators.
- * 
+ *
  * @param num - Number to format
  * @returns Formatted number string
  */
@@ -77,7 +77,7 @@ function formatNumber(num: number): string {
 
 /**
  * Truncates text to specified length with ellipsis.
- * 
+ *
  * @param text - Text to truncate
  * @param maxLength - Maximum length before truncation
  * @returns Truncated text with ellipsis if needed
@@ -90,7 +90,7 @@ function truncateText(text: string, maxLength: number = 50): string {
 /**
  * MessagesTable component for displaying AI interaction messages in a sortable table.
  * Provides comprehensive message information with responsive design and accessibility.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the messages table
  */
@@ -106,144 +106,110 @@ export function MessagesTable({
    * Column definitions for the messages table.
    * Memoized to prevent unnecessary re-renders.
    */
-  const columns = useMemo(() => [
-    columnHelper.accessor('createdAt', {
-      header: 'Created',
-      cell: (info) => (
-        <time
-          dateTime={info.getValue().toISOString()}
-          className="text-sm text-gray-600"
-          title={formatDate(info.getValue())}
-        >
-          {formatDate(info.getValue())}
-        </time>
-      ),
-      sortingFn: 'datetime',
-      enableSorting: true,
-    }),
-    columnHelper.accessor('model', {
-      header: 'Model',
-      cell: (info) => (
-        <span className="font-medium text-gray-900" title={info.getValue()}>
-          {info.getValue()}
-        </span>
-      ),
-      enableSorting: true,
-    }),
-    columnHelper.accessor('provider', {
-      header: 'Provider',
-      cell: (info) => {
-        const provider = info.getValue();
-        return provider ? (
-          <span className="text-sm text-gray-600" title={provider}>
-            {provider}
-          </span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        );
-      },
-      enableSorting: false,
-    }),
-    columnHelper.accessor('isSuccess', {
-      header: 'Status',
-      cell: (info) => {
-        const isSuccess = info.getValue();
-        const statusCode = info.row.original.statusCode;
-        const error = info.row.original.error;
-        
-        return (
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isSuccess
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
-              title={error || `HTTP ${statusCode}`}
-            >
-              {isSuccess ? '✓ Success' : '✗ Failed'}
-            </span>
-            {statusCode && (
-              <span className="text-xs text-gray-500" title={`HTTP Status: ${statusCode}`}>
-                {statusCode}
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('createdAt', {
+        header: 'Created',
+        cell: info => (
+          <time dateTime={info.getValue().toISOString()} title={formatDate(info.getValue())}>
+            <small>{formatDate(info.getValue())}</small>
+          </time>
+        ),
+        sortingFn: 'datetime',
+        enableSorting: true,
+      }),
+      columnHelper.accessor('model', {
+        header: 'Model',
+        cell: info => <strong title={info.getValue()}>{info.getValue()}</strong>,
+        enableSorting: true,
+      }),
+      columnHelper.accessor('provider', {
+        header: 'Provider',
+        cell: info => {
+          const provider = info.getValue();
+          return provider ? <small title={provider}>{provider}</small> : <small>—</small>;
+        },
+        enableSorting: false,
+      }),
+      columnHelper.accessor('isSuccess', {
+        header: 'Status',
+        cell: info => {
+          const isSuccess = info.getValue();
+          const statusCode = info.row.original.statusCode;
+          const error = info.row.original.error;
+
+          return (
+            <span>
+              <span
+                is-="badge"
+                variant-={isSuccess ? 'success' : 'error'}
+                title={error || `HTTP ${statusCode}`}
+              >
+                <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
               </span>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-    }),
-    columnHelper.accessor('totalTokens', {
-      header: 'Tokens',
-      cell: (info) => {
-        const tokens = info.getValue();
-        return tokens ? (
-          <span className="text-sm text-gray-900" title={`Total tokens: ${formatNumber(tokens)}`}>
-            {formatNumber(tokens)}
-          </span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        );
-      },
-      enableSorting: true,
-    }),
-    columnHelper.accessor('responseTime', {
-      header: 'Response Time',
-      cell: (info) => {
-        const responseTime = info.getValue();
-        return responseTime ? (
-          <span 
-            className="text-sm text-gray-900" 
-            title={`Response time: ${responseTime}ms`}
-          >
-            {responseTime}ms
-          </span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        );
-      },
-      enableSorting: true,
-    }),
-    columnHelper.accessor('requestPreview', {
-      header: 'Request Preview',
-      cell: (info) => (
-        <span 
-          className="text-sm text-gray-600 font-mono" 
-          title={info.getValue()}
-        >
-          {truncateText(info.getValue(), 40)}
-        </span>
-      ),
-      enableSorting: false,
-    }),
-    columnHelper.accessor('responsePreview', {
-      header: 'Response Preview',
-      cell: (info) => {
-        const preview = info.getValue();
-        return preview ? (
-          <span 
-            className="text-sm text-gray-600 font-mono" 
-            title={preview}
-          >
-            {truncateText(preview, 40)}
-          </span>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        );
-      },
-      enableSorting: false,
-    }),
-  ], []);
+              {statusCode && <small title={`HTTP Status: ${statusCode}`}>{statusCode}</small>}
+            </span>
+          );
+        },
+        enableSorting: false,
+      }),
+      columnHelper.accessor('totalTokens', {
+        header: 'Tokens',
+        cell: info => {
+          const tokens = info.getValue();
+          return tokens ? (
+            <small title={`Total tokens: ${formatNumber(tokens)}`}>{formatNumber(tokens)}</small>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('responseTime', {
+        header: 'Response Time',
+        cell: info => {
+          const responseTime = info.getValue();
+          return responseTime ? (
+            <small title={`Response time: ${responseTime}ms`}>{responseTime}ms</small>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: true,
+      }),
+      columnHelper.accessor('requestPreview', {
+        header: 'Request Preview',
+        cell: info => <code title={info.getValue()}>{truncateText(info.getValue(), 40)}</code>,
+        enableSorting: false,
+      }),
+      columnHelper.accessor('responsePreview', {
+        header: 'Response Preview',
+        cell: info => {
+          const preview = info.getValue();
+          return preview ? (
+            <code title={preview}>{truncateText(preview, 40)}</code>
+          ) : (
+            <small>—</small>
+          );
+        },
+        enableSorting: false,
+      }),
+    ],
+    []
+  );
 
   /**
    * Convert our sort format to TanStack Table format.
    */
-  const sorting = useMemo<SortingState>(() => [
-    {
-      id: sort.field,
-      desc: sort.direction === 'desc',
-    },
-  ], [sort.field, sort.direction]);
+  const sorting = useMemo<SortingState>(
+    () => [
+      {
+        id: sort.field,
+        desc: sort.direction === 'desc',
+      },
+    ],
+    [sort.field, sort.direction]
+  );
 
   /**
    * TanStack Table instance with configuration.
@@ -256,7 +222,7 @@ export function MessagesTable({
     state: {
       sorting,
     },
-    onSortingChange: (updater) => {
+    onSortingChange: updater => {
       const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
       const newSort = newSorting[0];
       if (newSort) {
@@ -273,10 +239,12 @@ export function MessagesTable({
   // Handle error state
   if (error) {
     return (
-      <div className="wui-table-container" role="alert" aria-live="polite">
-        <div className="p-6 text-center text-red-600 bg-red-50 rounded-lg border border-red-200">
-          <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
-          <p className="text-sm">{error}</p>
+      <div role="alert" aria-live="polite">
+        <div variant-="error" box-="square" style={{ textAlign: 'center' }}>
+          <h3>Error Loading Messages</h3>
+          <p>
+            <small>{error}</small>
+          </p>
         </div>
       </div>
     );
@@ -285,10 +253,12 @@ export function MessagesTable({
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="wui-table-container" aria-busy="true" aria-live="polite">
-        <div className="p-6 text-center text-gray-500">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600 mb-2"></div>
-          <p className="text-sm">Loading messages...</p>
+      <div aria-busy="true" aria-live="polite">
+        <div style={{ textAlign: 'center' }}>
+          <div>⟳</div>
+          <p>
+            <small>Loading messages...</small>
+          </p>
         </div>
       </div>
     );
@@ -297,31 +267,34 @@ export function MessagesTable({
   // Handle empty state
   if (messages.length === 0) {
     return (
-      <div className="wui-table-container" role="status" aria-live="polite">
-        <div className="p-6 text-center text-gray-500">
-          <h3 className="text-lg font-medium mb-2">No Messages Found</h3>
-          <p className="text-sm">There are no messages matching your current filters.</p>
+      <div role="status" aria-live="polite">
+        <div style={{ textAlign: 'center' }}>
+          <h3>No Messages Found</h3>
+          <p>
+            <small>There are no messages matching your current filters.</small>
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`wui-table-container ${className}`} role="region" aria-label="Messages table">
-      <table className="wui-table" role="table">
+    <div role="region" aria-label="Messages table">
+      <table is-="table" role="table" style={{ width: '100%' }}>
         <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
+          {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} role="row">
-              {headerGroup.headers.map((header) => (
+              {headerGroup.headers.map(header => (
                 <th
                   key={header.id}
                   role="columnheader"
-                  className={`wui-table-header ${
-                    header.column.getCanSort() ? 'cursor-pointer select-none' : ''
-                  }`}
+                  style={{
+                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                    userSelect: 'none',
+                  }}
                   onClick={header.column.getToggleSortingHandler()}
                   tabIndex={header.column.getCanSort() ? 0 : -1}
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
                       e.preventDefault();
                       header.column.getToggleSortingHandler()?.(e);
@@ -333,19 +306,21 @@ export function MessagesTable({
                         ? 'descending'
                         : 'ascending'
                       : header.column.getCanSort()
-                      ? 'none'
-                      : undefined
+                        ? 'none'
+                        : undefined
                   }
                 >
-                  <div className="flex items-center gap-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getCanSort() && (
-                      <span className="text-gray-400" aria-hidden="true">
-                        {header.column.getIsSorted() === 'desc' 
-                          ? '↓' 
-                          : header.column.getIsSorted() === 'asc' 
-                          ? '↑' 
-                          : '↕'}
+                      <span aria-hidden="true">
+                        <small>
+                          {header.column.getIsSorted() === 'desc'
+                            ? '↓'
+                            : header.column.getIsSorted() === 'asc'
+                              ? '↑'
+                              : '↕'}
+                        </small>
                       </span>
                     )}
                   </div>
@@ -355,10 +330,10 @@ export function MessagesTable({
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} role="row" className="wui-table-row">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} role="gridcell" className="wui-table-cell">
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id} role="row">
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id} role="gridcell">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

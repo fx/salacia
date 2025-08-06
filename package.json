@@ -17,7 +17,8 @@
     "lint:fix": "eslint src --ext .ts,.astro --fix",
     "format": "prettier --write src/**/*.{ts,astro,json}",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
@@ -37,6 +38,17 @@
     "react-dom": "^19.1.1",
     "zod": "^3.24.1"
   },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.astro": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": "prettier --write"
+  },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/node": "^9.3.3",
@@ -46,6 +58,8 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.18.0",
     "eslint-plugin-astro": "^1.2.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.4",
     "msw": "^2.8.2",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",

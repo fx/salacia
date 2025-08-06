@@ -1,24 +1,24 @@
 /**
  * MessagesApp main component that coordinates the messages interface.
- * 
+ *
  * This component serves as the main container for the messages interface,
  * managing state, data fetching, and coordinating between the table,
  * filters, and pagination components.
- * 
+ *
  * Features:
  * - Manages messages data state and loading states
  * - Coordinates filtering, sorting, and pagination
  * - Handles error states and recovery
  * - Provides real-time updates via API calls
  * - Integrates all sub-components seamlessly
- * 
+ *
  * @module MessagesApp
  */
 
 import React, { useState, useCallback } from 'react';
 import { MessagesTable } from './MessagesTable.js';
 import { Pagination } from './Pagination.js';
-import { TableFilters } from './TableFilters.js';
+import { SearchAndFilters } from './SearchAndFilters.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { messagesClient, MessagesApiError } from '../lib/api/messages-client.js';
 import type {
@@ -61,7 +61,7 @@ interface MessagesAppState {
 /**
  * MessagesApp component that provides the complete messages interface.
  * Manages state and coordinates between all sub-components.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the messages application
  */
@@ -84,59 +84,69 @@ export function MessagesApp({
    * Fetches messages with current pagination and filter parameters.
    * Updates loading and error states appropriately.
    */
-  const fetchMessages = useCallback(async (
-    paginationParams: MessagesPaginationParams,
-    filterParams: MessagesFilterParams
-  ) => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+  const fetchMessages = useCallback(
+    async (paginationParams: MessagesPaginationParams, filterParams: MessagesFilterParams) => {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-    try {
-      const result = await messagesClient.getMessages(paginationParams, filterParams);
-      setState(prev => ({
-        ...prev,
-        data: result,
-        isLoading: false,
-        error: null,
-        pagination: paginationParams,
-        filters: filterParams,
-      }));
-    } catch (error) {
-      const errorMessage = error instanceof MessagesApiError 
-        ? error.message 
-        : 'Failed to load messages. Please try again.';
-      
-      setState(prev => ({
-        ...prev,
-        data: null,
-        isLoading: false,
-        error: errorMessage,
-      }));
-    }
-  }, []);
+      try {
+        const result = await messagesClient.getMessages(paginationParams, filterParams);
+        setState(prev => ({
+          ...prev,
+          data: result,
+          isLoading: false,
+          error: null,
+          pagination: paginationParams,
+          filters: filterParams,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof MessagesApiError
+            ? error.message
+            : 'Failed to load messages. Please try again.';
+
+        setState(prev => ({
+          ...prev,
+          data: null,
+          isLoading: false,
+          error: errorMessage,
+        }));
+      }
+    },
+    []
+  );
 
   /**
    * Handles page changes from pagination component.
    */
-  const handlePageChange = useCallback((page: number) => {
-    const newPagination = { ...state.pagination, page };
-    fetchMessages(newPagination, state.filters);
-  }, [state.pagination, state.filters, fetchMessages]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const newPagination = { ...state.pagination, page };
+      fetchMessages(newPagination, state.filters);
+    },
+    [state.pagination, state.filters, fetchMessages]
+  );
 
   /**
    * Handles sort changes from table component.
    */
-  const handleSortChange = useCallback((sort: MessageSort) => {
-    const newPagination = { ...state.pagination, sort, page: 1 }; // Reset to page 1 on sort
-    fetchMessages(newPagination, state.filters);
-  }, [state.pagination, state.filters, fetchMessages]);
+  const handleSortChange = useCallback(
+    (sort: MessageSort) => {
+      const newPagination = { ...state.pagination, sort, page: 1 }; // Reset to page 1 on sort
+      fetchMessages(newPagination, state.filters);
+    },
+    [state.pagination, state.filters, fetchMessages]
+  );
 
   /**
    * Handles filter changes from filters component.
    */
-  const handleFiltersChange = useCallback((filters: MessagesFilterParams) => {
-    const newPagination = { ...state.pagination, page: 1 }; // Reset to page 1 on filter change
-    fetchMessages(newPagination, filters);
-  }, [state.pagination, fetchMessages]);
+  const handleFiltersChange = useCallback(
+    (filters: MessagesFilterParams) => {
+      const newPagination = { ...state.pagination, page: 1 }; // Reset to page 1 on filter change
+      fetchMessages(newPagination, filters);
+    },
+    [state.pagination, fetchMessages]
+  );
 
   /**
    * Handles retry after error.
@@ -149,16 +159,18 @@ export function MessagesApp({
   const availableModels = state.data?.messages
     ? Array.from(new Set(state.data.messages.map(msg => msg.model))).sort()
     : [];
-  
+
   const availableProviders = state.data?.messages
-    ? Array.from(new Set(state.data.messages.map(msg => msg.provider).filter((p): p is string => Boolean(p)))).sort()
+    ? Array.from(
+        new Set(state.data.messages.map(msg => msg.provider).filter((p): p is string => Boolean(p)))
+      ).sort()
     : [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2ch' }}>
-      {/* Filters section */}
-      <ErrorBoundary context="Table Filters">
-        <TableFilters
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Search and Filters section */}
+      <ErrorBoundary context="Search and Filters">
+        <SearchAndFilters
           filters={state.filters}
           onFiltersChange={handleFiltersChange}
           availableModels={availableModels}
@@ -171,17 +183,14 @@ export function MessagesApp({
       <div>
         {/* Error state */}
         {state.error && (
-          <div style={{ padding: '2ch', textAlign: 'center' }} role="alert" aria-live="polite">
-            <div style={{ marginBottom: '2ch' }}>
-              <h3 style={{ marginBottom: '1ch' }}>Error Loading Messages</h3>
-              <p><small>{state.error}</small></p>
+          <div style={{ textAlign: 'center' }} role="alert" aria-live="polite">
+            <div>
+              <h3>Error Loading Messages</h3>
+              <p>
+                <small>{state.error}</small>
+              </p>
             </div>
-            <button
-              onClick={handleRetry}
-              is-="button"
-              variant-="primary"
-              type="button"
-            >
+            <button onClick={handleRetry} is-="button" variant-="primary" type="button">
               Try Again
             </button>
           </div>
@@ -217,20 +226,20 @@ export function MessagesApp({
 
       {/* Loading overlay for better UX */}
       {state.isLoading && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            inset: '0', 
-            backgroundColor: 'rgba(0, 0, 0, 0.2)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            zIndex: '50' 
+        <div
+          style={{
+            position: 'fixed',
+            inset: '0',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: '50',
           }}
           role="status"
           aria-live="polite"
         >
-          <div style={{ padding: '2ch', display: 'flex', alignItems: 'center', gap: '1ch' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
             <span>Loading messages...</span>
           </div>
         </div>

@@ -104,14 +104,38 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 **CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
 
+- **ABSOLUTELY NO Custom CSS**: Never create .css files or add custom styles - WebTUI provides everything needed
 - **NO Tailwind**: This project does not use Tailwind CSS classes
-- **NO Custom CSS**: Avoid adding custom styles - let WebTUI and Catppuccin handle all styling
 - **NO Inline Styles**: Do not use style attributes or custom data attributes for styling
+- **WebTUI Is Complete**: WebTUI's design system is comprehensive - if something seems to need custom CSS, you're using WebTUI incorrectly
 - **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
 - **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **NEVER modify padding on WebTUI boxes**: Elements with `box-=` attributes have their own padding - never add custom padding
 - **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
+- **Dialog Elements**: Use native HTML dialog with WebTUI attributes only (position-, container-, size-)
 
 The Catppuccin theme provides all necessary colors, spacing, and typography through WebTUI's CSS.
+
+#### WebTUI ASCII Boxes
+
+Essential box patterns for terminal-style UI:
+
+**Box Types** (must suffix with `-`):
+```html
+<div box-="square">Square Box</div>
+<div box-="round">Round Box</div>
+<div box-="double">Double Border</div>
+<div box-="double round">Combined styles</div>
+```
+
+**Shearing** (overlap edges):
+```html
+<div box-="square" shear-="top">Top overlap</div>
+<div box-="square" shear-="bottom">Bottom overlap</div>
+<div box-="square" shear-="both">Both edges</div>
+```
+
+**Required Import**: `@import "@webtui/css/utils/box.css";`
 
 ### Frontend Architecture
 
