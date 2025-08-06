@@ -123,7 +123,7 @@ export function SearchAndFilters({
 
   return (
     <>
-      <div box-="square" style={{ padding: '1ch' }}>
+      <div box-="square">
         {/* Search input with label on left and Filters button */}
         <label htmlFor="message-search">
           <strong>Search: </strong>

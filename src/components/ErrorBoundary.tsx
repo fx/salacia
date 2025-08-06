@@ -92,7 +92,7 @@ function DefaultErrorFallback(
               <summary style={{ cursor: 'pointer' }}>
                 <small><strong>Error Details (Development)</strong></small>
               </summary>
-              <div variant-="error" box-="square" style={{ marginTop: '1lh', padding: '1lh' }}>
+              <div variant-="error" box-="square" style={{ marginTop: '1lh' }}>
                 <pre>
                   <code>
                     {error.message}

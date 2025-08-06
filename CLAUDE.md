@@ -110,6 +110,7 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **WebTUI Is Complete**: WebTUI's design system is comprehensive - if something seems to need custom CSS, you're using WebTUI incorrectly
 - **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
 - **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **NEVER modify padding on WebTUI boxes**: Elements with `box-=` attributes have their own padding - never add custom padding
 - **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
 - **Dialog Elements**: Use native HTML dialog with WebTUI attributes only (position-, container-, size-)
 

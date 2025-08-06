@@ -166,7 +166,7 @@ export function TableFilters({
   ).length;
 
   return (
-    <div box-="square" style={{ padding: '1lh' }}>
+    <div box-="square">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1lh' }}>
         <h3>Filters</h3>
         {activeFiltersCount > 0 && (

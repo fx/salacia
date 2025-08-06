@@ -267,7 +267,7 @@ export function MessagesTable({
   if (error) {
     return (
       <div role="alert" aria-live="polite">
-        <div variant-="error" box-="square" style={{ padding: '1lh', textAlign: 'center' }}>
+        <div variant-="error" box-="square" style={{ textAlign: 'center' }}>
           <h3>Error Loading Messages</h3>
           <p><small>{error}</small></p>
         </div>
