@@ -21,11 +21,7 @@ import '../styles/global.css';
 // Import the messages service for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
 import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
-import type {
-  MessagesCursorPaginationParams,
-  MessagesCursorPaginationResponse,
-} from '../lib/types/cursor.js';
-import type { MessageDisplay } from '../lib/types/messages.js';
+import type { MessagesCursorPaginationParams } from '../lib/types/cursor.js';
 
 // Default pagination parameters for initial page load
 const defaultPagination: MessagesCursorPaginationParams = {
@@ -41,11 +37,18 @@ const defaultSort: MessageSort = {
 };
 
 // Fetch initial data server-side for faster page load
-let initialMessages: MessagesCursorPaginationResponse<MessageDisplay>;
+let initialMessages: any;
 let initialError = null;
 
 try {
-  initialMessages = await MessagesService.getMessagesWithCursor(defaultPagination, defaultFilters);
+  const response = await MessagesService.getMessagesWithCursor(defaultPagination, defaultFilters);
+  // Transform to simplified structure for frontend
+  initialMessages = {
+    items: response.data,
+    hasMore: response.meta.hasMore,
+    nextCursor: response.cursors.next,
+    prevCursor: response.cursors.prev,
+  };
 } catch (error) {
   console.error('Failed to load initial messages:', error);
   initialError = error instanceof Error ? error.message : 'Failed to load messages';

@@ -1,8 +1,15 @@
-import type {
-  MessagesCursorPaginationParams,
-  MessagesCursorPaginationResponse,
-} from '../types/cursor.js';
+import type { MessagesCursorPaginationParams } from '../types/cursor.js';
 import type { MessageDisplay, MessagesFilterParams } from '../types/messages.js';
+
+/**
+ * Simplified cursor response structure for frontend consumption.
+ */
+export interface SimplifiedCursorResponse {
+  items: MessageDisplay[];
+  hasMore: boolean;
+  nextCursor?: string;
+  prevCursor?: string;
+}
 
 /**
  * Client for interacting with the messages API endpoints.
@@ -16,13 +23,13 @@ export class MessagesClient {
    *
    * @param params - Cursor pagination parameters
    * @param filters - Optional filtering criteria
-   * @returns Promise resolving to cursor-paginated response
+   * @returns Promise resolving to simplified cursor-paginated response
    * @throws Error if the API request fails
    */
   async getMessagesWithCursor(
     params: MessagesCursorPaginationParams = {},
     filters: MessagesFilterParams = {}
-  ): Promise<MessagesCursorPaginationResponse<MessageDisplay>> {
+  ): Promise<SimplifiedCursorResponse> {
     const queryParams = new URLSearchParams();
 
     // Add pagination parameters
@@ -52,6 +59,15 @@ export class MessagesClient {
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Parse dates in the response
+    return {
+      ...data,
+      items: data.items.map((item: any) => ({
+        ...item,
+        createdAt: new Date(item.createdAt),
+      })),
+    };
   }
 }

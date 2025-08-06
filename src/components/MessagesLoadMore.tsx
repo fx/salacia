@@ -1,15 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import type {
-  MessagesCursorPaginationParams,
-  MessagesCursorPaginationResponse,
-} from '../lib/types/cursor';
+import type { MessagesCursorPaginationParams } from '../lib/types/cursor';
 import type { MessagesFilterParams, MessageDisplay, MessageSort } from '../lib/types/messages';
 import { MessagesTable } from './MessagesTable';
 import { SearchAndFilters } from './SearchAndFilters';
-import { MessagesClient } from '../lib/api/messages';
+import { MessagesClient, type SimplifiedCursorResponse } from '../lib/api/messages';
 
 interface MessagesLoadMoreProps {
-  initialMessages: MessagesCursorPaginationResponse<MessageDisplay>;
+  initialMessages: SimplifiedCursorResponse;
   initialFilters: MessagesFilterParams;
   initialSort: MessageSort;
 }
