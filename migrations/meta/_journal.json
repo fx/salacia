@@ -8,6 +8,13 @@
       "when": 1754245211176,
       "tag": "0000_classy_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1754502083261,
+      "tag": "0001_curved_franklin_richards",
+      "breakpoints": true
     }
   ]
 }
