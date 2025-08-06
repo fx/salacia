@@ -1,4 +1,18 @@
-import { desc, asc, and, or, gte, lte, like, isNull, isNotNull, count, sql } from 'drizzle-orm';
+import {
+  desc,
+  asc,
+  and,
+  or,
+  gte,
+  lte,
+  gt,
+  lt,
+  like,
+  isNull,
+  isNotNull,
+  count,
+  sql,
+} from 'drizzle-orm';
 import type {
   MessageDisplay,
   MessageStats,
@@ -10,6 +24,11 @@ import type {
 import { transformAiInteractionToDisplay } from '../types/messages.js';
 import { aiInteractions } from '../db/schema.js';
 import { db } from '../db/connection.js';
+import type {
+  MessagesCursorPaginationParams,
+  MessagesCursorPaginationResponse,
+} from '../types/cursor.js';
+import { CursorUtils } from '../types/cursor.js';
 
 /**
  * Service class for managing AI message interactions.
@@ -288,5 +307,129 @@ export class MessagesService {
   private static isValidUUID(id: string): boolean {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
+  }
+
+  /**
+   * Retrieves messages using cursor-based pagination for efficient large dataset navigation.
+   *
+   * @param params - Cursor pagination parameters
+   * @param filters - Optional filtering criteria
+   * @returns Promise resolving to cursor-paginated response
+   * @throws Error if pagination fails or parameters are invalid
+   */
+  static async getMessagesWithCursor(
+    params: MessagesCursorPaginationParams,
+    filters: MessagesFilterParams = {}
+  ): Promise<MessagesCursorPaginationResponse<MessageDisplay>> {
+    const limit = Math.min(params.limit || 20, 100);
+    const sortBy = params.sortBy || 'createdAt';
+    const sortDirection = params.sortDirection || 'desc';
+
+    try {
+      const whereConditions = [];
+
+      // Add filter conditions
+      const filterConditions = this.buildWhereConditions(filters);
+      if (filterConditions) {
+        whereConditions.push(filterConditions);
+      }
+
+      // Add cursor conditions if cursor provided
+      if (params.cursor && CursorUtils.isValid(params.cursor)) {
+        const cursorData = CursorUtils.decode(params.cursor);
+        if (cursorData) {
+          // Build cursor comparison based on sort field
+          if (sortBy === 'createdAt') {
+            const cursorDate = new Date(cursorData.sortFieldValue);
+            if (sortDirection === 'desc') {
+              whereConditions.push(
+                or(
+                  lt(aiInteractions.createdAt, cursorDate),
+                  and(
+                    sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                    lt(aiInteractions.id, cursorData.id)
+                  )
+                )
+              );
+            } else {
+              whereConditions.push(
+                or(
+                  gt(aiInteractions.createdAt, cursorDate),
+                  and(
+                    sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                    gt(aiInteractions.id, cursorData.id)
+                  )
+                )
+              );
+            }
+          } else if (sortBy === 'id') {
+            if (sortDirection === 'desc') {
+              whereConditions.push(lt(aiInteractions.id, cursorData.id));
+            } else {
+              whereConditions.push(gt(aiInteractions.id, cursorData.id));
+            }
+          }
+        }
+      }
+
+      const combinedWhere = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+      // Build order by
+      const orderByClause = [];
+      if (sortBy === 'createdAt') {
+        orderByClause.push(
+          sortDirection === 'desc' ? desc(aiInteractions.createdAt) : asc(aiInteractions.createdAt)
+        );
+      }
+      orderByClause.push(
+        sortDirection === 'desc' ? desc(aiInteractions.id) : asc(aiInteractions.id)
+      );
+
+      // Fetch one extra item to determine hasMore
+      const results = await db
+        .select()
+        .from(aiInteractions)
+        .where(combinedWhere)
+        .orderBy(...orderByClause)
+        .limit(limit + 1);
+
+      const hasMore = results.length > limit;
+      const items = results.slice(0, limit).map(transformAiInteractionToDisplay);
+
+      // Generate cursors
+      let nextCursor: string | undefined;
+      let prevCursor: string | undefined;
+
+      if (hasMore && items.length > 0) {
+        const lastItem = items[items.length - 1];
+        const sortValue = sortBy === 'createdAt' ? lastItem.createdAt : lastItem.id;
+        nextCursor = CursorUtils.encode(sortValue, lastItem.id, sortBy);
+      }
+
+      if (params.cursor && items.length > 0) {
+        const firstItem = items[0];
+        const sortValue = sortBy === 'createdAt' ? firstItem.createdAt : firstItem.id;
+        prevCursor = CursorUtils.encode(sortValue, firstItem.id, sortBy);
+      }
+
+      return {
+        data: items,
+        meta: {
+          count: items.length,
+          limit,
+          hasMore,
+          sortBy,
+          sortDirection,
+        },
+        cursors: {
+          next: nextCursor,
+          prev: prevCursor,
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to retrieve messages with cursor: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
