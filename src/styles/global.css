@@ -17,6 +17,7 @@
 @import '@webtui/css/components/textarea.css';
 @import '@webtui/css/components/separator.css';
 @import '@webtui/css/components/table.css';
+@import '@webtui/css/components/dialog.css';
 
 /* Import themes and plugins */
 @import '@webtui/theme-catppuccin';

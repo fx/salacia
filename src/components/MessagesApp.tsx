@@ -18,7 +18,7 @@
 import React, { useState, useCallback } from 'react';
 import { MessagesTable } from './MessagesTable.js';
 import { Pagination } from './Pagination.js';
-import { TableFilters } from './TableFilters.js';
+import { SearchAndFilters } from './SearchAndFilters.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { messagesClient, MessagesApiError } from '../lib/api/messages-client.js';
 import type {
@@ -156,9 +156,9 @@ export function MessagesApp({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2ch' }}>
-      {/* Filters section */}
-      <ErrorBoundary context="Table Filters">
-        <TableFilters
+      {/* Search and Filters section */}
+      <ErrorBoundary context="Search and Filters">
+        <SearchAndFilters
           filters={state.filters}
           onFiltersChange={handleFiltersChange}
           availableModels={availableModels}
