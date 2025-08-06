@@ -123,81 +123,41 @@ export function SearchAndFilters({
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1ch', marginBottom: '2ch' }}>
-        {/* Search input */}
-        <div style={{ flexGrow: 1, maxWidth: '400px' }}>
-          <label htmlFor="message-search" style={{ display: 'block', marginBottom: '0.5ch' }}>
-            <strong>Search Messages</strong>
-          </label>
+      <div>
+        {/* Search input with label on left and Filters button */}
+        <label htmlFor="message-search">
+          <strong>Search: </strong>
           <input
             id="message-search"
             type="text"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            placeholder="Search in request and response content..."
+            placeholder="Search messages..."
             disabled={disabled}
-            style={{ width: '100%' }}
           />
-        </div>
-
-        {/* Filters button */}
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          {' '}
           <button
             type="button"
             onClick={() => setIsFilterDialogOpen(true)}
             disabled={disabled}
-            style={{ 
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5ch'
-            }}
+            size-="small"
           >
             Filters
             {activeNonSearchFilters > 0 && (
-              <span 
-                style={{
-                  backgroundColor: 'var(--color-accent)',
-                  color: 'var(--color-accent-contrast)',
-                  borderRadius: '50%',
-                  minWidth: '1.5ch',
-                  height: '1.5ch',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.75em',
-                  fontWeight: 'bold',
-                  marginLeft: '0.5ch'
-                }}
-              >
-                {activeNonSearchFilters}
-              </span>
+              <>
+                {' '}
+                <span variant-="badge">
+                  {activeNonSearchFilters}
+                </span>
+              </>
             )}
           </button>
-        </div>
-
-        {/* Clear all button - only show if filters are active */}
-        {totalActiveFilters > 0 && (
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            disabled={disabled}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              textDecoration: 'underline', 
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Clear all
-          </button>
-        )}
+        </label>
       </div>
 
       {/* Active filters summary */}
       {totalActiveFilters > 0 && (
-        <div style={{ marginBottom: '1ch' }}>
+        <div>
           <small>
             {totalActiveFilters} filter{totalActiveFilters === 1 ? '' : 's'} active
             {filters.searchTerm && ` • Search: "${filters.searchTerm}"`}
@@ -207,6 +167,15 @@ export function SearchAndFilters({
             {filters.startDate && ` • From: ${filters.startDate.toLocaleDateString()}`}
             {filters.endDate && ` • To: ${filters.endDate.toLocaleDateString()}`}
           </small>
+          {' '}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            disabled={disabled}
+            size-="small"
+          >
+            Clear all
+          </button>
         </div>
       )}
 
