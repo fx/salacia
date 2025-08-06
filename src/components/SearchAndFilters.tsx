@@ -128,6 +128,7 @@ export function SearchAndFilters({
         <label htmlFor="message-search">
           <strong>Search: </strong>
           <input
+            is-="input"
             id="message-search"
             type="text"
             value={localSearchTerm}
@@ -136,6 +137,7 @@ export function SearchAndFilters({
             disabled={disabled}
           />{' '}
           <button
+            is-="button"
             type="button"
             onClick={() => setIsFilterDialogOpen(true)}
             disabled={disabled}
@@ -164,7 +166,7 @@ export function SearchAndFilters({
               {filters.startDate && ` • From: ${filters.startDate.toLocaleDateString()}`}
               {filters.endDate && ` • To: ${filters.endDate.toLocaleDateString()}`}
             </small>{' '}
-            <button type="button" onClick={clearAllFilters} disabled={disabled} size-="small">
+            <button is-="button" type="button" onClick={clearAllFilters} disabled={disabled} size-="small">
               Clear all
             </button>
           </div>

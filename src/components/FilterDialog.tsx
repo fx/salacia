@@ -180,6 +180,7 @@ export function FilterDialog({
             <strong>Model</strong>
           </label>
               <select
+                is-="select"
                 id="dialog-model-filter"
                 value={localFilters.model || ''}
                 onChange={(e) => updateFilter('model', e.target.value || undefined)}
@@ -200,6 +201,7 @@ export function FilterDialog({
                 <strong>Provider</strong>
               </label>
               <select
+                is-="select"
                 id="dialog-provider-filter"
                 value={localFilters.provider || ''}
                 onChange={(e) => updateFilter('provider', e.target.value || undefined)}
@@ -220,6 +222,7 @@ export function FilterDialog({
                 <strong>Status</strong>
               </label>
               <select
+                is-="select"
                 id="dialog-status-filter"
                 value={localFilters.hasError === undefined ? '' : localFilters.hasError ? 'error' : 'success'}
                 onChange={(e) => {
@@ -240,6 +243,7 @@ export function FilterDialog({
                 <strong>Start Date</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-start-date"
                 type="date"
                 value={localFilters.startDate ? formatDateForInput(localFilters.startDate) : ''}
@@ -254,6 +258,7 @@ export function FilterDialog({
                 <strong>End Date</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-end-date"
                 type="date"
                 value={localFilters.endDate ? formatDateForInput(localFilters.endDate) : ''}
@@ -268,6 +273,7 @@ export function FilterDialog({
                 <strong>Min Tokens</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-min-tokens"
                 type="number"
                 min="0"
@@ -284,6 +290,7 @@ export function FilterDialog({
                 <strong>Max Tokens</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-max-tokens"
                 type="number"
                 min="0"
@@ -300,6 +307,7 @@ export function FilterDialog({
                 <strong>Min Response Time (ms)</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-min-response-time"
                 type="number"
                 min="0"
@@ -316,6 +324,7 @@ export function FilterDialog({
                 <strong>Max Response Time (ms)</strong>
               </label>
               <input
+                is-="input"
                 id="dialog-max-response-time"
                 type="number"
                 min="0"
@@ -336,6 +345,7 @@ export function FilterDialog({
               </small>
               {' '}
               <button
+                is-="button"
                 type="button"
                 onClick={clearAllFilters}
                 disabled={disabled}
@@ -348,6 +358,7 @@ export function FilterDialog({
         
         <div>
           <button
+            is-="button"
             type="button"
             onClick={handleCancel}
             disabled={disabled}
@@ -356,6 +367,7 @@ export function FilterDialog({
           </button>
           {' '}
           <button
+            is-="button"
             type="button"
             onClick={handleApplyFilters}
             disabled={disabled}
