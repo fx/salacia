@@ -79,7 +79,7 @@ export function decodeCursor(cursor: string): CursorData {
     
     const validated = cursorDataSchema.parse(parsed);
     return validated;
-  } catch (error) {
+  } catch {
     throw new Error('Invalid cursor format');
   }
 }

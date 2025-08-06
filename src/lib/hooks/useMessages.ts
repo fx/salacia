@@ -62,7 +62,7 @@ export interface UseMessagesReturn {
   /** Refresh messages (replace existing) */
   refresh: () => Promise<void>;
   /** Change sort parameters and reload */
-  changeSortAndReload: (sortBy: SortField, sortDirection: SortDirection) => Promise<void>;
+  changeSortAndReload: (_sortBy: SortField, _sortDirection: SortDirection) => Promise<void>;
   /** Clear all messages and reset state */
   clear: () => void;
 }

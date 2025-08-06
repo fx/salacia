@@ -18,12 +18,23 @@ export default [
         console: 'readonly',
         Response: 'readonly',
         Date: 'readonly',
+        // Browser globals
+        AbortController: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+        DOMException: 'readonly',
+        URL: 'readonly',
+        window: 'readonly',
+        // Node.js globals
+        Buffer: 'readonly',
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
     },
     rules: {
+      'no-unused-vars': 'off', // Turn off base rule to use TypeScript version
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
