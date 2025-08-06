@@ -67,64 +67,70 @@ function DefaultErrorFallback(
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
-    <div 
-      className="p-6 bg-red-50 border border-red-200 rounded-lg"
+    <div
+      variant-="error"
+      box-="square"
+      style={{ padding: '1lh' }}
       role="alert"
       aria-live="assertive"
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">
-          <span className="text-red-500 text-xl" aria-hidden="true">⚠️</span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1ch' }}>
+        <div style={{ flexShrink: 0 }}>
+          <span aria-hidden="true">⚠️</span>
         </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-medium text-red-800 mb-2">
+        <div style={{ flex: 1 }}>
+          <h3 style={{ marginBottom: '1lh' }}>
             Something went wrong {context && `in ${context}`}
           </h3>
-          <p className="text-red-700 mb-4">
+          <p style={{ marginBottom: '1lh' }}>
             An unexpected error occurred while rendering this component. 
             The error has been logged and reported.
           </p>
           
           {isDevelopment && (
-            <details className="mb-4">
-              <summary className="cursor-pointer text-sm font-medium text-red-800 hover:text-red-900">
-                Error Details (Development)
+            <details style={{ marginBottom: '1lh' }}>
+              <summary style={{ cursor: 'pointer' }}>
+                <small><strong>Error Details (Development)</strong></small>
               </summary>
-              <div className="mt-2 p-3 bg-red-100 rounded border border-red-300">
-                <pre className="text-sm text-red-800 whitespace-pre-wrap font-mono">
-                  {error.message}
-                  {error.stack && `\n\nStack trace:\n${error.stack}`}
-                  {errorInfo.componentStack && `\n\nComponent stack:${errorInfo.componentStack}`}
+              <div variant-="error" box-="square" style={{ marginTop: '1lh', padding: '1lh' }}>
+                <pre>
+                  <code>
+                    {error.message}
+                    {error.stack && `\n\nStack trace:\n${error.stack}`}
+                    {errorInfo.componentStack && `\n\nComponent stack:${errorInfo.componentStack}`}
+                  </code>
                 </pre>
               </div>
             </details>
           )}
 
-          <div className="flex flex-wrap gap-2">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1ch' }}>
             <button
               type="button"
+              is-="button"
+              variant-="primary"
               onClick={retry}
-              className="wui-button wui-button-primary"
               aria-describedby="retry-help"
             >
               Try Again
             </button>
             <button
               type="button"
+              is-="button"
+              variant-="secondary"
               onClick={() => window.location.reload()}
-              className="wui-button wui-button-secondary"
               aria-describedby="reload-help"
             >
               Reload Page
             </button>
           </div>
           
-          <div className="mt-2 text-sm text-red-600">
-            <p id="retry-help" className="sr-only">
-              Try again to re-render the component
+          <div style={{ marginTop: '1lh' }}>
+            <p id="retry-help" style={{ position: 'absolute', left: '-10000px' }}>
+              <small>Try again to re-render the component</small>
             </p>
-            <p id="reload-help" className="sr-only">
-              Reload the entire page to reset the application state
+            <p id="reload-help" style={{ position: 'absolute', left: '-10000px' }}>
+              <small>Reload the entire page to reset the application state</small>
             </p>
           </div>
         </div>
@@ -222,7 +228,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         : DefaultErrorFallback(error, errorInfo, this.retry, context);
 
       return (
-        <div className={className}>
+        <div>
           {fallbackContent}
         </div>
       );
@@ -230,7 +236,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Use key to force remount on retry
     return (
-      <div key={this.state.retryCount} className={className}>
+      <div key={this.state.retryCount}>
         {children}
       </div>
     );

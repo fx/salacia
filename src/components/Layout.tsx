@@ -25,7 +25,7 @@ export function Layout({ children }: Omit<LayoutProps, 'title'>) {
     <div style={{ padding: '1ch', height: '100vh', boxSizing: 'border-box' }}>
       <div box-="square" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Navigation />
-        <main style={{ flex: '1', padding: '0 1ch 1ch 1ch', overflow: 'auto' }}>
+        <main style={{ flex: '1', padding: '1ch', overflow: 'auto' }}>
           {children}
         </main>
       </div>

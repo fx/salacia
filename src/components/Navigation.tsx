@@ -7,14 +7,14 @@
  */
 export function Navigation() {
   return (
-    <nav style={{ padding: '1ch 2ch', borderBottom: '1px solid var(--background1)' }}>
+    <nav style={{ padding: '1ch', borderBottom: '1px solid var(--background1)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2ch' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
           <a href="/" style={{ textDecoration: 'none' }}>
-            <span is-="badge" variant-="blue">HOME</span>
+            <span is-="badge">HOME</span>
           </a>
           <a href="/messages" style={{ textDecoration: 'none' }}>
-            <span is-="badge" variant-="background1">MESSAGES</span>
+            <span is-="badge">MESSAGES</span>
           </a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>

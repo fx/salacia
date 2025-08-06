@@ -112,10 +112,9 @@ export function MessagesTable({
       cell: (info) => (
         <time
           dateTime={info.getValue().toISOString()}
-          className="text-sm text-gray-600"
           title={formatDate(info.getValue())}
         >
-          {formatDate(info.getValue())}
+          <small>{formatDate(info.getValue())}</small>
         </time>
       ),
       sortingFn: 'datetime',
@@ -124,9 +123,9 @@ export function MessagesTable({
     columnHelper.accessor('model', {
       header: 'Model',
       cell: (info) => (
-        <span className="font-medium text-gray-900" title={info.getValue()}>
+        <strong title={info.getValue()}>
           {info.getValue()}
-        </span>
+        </strong>
       ),
       enableSorting: true,
     }),
@@ -135,11 +134,11 @@ export function MessagesTable({
       cell: (info) => {
         const provider = info.getValue();
         return provider ? (
-          <span className="text-sm text-gray-600" title={provider}>
+          <small title={provider}>
             {provider}
-          </span>
+          </small>
         ) : (
-          <span className="text-sm text-gray-400">—</span>
+          <small>—</small>
         );
       },
       enableSorting: false,
@@ -152,21 +151,18 @@ export function MessagesTable({
         const error = info.row.original.error;
         
         return (
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
             <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isSuccess
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
+              box-="square"
+              variant-={isSuccess ? 'success' : 'error'}
               title={error || `HTTP ${statusCode}`}
             >
-              {isSuccess ? '✓ Success' : '✗ Failed'}
+              <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
             </span>
             {statusCode && (
-              <span className="text-xs text-gray-500" title={`HTTP Status: ${statusCode}`}>
+              <small title={`HTTP Status: ${statusCode}`}>
                 {statusCode}
-              </span>
+              </small>
             )}
           </div>
         );
@@ -178,11 +174,11 @@ export function MessagesTable({
       cell: (info) => {
         const tokens = info.getValue();
         return tokens ? (
-          <span className="text-sm text-gray-900" title={`Total tokens: ${formatNumber(tokens)}`}>
+          <small title={`Total tokens: ${formatNumber(tokens)}`}>
             {formatNumber(tokens)}
-          </span>
+          </small>
         ) : (
-          <span className="text-sm text-gray-400">—</span>
+          <small>—</small>
         );
       },
       enableSorting: true,
@@ -192,14 +188,13 @@ export function MessagesTable({
       cell: (info) => {
         const responseTime = info.getValue();
         return responseTime ? (
-          <span 
-            className="text-sm text-gray-900" 
+          <small
             title={`Response time: ${responseTime}ms`}
           >
             {responseTime}ms
-          </span>
+          </small>
         ) : (
-          <span className="text-sm text-gray-400">—</span>
+          <small>—</small>
         );
       },
       enableSorting: true,
@@ -207,12 +202,11 @@ export function MessagesTable({
     columnHelper.accessor('requestPreview', {
       header: 'Request Preview',
       cell: (info) => (
-        <span 
-          className="text-sm text-gray-600 font-mono" 
+        <code
           title={info.getValue()}
         >
           {truncateText(info.getValue(), 40)}
-        </span>
+        </code>
       ),
       enableSorting: false,
     }),
@@ -221,14 +215,13 @@ export function MessagesTable({
       cell: (info) => {
         const preview = info.getValue();
         return preview ? (
-          <span 
-            className="text-sm text-gray-600 font-mono" 
+          <code
             title={preview}
           >
             {truncateText(preview, 40)}
-          </span>
+          </code>
         ) : (
-          <span className="text-sm text-gray-400">—</span>
+          <small>—</small>
         );
       },
       enableSorting: false,
@@ -273,10 +266,10 @@ export function MessagesTable({
   // Handle error state
   if (error) {
     return (
-      <div className="wui-table-container" role="alert" aria-live="polite">
-        <div className="p-6 text-center text-red-600 bg-red-50 rounded-lg border border-red-200">
-          <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
-          <p className="text-sm">{error}</p>
+      <div role="alert" aria-live="polite">
+        <div variant-="error" box-="square" style={{ padding: '1lh', textAlign: 'center' }}>
+          <h3>Error Loading Messages</h3>
+          <p><small>{error}</small></p>
         </div>
       </div>
     );
@@ -285,10 +278,10 @@ export function MessagesTable({
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="wui-table-container" aria-busy="true" aria-live="polite">
-        <div className="p-6 text-center text-gray-500">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600 mb-2"></div>
-          <p className="text-sm">Loading messages...</p>
+      <div aria-busy="true" aria-live="polite">
+        <div style={{ padding: '1lh', textAlign: 'center' }}>
+          <div style={{ marginBottom: '1lh' }}>⟳</div>
+          <p><small>Loading messages...</small></p>
         </div>
       </div>
     );
@@ -297,18 +290,18 @@ export function MessagesTable({
   // Handle empty state
   if (messages.length === 0) {
     return (
-      <div className="wui-table-container" role="status" aria-live="polite">
-        <div className="p-6 text-center text-gray-500">
-          <h3 className="text-lg font-medium mb-2">No Messages Found</h3>
-          <p className="text-sm">There are no messages matching your current filters.</p>
+      <div role="status" aria-live="polite">
+        <div style={{ padding: '1lh', textAlign: 'center' }}>
+          <h3>No Messages Found</h3>
+          <p><small>There are no messages matching your current filters.</small></p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`wui-table-container ${className}`} role="region" aria-label="Messages table">
-      <table className="wui-table" role="table">
+    <div role="region" aria-label="Messages table">
+      <table is-="table" role="table">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} role="row">
@@ -316,9 +309,10 @@ export function MessagesTable({
                 <th
                   key={header.id}
                   role="columnheader"
-                  className={`wui-table-header ${
-                    header.column.getCanSort() ? 'cursor-pointer select-none' : ''
-                  }`}
+                  style={{
+                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                    userSelect: 'none'
+                  }}
                   onClick={header.column.getToggleSortingHandler()}
                   tabIndex={header.column.getCanSort() ? 0 : -1}
                   onKeyDown={(e) => {
@@ -337,15 +331,17 @@ export function MessagesTable({
                       : undefined
                   }
                 >
-                  <div className="flex items-center gap-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getCanSort() && (
-                      <span className="text-gray-400" aria-hidden="true">
-                        {header.column.getIsSorted() === 'desc' 
-                          ? '↓' 
-                          : header.column.getIsSorted() === 'asc' 
-                          ? '↑' 
-                          : '↕'}
+                      <span aria-hidden="true">
+                        <small>
+                          {header.column.getIsSorted() === 'desc' 
+                            ? '↓' 
+                            : header.column.getIsSorted() === 'asc' 
+                            ? '↑' 
+                            : '↕'}
+                        </small>
                       </span>
                     )}
                   </div>
@@ -356,9 +352,9 @@ export function MessagesTable({
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} role="row" className="wui-table-row">
+            <tr key={row.id} role="row">
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} role="gridcell" className="wui-table-cell">
+                <td key={cell.id} role="gridcell">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
