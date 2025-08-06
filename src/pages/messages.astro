@@ -71,7 +71,7 @@ try {
 }
 ---
 
-<html lang="en">
+<html lang="en" data-webtui-theme="catppuccin">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -84,24 +84,23 @@ try {
   </head>
   <body>
     <Layout client:idle>
-      <div class="space-y-6">
-        <!-- Page header -->
-        <div class="border-b border-gray-200 pb-4">
-          <h1 class="text-3xl font-bold text-foreground">Messages</h1>
-          <p class="mt-2 text-foreground-muted">
-            View and analyze AI interaction messages with comprehensive filtering and search
-            capabilities
-          </p>
+      <div>
+        <!-- Terminal-style page header -->
+        <div box-="square">
+          <h2>MESSAGES MODULE</h2>
+          <p>AI interaction messages with filtering and search capabilities</p>
         </div>
 
         <!-- Messages interface component with server-side data -->
-        <MessagesApp
-          client:load
-          initialMessages={initialMessages}
-          initialError={initialError}
-          defaultPagination={defaultPagination}
-          defaultFilters={defaultFilters}
-        />
+        <div>
+          <MessagesApp
+            client:load
+            initialMessages={initialMessages}
+            initialError={initialError}
+            defaultPagination={defaultPagination}
+            defaultFilters={defaultFilters}
+          />
+        </div>
       </div>
     </Layout>
   </body>

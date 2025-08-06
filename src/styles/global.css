@@ -1,15 +1,44 @@
-/* WebTUI CSS - Global Styles */
+/* WebTUI CSS - Global Styles with Catppuccin Theme */
 
 /* Define CSS layers for proper specificity */
 @layer base, utils, components;
 
-/* Import WebTUI base styles */
-@import "@webtui/css/base.css";
+/* Import WebTUI base styles first */
+@import '@webtui/css/base.css';
 
 /* Import WebTUI utilities */
-@import "@webtui/css/utils/box.css";
+@import '@webtui/css/utils/box.css';
 
 /* Import WebTUI components */
-@import "@webtui/css/components/button.css";
-@import "@webtui/css/components/typography.css";
-@import "@webtui/css/components/table.css";
+@import '@webtui/css/components/button.css';
+@import '@webtui/css/components/typography.css';
+@import '@webtui/css/components/badge.css';
+@import '@webtui/css/components/input.css';
+@import '@webtui/css/components/textarea.css';
+@import '@webtui/css/components/separator.css';
+@import '@webtui/css/components/table.css';
+
+/* Import themes and plugins */
+@import '@webtui/theme-catppuccin';
+@import '@webtui/plugin-nf';
+
+/* Custom font configuration for terminal theme */
+@layer base {
+  :root {
+    --font-family:
+      'Hack Nerd Font', 'JetBrains Mono', Menlo, Monaco, monospace, 'Symbols Nerd Font';
+    --font-size: 16px;
+    --line-height: 1.4;
+    --box-border-color: var(--background1);
+  }
+
+  body,
+  html {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+}

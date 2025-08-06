@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout';
 import '../styles/global.css';
 ---
 
-<html lang="en">
+<html lang="en" data-webtui-theme="catppuccin">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -13,10 +13,26 @@ import '../styles/global.css';
   <body>
     <Layout client:idle>
       <div>
-        <h1 class="text-3xl font-bold text-foreground mb-6">Welcome to Salacia</h1>
-        <p class="text-foreground-muted text-lg">
-          LLM inference API proxy with database recording capabilities
-        </p>
+        <!-- Terminal-style welcome header -->
+        <div box-="square">
+          <h2># WELCOME TO SALACIA</h2>
+          <p>LLM inference API proxy with database recording capabilities</p>
+        </div>
+
+        <!-- Terminal-style system info -->
+        <div box-="square">
+          <h3>## SYSTEM STATUS</h3>
+          <p>Status: <span is-="badge" variant-="green">ONLINE</span></p>
+          <p>Database: <span is-="badge" variant-="green">CONNECTED</span></p>
+          <p>Theme: <span is-="badge" variant-="yellow">CATPPUCCIN</span></p>
+        </div>
+
+        <!-- Terminal-style quick actions -->
+        <div box-="square">
+          <h3>### QUICK ACTIONS</h3>
+          <p><a href="/messages">[1] View Messages Database →</a></p>
+          <p><span is-="badge" variant-="background1">[2] API Documentation (Coming Soon)</span></p>
+        </div>
       </div>
     </Layout>
   </body>

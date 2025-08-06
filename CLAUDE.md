@@ -94,13 +94,24 @@ All commits and pull request titles must follow the Conventional Commits specifi
 
 ### WebTUI Design System
 
-This project uses WebTUI as the primary design system and CSS framework:
+This project uses WebTUI as the primary design system and CSS framework with Catppuccin theming:
 
 - **Documentation**: Always refer to https://webtui.ironclad.sh/start/intro/ for WebTUI documentation
-- **Component Preference**: Always prefer using WebTUI components directly rather than custom implementations
-- **Styling Guidelines**: Contain any custom styling within components that directly use WebTUI or very simple CSS based on WebTUI patterns
-- **CSS Architecture**: Follow WebTUI's layer-based CSS architecture with `@layer base, utils, components`
-- **Design Tokens**: Use WebTUI's design tokens and utility classes for consistent spacing, typography, and colors
+- **Theme**: Uses `@webtui/theme-catppuccin` with `catppuccin-mocha` variant for consistent dark terminal aesthetic
+- **Fonts**: Uses `@webtui/plugin-nf` with Hack Nerd Font as primary monospace font family
+
+#### Styling Approach
+
+**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
+
+- **NO Tailwind**: This project does not use Tailwind CSS classes
+- **NO Custom CSS**: Avoid adding custom styles - let WebTUI and Catppuccin handle all styling
+- **NO Inline Styles**: Do not use style attributes or custom data attributes for styling
+- **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
+- **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
+
+The Catppuccin theme provides all necessary colors, spacing, and typography through WebTUI's CSS.
 
 ### Frontend Architecture
 

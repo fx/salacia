@@ -12,20 +12,21 @@ interface LayoutProps {
 }
 
 /**
- * Main layout component that provides the overall structure for the application.
- * Includes navigation and content area within a flex layout.
+ * Main layout component that provides the overall terminal-like structure for the application.
+ * Creates a full viewport terminal interface with navigation and content areas.
+ * Uses WebTUI CSS utilities exclusively for consistent theming and spacing.
  * 
  * @param props - The layout props
  * @param props.children - The main content to be rendered
- * @returns The page layout with navigation and content
+ * @returns The terminal-style page layout with navigation and content
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Navigation />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main>
         {children}
       </main>
-    </div>
+    </>
   );
 }

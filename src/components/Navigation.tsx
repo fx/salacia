@@ -1,34 +1,22 @@
 /**
- * Navigation component that provides the main site navigation.
- * Includes navigation links for Home and Messages pages, with active state
- * indication and responsive design.
+ * Terminal-style navigation component designed to mimic Claude Code's interface.
+ * Creates an ASCII box layout using WebTUI CSS utilities exclusively.
+ * Features a monospace terminal aesthetic with border styling.
  * 
- * @returns The navigation bar with primary site links
+ * @returns The terminal-style navigation bar with ASCII box design
  */
 export function Navigation() {
   return (
-    <nav className="bg-surface border-b border-neutral-200 shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl font-semibold text-foreground">Salacia</h1>
-            </div>
-            <div className="flex space-x-6">
-              <a 
-                href="/" 
-                className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Home
-              </a>
-              <a 
-                href="/messages" 
-                className="text-foreground hover:text-primary transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Messages
-              </a>
-            </div>
-          </div>
+    <nav style={{ padding: '1ch' }}>
+      <div box-="square" style={{ padding: '1ch 2ch' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5lh' }}>
+          <span is-="badge" variant-="blue">SALACIA</span>
+          <span is-="badge" variant-="background1">v0.0.1</span>
+        </div>
+        <div is-="separator"></div>
+        <div style={{ marginTop: '0.5lh' }}>
+          <a href="/"><button variant-="primary">[1] Home</button></a>{' '}
+          <a href="/messages"><button variant-="background1">[2] Messages</button></a>
         </div>
       </div>
     </nav>
