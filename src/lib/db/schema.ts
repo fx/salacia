@@ -62,6 +62,27 @@ export const healthChecks = pgTable('health_checks', {
 });
 
 /**
+ * AI interactions table for tracking LLM API calls and responses.
+ * Records all AI model interactions with metadata, timing, and token usage.
+ */
+export const aiInteractions = pgTable('ai_interactions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  model: varchar('model', { length: 100 }).notNull(),
+  provider: varchar('provider', { length: 50 }),
+  request: jsonb('request').notNull(),
+  response: jsonb('response'),
+  statusCode: integer('status_code'),
+  error: text('error'),
+  responseTimeMs: integer('response_time_ms'),
+  promptTokens: integer('prompt_tokens'),
+  completionTokens: integer('completion_tokens'),
+  totalTokens: integer('total_tokens'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
  * Type definitions for database tables.
  * Provides type safety for database operations.
  */
@@ -73,3 +94,6 @@ export type NewApiRequest = typeof apiRequests.$inferInsert;
 
 export type HealthCheck = typeof healthChecks.$inferSelect;
 export type NewHealthCheck = typeof healthChecks.$inferInsert;
+
+export type AiInteraction = typeof aiInteractions.$inferSelect;
+export type NewAiInteraction = typeof aiInteractions.$inferInsert;
