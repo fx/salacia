@@ -19,6 +19,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
+import './FilterDialog.css';
 
 /**
  * Props for the FilterDialog component.
@@ -102,6 +103,26 @@ export function FilterDialog({
   };
 
   /**
+   * Handle backdrop clicks to close dialog.
+   */
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    
+    const rect = dialog.getBoundingClientRect();
+    const isInDialog = (
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom
+    );
+    
+    if (!isInDialog) {
+      handleDialogClose();
+    }
+  };
+
+  /**
    * Handle applying filters and closing dialog.
    */
   const handleApplyFilters = () => {
@@ -147,189 +168,184 @@ export function FilterDialog({
     <dialog
       ref={dialogRef}
       onClose={handleDialogClose}
-      position-="center"
+      onClick={handleBackdropClick}
+      position-="center center"
       container-="auto"
-      size-="large"
-      style={{ padding: 0 }}
+      size-="default"
+      data-filter-dialog
     >
-      <div style={{ padding: '2ch' }}>
-        <header style={{ marginBottom: '2ch', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div box-="square" onClick={(e) => e.stopPropagation()}>
+        <header>
           <h2>Filters</h2>
           <button
             type="button"
             onClick={handleCancel}
-            style={{ background: 'none', border: 'none', fontSize: '1.5em', cursor: 'pointer' }}
             aria-label="Close dialog"
           >
             ×
           </button>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1ch', marginBottom: '2ch' }}>
-          {/* Model filter */}
-          <div>
-            <label htmlFor="dialog-model-filter" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Model</strong>
-            </label>
-            <select
-              id="dialog-model-filter"
-              value={localFilters.model || ''}
-              onChange={(e) => updateFilter('model', e.target.value || undefined)}
-              disabled={disabled}
-              style={{ width: '100%' }}
-            >
-              <option value="">All models</option>
-              {availableModels.map((model) => (
-                <option key={model} value={model}>
-                  {model}
-                </option>
-              ))}
-            </select>
-          </div>
+        <form>
+          <fieldset>
+            <legend>Filter Options</legend>
+            
+            {/* Model filter */}
+            <div>
+              <label htmlFor="dialog-model-filter">
+                <strong>Model</strong>
+              </label>
+              <select
+                id="dialog-model-filter"
+                value={localFilters.model || ''}
+                onChange={(e) => updateFilter('model', e.target.value || undefined)}
+                disabled={disabled}
+              >
+                <option value="">All models</option>
+                {availableModels.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Provider filter */}
-          <div>
-            <label htmlFor="dialog-provider-filter" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Provider</strong>
-            </label>
-            <select
-              id="dialog-provider-filter"
-              value={localFilters.provider || ''}
-              onChange={(e) => updateFilter('provider', e.target.value || undefined)}
-              disabled={disabled}
-              style={{ width: '100%' }}
-            >
-              <option value="">All providers</option>
-              {availableProviders.map((provider) => (
-                <option key={provider} value={provider}>
-                  {provider}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Provider filter */}
+            <div>
+              <label htmlFor="dialog-provider-filter">
+                <strong>Provider</strong>
+              </label>
+              <select
+                id="dialog-provider-filter"
+                value={localFilters.provider || ''}
+                onChange={(e) => updateFilter('provider', e.target.value || undefined)}
+                disabled={disabled}
+              >
+                <option value="">All providers</option>
+                {availableProviders.map((provider) => (
+                  <option key={provider} value={provider}>
+                    {provider}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Status filter */}
-          <div>
-            <label htmlFor="dialog-status-filter" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Status</strong>
-            </label>
-            <select
-              id="dialog-status-filter"
-              value={localFilters.hasError === undefined ? '' : localFilters.hasError ? 'error' : 'success'}
-              onChange={(e) => {
-                const value = e.target.value;
-                updateFilter('hasError', value === '' ? undefined : value === 'error');
-              }}
-              disabled={disabled}
-              style={{ width: '100%' }}
-            >
-              <option value="">All statuses</option>
-              <option value="success">Success only</option>
-              <option value="error">Errors only</option>
-            </select>
-          </div>
+            {/* Status filter */}
+            <div>
+              <label htmlFor="dialog-status-filter">
+                <strong>Status</strong>
+              </label>
+              <select
+                id="dialog-status-filter"
+                value={localFilters.hasError === undefined ? '' : localFilters.hasError ? 'error' : 'success'}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  updateFilter('hasError', value === '' ? undefined : value === 'error');
+                }}
+                disabled={disabled}
+              >
+                <option value="">All statuses</option>
+                <option value="success">Success only</option>
+                <option value="error">Errors only</option>
+              </select>
+            </div>
 
-          {/* Start date */}
-          <div>
-            <label htmlFor="dialog-start-date" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Start Date</strong>
-            </label>
-            <input
-              id="dialog-start-date"
-              type="date"
-              value={localFilters.startDate ? formatDateForInput(localFilters.startDate) : ''}
-              onChange={(e) => updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)}
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
+            {/* Start date */}
+            <div>
+              <label htmlFor="dialog-start-date">
+                <strong>Start Date</strong>
+              </label>
+              <input
+                id="dialog-start-date"
+                type="date"
+                value={localFilters.startDate ? formatDateForInput(localFilters.startDate) : ''}
+                onChange={(e) => updateFilter('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+                disabled={disabled}
+              />
+            </div>
 
-          {/* End date */}
-          <div>
-            <label htmlFor="dialog-end-date" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>End Date</strong>
-            </label>
-            <input
-              id="dialog-end-date"
-              type="date"
-              value={localFilters.endDate ? formatDateForInput(localFilters.endDate) : ''}
-              onChange={(e) => updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)}
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
+            {/* End date */}
+            <div>
+              <label htmlFor="dialog-end-date">
+                <strong>End Date</strong>
+              </label>
+              <input
+                id="dialog-end-date"
+                type="date"
+                value={localFilters.endDate ? formatDateForInput(localFilters.endDate) : ''}
+                onChange={(e) => updateFilter('endDate', e.target.value ? new Date(e.target.value) : undefined)}
+                disabled={disabled}
+              />
+            </div>
 
-          {/* Min tokens */}
-          <div>
-            <label htmlFor="dialog-min-tokens" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Min Tokens</strong>
-            </label>
-            <input
-              id="dialog-min-tokens"
-              type="number"
-              min="0"
-              value={localFilters.minTokens?.toString() || ''}
-              onChange={(e) => updateFilter('minTokens', e.target.value ? parseInt(e.target.value, 10) : undefined)}
-              placeholder="0"
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
+            {/* Min tokens */}
+            <div>
+              <label htmlFor="dialog-min-tokens">
+                <strong>Min Tokens</strong>
+              </label>
+              <input
+                id="dialog-min-tokens"
+                type="number"
+                min="0"
+                value={localFilters.minTokens?.toString() || ''}
+                onChange={(e) => updateFilter('minTokens', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                placeholder="0"
+                disabled={disabled}
+              />
+            </div>
 
-          {/* Max tokens */}
-          <div>
-            <label htmlFor="dialog-max-tokens" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Max Tokens</strong>
-            </label>
-            <input
-              id="dialog-max-tokens"
-              type="number"
-              min="0"
-              value={localFilters.maxTokens?.toString() || ''}
-              onChange={(e) => updateFilter('maxTokens', e.target.value ? parseInt(e.target.value, 10) : undefined)}
-              placeholder="Unlimited"
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
+            {/* Max tokens */}
+            <div>
+              <label htmlFor="dialog-max-tokens">
+                <strong>Max Tokens</strong>
+              </label>
+              <input
+                id="dialog-max-tokens"
+                type="number"
+                min="0"
+                value={localFilters.maxTokens?.toString() || ''}
+                onChange={(e) => updateFilter('maxTokens', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                placeholder="Unlimited"
+                disabled={disabled}
+              />
+            </div>
 
-          {/* Min response time */}
-          <div>
-            <label htmlFor="dialog-min-response-time" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Min Response Time (ms)</strong>
-            </label>
-            <input
-              id="dialog-min-response-time"
-              type="number"
-              min="0"
-              value={localFilters.minResponseTime?.toString() || ''}
-              onChange={(e) => updateFilter('minResponseTime', e.target.value ? parseInt(e.target.value, 10) : undefined)}
-              placeholder="0"
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
+            {/* Min response time */}
+            <div>
+              <label htmlFor="dialog-min-response-time">
+                <strong>Min Response Time (ms)</strong>
+              </label>
+              <input
+                id="dialog-min-response-time"
+                type="number"
+                min="0"
+                value={localFilters.minResponseTime?.toString() || ''}
+                onChange={(e) => updateFilter('minResponseTime', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                placeholder="0"
+                disabled={disabled}
+              />
+            </div>
 
-          {/* Max response time */}
-          <div>
-            <label htmlFor="dialog-max-response-time" style={{ display: 'block', marginBottom: '0.5ch' }}>
-              <strong>Max Response Time (ms)</strong>
-            </label>
-            <input
-              id="dialog-max-response-time"
-              type="number"
-              min="0"
-              value={localFilters.maxResponseTime?.toString() || ''}
-              onChange={(e) => updateFilter('maxResponseTime', e.target.value ? parseInt(e.target.value, 10) : undefined)}
-              placeholder="Unlimited"
-              disabled={disabled}
-              style={{ width: '100%' }}
-            />
-          </div>
-        </div>
+            {/* Max response time */}
+            <div>
+              <label htmlFor="dialog-max-response-time">
+                <strong>Max Response Time (ms)</strong>
+              </label>
+              <input
+                id="dialog-max-response-time"
+                type="number"
+                min="0"
+                value={localFilters.maxResponseTime?.toString() || ''}
+                onChange={(e) => updateFilter('maxResponseTime', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                placeholder="Unlimited"
+                disabled={disabled}
+              />
+            </div>
+          </fieldset>
+        </form>
 
-        <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1ch', paddingTop: '1ch', borderTop: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
+        <footer>
+          <div>
             {activeFiltersCount > 0 && (
               <>
                 <small>
@@ -339,7 +355,7 @@ export function FilterDialog({
                   type="button"
                   onClick={clearAllFilters}
                   disabled={disabled}
-                  style={{ background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+                  data-clear-all
                 >
                   Clear all
                 </button>
@@ -347,7 +363,7 @@ export function FilterDialog({
             )}
           </div>
           
-          <div style={{ display: 'flex', gap: '1ch' }}>
+          <div>
             <button
               type="button"
               onClick={handleCancel}
