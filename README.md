@@ -8,11 +8,12 @@ An LLM inference API proxy with database recording capabilities built with Astro
 - **Modern Database Stack**: PostgreSQL with Drizzle ORM for type-safe database operations
 - **Health Monitoring**: Built-in health check API with database connectivity testing
 - **Development Ready**: Docker Compose for PostgreSQL, ESLint, Prettier, and comprehensive scripts
+- **Code Quality**: Pre-commit hooks with lint-staged to ensure clean code
 - **Production Ready**: Server-side rendering with Node.js adapter for deployment
 
 ## 📋 Prerequisites
 
-- Node.js 20+ 
+- Node.js 20+
 - Docker and Docker Compose (for PostgreSQL)
 - npm or yarn
 
@@ -35,6 +36,7 @@ cp .env.example .env
 ```
 
 The default configuration uses:
+
 - Database: `postgresql://salacia:salacia_dev_password@localhost:5432/salacia`
 - Port: `4321`
 - Node Environment: `development`
@@ -91,29 +93,29 @@ salacia/
 
 ## 🧞 Commands
 
-| Command | Action |
-|---------|--------|
-| `npm install` | Install dependencies |
-| `npm run dev` | Start development server at `localhost:4321` |
-| `npm run build` | Build production site to `./dist/` |
-| `npm run preview` | Preview production build locally |
-| `npm run type-check` | Run TypeScript type checking |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint issues automatically |
-| `npm run format` | Format code with Prettier |
-| `npm run db:generate` | Generate database migration files |
-| `npm run db:migrate` | Run database migrations |
-| `npm run db:push` | Push schema changes to database |
-| `npm run db:studio` | Open Drizzle Studio (database GUI) |
+| Command               | Action                                       |
+| --------------------- | -------------------------------------------- |
+| `npm install`         | Install dependencies                         |
+| `npm run dev`         | Start development server at `localhost:4321` |
+| `npm run build`       | Build production site to `./dist/`           |
+| `npm run preview`     | Preview production build locally             |
+| `npm run type-check`  | Run TypeScript type checking                 |
+| `npm run lint`        | Run ESLint                                   |
+| `npm run lint:fix`    | Fix ESLint issues automatically              |
+| `npm run format`      | Format code with Prettier                    |
+| `npm run db:generate` | Generate database migration files            |
+| `npm run db:migrate`  | Run database migrations                      |
+| `npm run db:push`     | Push schema changes to database              |
+| `npm run db:studio`   | Open Drizzle Studio (database GUI)           |
 
 ## 🐳 Docker Commands
 
-| Command | Action |
-|---------|--------|
-| `docker compose up -d postgres` | Start PostgreSQL in background |
-| `docker compose down` | Stop all services |
-| `docker compose logs postgres` | View PostgreSQL logs |
-| `docker compose exec postgres psql -U salacia -d salacia` | Connect to PostgreSQL CLI |
+| Command                                                   | Action                         |
+| --------------------------------------------------------- | ------------------------------ |
+| `docker compose up -d postgres`                           | Start PostgreSQL in background |
+| `docker compose down`                                     | Stop all services              |
+| `docker compose logs postgres`                            | View PostgreSQL logs           |
+| `docker compose exec postgres psql -U salacia -d salacia` | Connect to PostgreSQL CLI      |
 
 ## 🔧 Database Management
 
@@ -143,12 +145,14 @@ docker compose exec postgres psql -U salacia -d salacia
 ## 🏥 Health Monitoring
 
 The health check endpoint (`/api/health`) provides:
+
 - Overall system status
 - Database connectivity status
 - Response time metrics
 - Detailed service information
 
 Example response:
+
 ```json
 {
   "status": "healthy",
@@ -226,7 +230,7 @@ The application builds to a standalone Node.js server in the `dist/` directory.
 
 - [Astro](https://astro.build) - Web framework
 - [TypeScript](https://typescriptlang.org) - Language
-- [PostgreSQL](https://postgresql.org) - Database  
+- [PostgreSQL](https://postgresql.org) - Database
 - [Drizzle ORM](https://orm.drizzle.team) - Database ORM
-- [Docker](https://docker.com) - Containerization 
+- [Docker](https://docker.com) - Containerization
 - [Zod](https://zod.dev) - Schema validation
