@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FilterDialog } from './FilterDialog.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -35,28 +36,6 @@ export interface SearchAndFiltersProps {
   disabled?: boolean;
 }
 
-/**
- * Hook for debouncing input values to avoid excessive API calls.
- *
- * @param value - Value to debounce
- * @param delay - Delay in milliseconds
- * @returns Debounced value
- */
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 /**
  * SearchAndFilters component providing search input and filter dialog access.

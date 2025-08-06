@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useDebounce } from '../hooks/useDebounce.js';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -34,32 +35,8 @@ export interface TableFiltersProps {
   availableProviders?: string[];
   /** Whether filters are disabled (e.g., during loading) */
   disabled?: boolean;
-  /** Optional CSS class name */
-  className?: string;
 }
 
-/**
- * Hook for debouncing input values to avoid excessive API calls.
- *
- * @param value - Value to debounce
- * @param delay - Delay in milliseconds
- * @returns Debounced value
- */
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 /**
  * Formats a date to YYYY-MM-DD format for HTML date inputs.
@@ -84,7 +61,6 @@ export function TableFilters({
   availableModels = [],
   availableProviders = [],
   disabled = false,
-  className = '',
 }: TableFiltersProps): React.ReactElement {
   // Local state for immediate UI updates
   const [localSearchTerm, setLocalSearchTerm] = useState(filters.searchTerm || '');

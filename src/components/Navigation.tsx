@@ -7,7 +7,7 @@
  */
 export function Navigation() {
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <nav>
       <span>
         <a href="/">
           <span is-="badge">HOME</span>

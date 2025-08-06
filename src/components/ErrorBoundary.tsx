@@ -125,10 +125,10 @@ function DefaultErrorFallback(
           </div>
           
           <div>
-            <p id="retry-help" style={{ position: 'absolute', left: '-10000px' }}>
+            <p id="retry-help" className="sr-only">
               <small>Try again to re-render the component</small>
             </p>
-            <p id="reload-help" style={{ position: 'absolute', left: '-10000px' }}>
+            <p id="reload-help" className="sr-only">
               <small>Reload the entire page to reset the application state</small>
             </p>
           </div>
