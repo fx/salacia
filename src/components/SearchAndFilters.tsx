@@ -18,6 +18,7 @@
 import React, { useState, useEffect } from 'react';
 import { FilterDialog } from './FilterDialog.js';
 import { useDebounce } from '../hooks/useDebounce.js';
+import { countActiveNonSearchFilters, countActiveFilters } from '../lib/utils/filters.js';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -81,9 +82,7 @@ export function SearchAndFilters({
   /**
    * Count active non-search filters for the badge.
    */
-  const activeNonSearchFilters = Object.entries(filters).filter(
-    ([key, value]) => key !== 'searchTerm' && value !== undefined && value !== null && value !== ''
-  ).length;
+  const activeNonSearchFilters = countActiveNonSearchFilters(filters);
 
   /**
    * Clear all filters including search.
@@ -96,9 +95,7 @@ export function SearchAndFilters({
   /**
    * Count total active filters including search.
    */
-  const totalActiveFilters = Object.values(filters).filter(
-    value => value !== undefined && value !== null && value !== ''
-  ).length;
+  const totalActiveFilters = countActiveFilters(filters);
 
   return (
     <>

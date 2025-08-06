@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { countActiveNonSearchFilters } from '../lib/utils/filters.js';
 import type { MessagesFilterParams } from '../lib/types/messages.js';
 
 /**
@@ -159,9 +160,7 @@ export function FilterDialog({
   /**
    * Count active non-search filters.
    */
-  const activeFiltersCount = Object.entries(localFilters).filter(([key, value]) => 
-    key !== 'searchTerm' && value !== undefined && value !== null && value !== ''
-  ).length;
+  const activeFiltersCount = countActiveNonSearchFilters(localFilters);
 
   return (
     <dialog
