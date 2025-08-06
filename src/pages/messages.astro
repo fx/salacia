@@ -15,7 +15,7 @@
  */
 
 import { Layout } from '../components/Layout';
-import { MessagesAppCursor } from '../components/MessagesAppCursor';
+import { MessagesCursorApp } from '../components/MessagesCursorApp';
 import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
@@ -76,7 +76,7 @@ try {
       <div>
         <!-- Messages interface component with cursor-based pagination -->
         <div>
-          <MessagesAppCursor
+          <MessagesCursorApp
             client:load
             initialMessages={initialMessages}
             initialError={initialError}
