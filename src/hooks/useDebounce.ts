@@ -14,7 +14,7 @@
  * ```tsx
  * const [searchTerm, setSearchTerm] = useState('');
  * const debouncedSearchTerm = useDebounce(searchTerm, 500);
- * 
+ *
  * // API call only fires after user stops typing for 500ms
  * useEffect(() => {
  *   if (debouncedSearchTerm) {
@@ -30,7 +30,7 @@ import { useState, useEffect } from 'react';
 
 /**
  * Custom hook for debouncing values to improve performance.
- * 
+ *
  * @param value - The value to debounce
  * @param delay - The delay in milliseconds
  * @returns The debounced value
