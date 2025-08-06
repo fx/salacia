@@ -15,12 +15,12 @@
  */
 
 import { Layout } from '../components/Layout';
-import { MessagesCursorApp } from '../components/MessagesCursorApp';
+import { MessagesLoadMore } from '../components/MessagesLoadMore';
 import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
-import type { MessagesFilterParams } from '../lib/types/messages.js';
+import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -35,6 +35,10 @@ const defaultPagination: MessagesCursorPaginationParams = {
 };
 
 const defaultFilters: MessagesFilterParams = {};
+const defaultSort: MessageSort = {
+  field: 'createdAt',
+  direction: 'desc',
+};
 
 // Fetch initial data server-side for faster page load
 let initialMessages: MessagesCursorPaginationResponse<MessageDisplay>;
@@ -47,15 +51,10 @@ try {
   initialError = error instanceof Error ? error.message : 'Failed to load messages';
   // Provide empty data structure for fallback
   initialMessages = {
-    data: [],
-    meta: {
-      count: 0,
-      limit: 20,
-      hasMore: false,
-      sortBy: 'createdAt',
-      sortDirection: 'desc',
-    },
-    cursors: {},
+    items: [],
+    hasMore: false,
+    nextCursor: undefined,
+    prevCursor: undefined,
   };
 }
 ---
@@ -74,15 +73,22 @@ try {
   <body>
     <Layout client:idle>
       <div>
-        <!-- Messages interface component with cursor-based pagination -->
+        <!-- Messages interface component with Load More pattern -->
         <div>
-          <MessagesCursorApp
-            client:load
-            initialMessages={initialMessages}
-            initialError={initialError}
-            defaultPagination={defaultPagination}
-            defaultFilters={defaultFilters}
-          />
+          {
+            initialError ? (
+              <div box-="square" variant-="red" role="alert">
+                <strong>Error:</strong> {initialError}
+              </div>
+            ) : (
+              <MessagesLoadMore
+                client:load
+                initialMessages={initialMessages}
+                initialFilters={defaultFilters}
+                initialSort={defaultSort}
+              />
+            )
+          }
         </div>
       </div>
     </Layout>

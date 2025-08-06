@@ -341,12 +341,13 @@ export class MessagesService {
           // Build cursor comparison based on sort field
           if (sortBy === 'createdAt') {
             const cursorDate = new Date(cursorData.sortFieldValue);
+            const cursorTimestamp = cursorDate.toISOString();
             if (sortDirection === 'desc') {
               whereConditions.push(
                 or(
-                  lt(aiInteractions.createdAt, cursorDate),
+                  sql`${aiInteractions.createdAt} < ${cursorTimestamp}::timestamp`,
                   and(
-                    sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                    sql`${aiInteractions.createdAt} = ${cursorTimestamp}::timestamp`,
                     lt(aiInteractions.id, cursorData.id)
                   )
                 )
@@ -354,9 +355,9 @@ export class MessagesService {
             } else {
               whereConditions.push(
                 or(
-                  gt(aiInteractions.createdAt, cursorDate),
+                  sql`${aiInteractions.createdAt} > ${cursorTimestamp}::timestamp`,
                   and(
-                    sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                    sql`${aiInteractions.createdAt} = ${cursorTimestamp}::timestamp`,
                     gt(aiInteractions.id, cursorData.id)
                   )
                 )

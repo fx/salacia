@@ -9,7 +9,7 @@ import type { MessageDisplay, MessagesFilterParams } from '../types/messages.js'
  * Provides methods for fetching messages with cursor-based pagination.
  */
 export class MessagesClient {
-  private baseUrl = '/api/v1/messages';
+  private baseUrl = '/api/messages';
 
   /**
    * Fetches messages using cursor-based pagination.
@@ -40,7 +40,7 @@ export class MessagesClient {
     if (filters.maxTokens !== undefined) queryParams.set('maxTokens', filters.maxTokens.toString());
     if (filters.searchTerm) queryParams.set('searchTerm', filters.searchTerm);
 
-    const response = await fetch(`${this.baseUrl}/cursor?${queryParams.toString()}`, {
+    const response = await fetch(`${this.baseUrl}?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
