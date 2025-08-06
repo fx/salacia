@@ -14,6 +14,7 @@ interface LayoutProps {
 /**
  * Main layout component that provides the overall terminal-like structure for the application.
  * Creates a full viewport terminal interface with navigation and content areas wrapped in a single bordered box.
+ * Navigation items are direct children of the main box to enable proper shearing.
  * Uses WebTUI CSS utilities exclusively for consistent theming and spacing.
  *
  * @param props - The layout props
@@ -22,9 +23,9 @@ interface LayoutProps {
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div box-="square" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div box-="square" shear-="top">
       <Navigation />
-      <main style={{ flex: '1', overflow: 'auto' }}>{children}</main>
+      <main>{children}</main>
     </div>
   );
 }

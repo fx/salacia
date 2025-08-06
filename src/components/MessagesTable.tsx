@@ -139,16 +139,16 @@ export function MessagesTable({
           const error = info.row.original.error;
 
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
+            <span>
               <span
-                box-="square"
+                is-="badge"
                 variant-={isSuccess ? 'success' : 'error'}
                 title={error || `HTTP ${statusCode}`}
               >
                 <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
               </span>
               {statusCode && <small title={`HTTP Status: ${statusCode}`}>{statusCode}</small>}
-            </div>
+            </span>
           );
         },
         enableSorting: false,

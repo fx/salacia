@@ -116,6 +116,27 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 The Catppuccin theme provides all necessary colors, spacing, and typography through WebTUI's CSS.
 
+#### WebTUI ASCII Boxes
+
+Essential box patterns for terminal-style UI:
+
+**Box Types** (must suffix with `-`):
+```html
+<div box-="square">Square Box</div>
+<div box-="round">Round Box</div>
+<div box-="double">Double Border</div>
+<div box-="double round">Combined styles</div>
+```
+
+**Shearing** (overlap edges):
+```html
+<div box-="square" shear-="top">Top overlap</div>
+<div box-="square" shear-="bottom">Bottom overlap</div>
+<div box-="square" shear-="both">Both edges</div>
+```
+
+**Required Import**: `@import "@webtui/css/utils/box.css";`
+
 ### Frontend Architecture
 
 - **React Components**: All interactive UI components should be built with React and TypeScript
