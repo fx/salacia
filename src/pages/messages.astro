@@ -15,58 +15,49 @@
  */
 
 import { Layout } from '../components/Layout';
-import { MessagesApp } from '../components/MessagesApp';
+import { MessagesLoadMore } from '../components/MessagesLoadMore';
 import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
-import type {
-  MessagesPaginationParams,
-  MessagesFilterParams,
-  MessageSort,
-} from '../lib/types/messages.js';
+import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
+import type { MessagesCursorPaginationParams } from '../lib/types/cursor.js';
 
 // Default pagination parameters for initial page load
-const defaultPagination: MessagesPaginationParams = {
-  page: 1,
-  pageSize: 20,
-  sort: {
-    field: 'createdAt',
-    direction: 'desc',
-  } as MessageSort,
+const defaultPagination: MessagesCursorPaginationParams = {
+  limit: 20,
+  sortBy: 'createdAt',
+  sortDirection: 'desc',
 };
 
 const defaultFilters: MessagesFilterParams = {};
+const defaultSort: MessageSort = {
+  field: 'createdAt',
+  direction: 'desc',
+};
 
 // Fetch initial data server-side for faster page load
-let initialMessages;
+let initialMessages: any;
 let initialError = null;
 
 try {
-  initialMessages = await MessagesService.getMessages(defaultPagination, defaultFilters);
+  const response = await MessagesService.getMessagesWithCursor(defaultPagination, defaultFilters);
+  // Transform to simplified structure for frontend
+  initialMessages = {
+    items: response.data,
+    hasMore: response.meta.hasMore,
+    nextCursor: response.cursors.next,
+    prevCursor: response.cursors.prev,
+  };
 } catch (error) {
   console.error('Failed to load initial messages:', error);
   initialError = error instanceof Error ? error.message : 'Failed to load messages';
   // Provide empty data structure for fallback
   initialMessages = {
-    messages: [],
-    currentPage: 1,
-    pageSize: 20,
-    totalItems: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-    sort: defaultPagination.sort,
-    filters: defaultFilters,
-    stats: {
-      totalMessages: 0,
-      successfulMessages: 0,
-      failedMessages: 0,
-      successRate: 0,
-      totalTokens: 0,
-      averageResponseTime: 0,
-      uniqueModels: 0,
-    },
+    items: [],
+    hasMore: false,
+    nextCursor: undefined,
+    prevCursor: undefined,
   };
 }
 ---
@@ -85,15 +76,22 @@ try {
   <body>
     <Layout client:idle>
       <div>
-        <!-- Messages interface component with server-side data -->
+        <!-- Messages interface component with Load More pattern -->
         <div>
-          <MessagesApp
-            client:load
-            initialMessages={initialMessages}
-            initialError={initialError}
-            defaultPagination={defaultPagination}
-            defaultFilters={defaultFilters}
-          />
+          {
+            initialError ? (
+              <div box-="square" variant-="red" role="alert">
+                <strong>Error:</strong> {initialError}
+              </div>
+            ) : (
+              <MessagesLoadMore
+                client:load
+                initialMessages={initialMessages}
+                initialFilters={defaultFilters}
+                initialSort={defaultSort}
+              />
+            )
+          }
         </div>
       </div>
     </Layout>
