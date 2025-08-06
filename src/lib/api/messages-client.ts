@@ -10,9 +10,12 @@
 import type {
   MessagesPaginatedResult,
   MessagesPaginationParams,
+  MessagesCursorPaginatedResult,
+  MessagesCursorPaginationParams,
   MessagesFilterParams,
   MessageDisplay,
 } from '../types/messages.js';
+import { serializeToUrlParams, serializeCursorToUrlParams } from '../utils/pagination.js';
 
 /**
  * Raw message response from API before date parsing.
@@ -27,6 +30,14 @@ interface MessageApiResponse extends Omit<MessageDisplay, 'createdAt'> {
  * Raw API response structure before date parsing.
  */
 interface RawApiResponse extends Omit<MessagesPaginatedResult, 'messages'> {
+  /** Messages with string dates that need parsing */
+  messages?: MessageApiResponse[];
+}
+
+/**
+ * Raw cursor API response structure before date parsing.
+ */
+interface RawCursorApiResponse extends Omit<MessagesCursorPaginatedResult, 'messages'> {
   /** Messages with string dates that need parsing */
   messages?: MessageApiResponse[];
 }
@@ -72,7 +83,7 @@ const DEFAULT_CONFIG: Required<MessagesClientConfig> = {
 
 /**
  * Builds URL search parameters from pagination and filter parameters.
- * Handles proper serialization of dates, numbers, and boolean values.
+ * Handles proper serialization using centralized pagination utilities.
  *
  * @param paginationParams - Pagination configuration
  * @param filterParams - Filter parameters (optional)
@@ -82,49 +93,22 @@ export function buildApiUrlParams(
   paginationParams: MessagesPaginationParams,
   filterParams?: MessagesFilterParams
 ): URLSearchParams {
-  const params = new URLSearchParams();
+  return serializeToUrlParams(paginationParams, filterParams);
+}
 
-  // Add pagination parameters
-  params.set('page', paginationParams.page.toString());
-  params.set('pageSize', paginationParams.pageSize.toString());
-  params.set('sortField', paginationParams.sort.field);
-  params.set('sortDirection', paginationParams.sort.direction);
-
-  // Add filter parameters if provided
-  if (filterParams) {
-    if (filterParams.model) {
-      params.set('model', filterParams.model);
-    }
-    if (filterParams.provider) {
-      params.set('provider', filterParams.provider);
-    }
-    if (filterParams.startDate) {
-      params.set('startDate', filterParams.startDate.toISOString().split('T')[0]);
-    }
-    if (filterParams.endDate) {
-      params.set('endDate', filterParams.endDate.toISOString().split('T')[0]);
-    }
-    if (typeof filterParams.hasError === 'boolean') {
-      params.set('hasError', filterParams.hasError.toString());
-    }
-    if (typeof filterParams.minTokens === 'number') {
-      params.set('minTokens', filterParams.minTokens.toString());
-    }
-    if (typeof filterParams.maxTokens === 'number') {
-      params.set('maxTokens', filterParams.maxTokens.toString());
-    }
-    if (typeof filterParams.minResponseTime === 'number') {
-      params.set('minResponseTime', filterParams.minResponseTime.toString());
-    }
-    if (typeof filterParams.maxResponseTime === 'number') {
-      params.set('maxResponseTime', filterParams.maxResponseTime.toString());
-    }
-    if (filterParams.searchTerm) {
-      params.set('searchTerm', filterParams.searchTerm);
-    }
-  }
-
-  return params;
+/**
+ * Builds URL search parameters from cursor pagination and filter parameters.
+ * Handles proper serialization using centralized pagination utilities.
+ *
+ * @param cursorPaginationParams - Cursor pagination configuration
+ * @param filterParams - Filter parameters (optional)
+ * @returns URLSearchParams object ready for API request
+ */
+export function buildCursorApiUrlParams(
+  cursorPaginationParams: MessagesCursorPaginationParams,
+  filterParams?: MessagesFilterParams
+): URLSearchParams {
+  return serializeCursorToUrlParams(cursorPaginationParams, filterParams);
 }
 
 /**
@@ -149,6 +133,45 @@ export function parseApiResponseDates(data: unknown): MessagesPaginatedResult {
     : [];
 
   const result: MessagesPaginatedResult = {
+    ...rawResult,
+    messages,
+  };
+
+  // Parse filter dates if present
+  if (result.filters) {
+    if (result.filters.startDate) {
+      result.filters.startDate = new Date(result.filters.startDate);
+    }
+    if (result.filters.endDate) {
+      result.filters.endDate = new Date(result.filters.endDate);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Parses dates in cursor API response data, converting ISO strings back to Date objects.
+ * Handles the MessagesCursorPaginatedResult structure with nested MessageDisplay objects.
+ *
+ * @param data - Raw cursor API response data
+ * @returns Parsed data with Date objects restored
+ */
+export function parseCursorApiResponseDates(data: unknown): MessagesCursorPaginatedResult {
+  // Parse the outer structure
+  const rawResult = data as RawCursorApiResponse;
+
+  // Parse dates in each message
+  const messages: MessageDisplay[] = rawResult.messages
+    ? rawResult.messages.map(
+        (message: MessageApiResponse): MessageDisplay => ({
+          ...message,
+          createdAt: new Date(message.createdAt),
+        })
+      )
+    : [];
+
+  const result: MessagesCursorPaginatedResult = {
     ...rawResult,
     messages,
   };
@@ -235,6 +258,76 @@ export class MessagesClient {
 
       const data = await response.json();
       return parseApiResponseDates(data);
+    } catch (error) {
+      if (error instanceof MessagesApiError) {
+        throw error;
+      }
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new MessagesApiError('Request timeout', 0, 'TIMEOUT_ERROR');
+        }
+
+        throw new MessagesApiError(`Network error: ${error.message}`, 0, 'NETWORK_ERROR', error);
+      }
+
+      throw new MessagesApiError('Unknown error occurred', 0, 'UNKNOWN_ERROR', error);
+    }
+  }
+
+  /**
+   * Fetches messages using cursor-based pagination from the API.
+   *
+   * @param cursorPaginationParams - Cursor pagination configuration
+   * @param filterParams - Optional filter parameters
+   * @returns Promise resolving to cursor-paginated message results
+   * @throws MessagesApiError for API failures
+   */
+  async getMessagesCursor(
+    cursorPaginationParams: MessagesCursorPaginationParams,
+    filterParams?: MessagesFilterParams
+  ): Promise<MessagesCursorPaginatedResult> {
+    const urlParams = buildCursorApiUrlParams(cursorPaginationParams, filterParams);
+    const url = `${this.config.baseUrl}/api/v1/messages/cursor?${urlParams.toString()}`;
+
+    try {
+      // Create AbortController for timeout handling
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), this.config.timeout);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        signal: abortController.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let errorData: { error?: string; code?: string; details?: unknown } = {};
+        try {
+          errorData = (await response.json()) as {
+            error?: string;
+            code?: string;
+            details?: unknown;
+          };
+        } catch {
+          // Response body is not JSON, use default error structure
+        }
+
+        throw new MessagesApiError(
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          errorData.code || 'HTTP_ERROR',
+          errorData.details
+        );
+      }
+
+      const data = await response.json();
+      return parseCursorApiResponseDates(data);
     } catch (error) {
       if (error instanceof MessagesApiError) {
         throw error;

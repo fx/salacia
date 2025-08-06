@@ -1,5 +1,6 @@
 import type {
   MessagesPaginationParams,
+  MessagesCursorPaginationParams,
   MessagesFilterParams,
   MessageSortField,
   MessageSortDirection,
@@ -20,6 +21,10 @@ export const URL_PARAMS = {
   // Pagination parameters
   PAGE: 'page',
   PAGE_SIZE: 'pageSize',
+
+  // Cursor pagination parameters
+  LIMIT: 'limit',
+  CURSOR: 'cursor',
 
   // Sorting parameters
   SORT_FIELD: 'sortField',
@@ -45,6 +50,7 @@ export const URL_PARAMS = {
 export const DEFAULT_VALUES = {
   PAGE: 1,
   PAGE_SIZE: 20,
+  LIMIT: 100,
   SORT_FIELD: 'createdAt' as MessageSortField,
   SORT_DIRECTION: 'desc' as MessageSortDirection,
 } as const;
@@ -160,6 +166,38 @@ export function parseUrlFilterParams(searchParams: URLSearchParams): MessagesFil
 }
 
 /**
+ * Parses URL search parameters into structured cursor pagination parameters.
+ * Validates input values and provides sensible defaults for missing parameters.
+ *
+ * @param searchParams - URLSearchParams object from the current URL
+ * @returns Validated cursor pagination parameters with defaults applied
+ */
+export function parseUrlCursorPaginationParams(
+  searchParams: URLSearchParams
+): MessagesCursorPaginationParams {
+  // Parse and validate limit
+  const limitParam = searchParams.get(URL_PARAMS.LIMIT);
+  let limit = limitParam ? parseInt(limitParam, 10) : DEFAULT_VALUES.LIMIT;
+  limit = Math.max(1, Math.min(PAGINATION_CONSTANTS.MAX_PAGE_SIZE, limit)); // Clamp between 1 and max
+
+  // Get cursor (no validation needed as it will be validated in the service)
+  const cursor = searchParams.get(URL_PARAMS.CURSOR) || undefined;
+
+  // Parse and validate sort configuration
+  const sortField = parseSortField(searchParams.get(URL_PARAMS.SORT_FIELD));
+  const sortDirection = parseSortDirection(searchParams.get(URL_PARAMS.SORT_DIRECTION));
+
+  return {
+    limit: isNaN(limit) ? DEFAULT_VALUES.LIMIT : limit,
+    cursor,
+    sort: {
+      field: sortField,
+      direction: sortDirection,
+    },
+  };
+}
+
+/**
  * Serializes pagination and filter parameters into URL search parameters.
  * Omits default values to keep URLs clean and bookmarkable.
  *
@@ -190,6 +228,68 @@ export function serializeToUrlParams(
   }
 
   // Filter parameters (only set if present)
+  if (filters.model) params.set(URL_PARAMS.MODEL, filters.model);
+  if (filters.provider) params.set(URL_PARAMS.PROVIDER, filters.provider);
+  if (filters.searchTerm) params.set(URL_PARAMS.SEARCH_TERM, filters.searchTerm);
+
+  if (filters.startDate) {
+    params.set(URL_PARAMS.START_DATE, serializeDate(filters.startDate));
+  }
+  if (filters.endDate) {
+    params.set(URL_PARAMS.END_DATE, serializeDate(filters.endDate));
+  }
+
+  if (filters.hasError !== undefined) {
+    params.set(URL_PARAMS.HAS_ERROR, filters.hasError.toString());
+  }
+
+  if (filters.minTokens !== undefined) {
+    params.set(URL_PARAMS.MIN_TOKENS, filters.minTokens.toString());
+  }
+  if (filters.maxTokens !== undefined) {
+    params.set(URL_PARAMS.MAX_TOKENS, filters.maxTokens.toString());
+  }
+  if (filters.minResponseTime !== undefined) {
+    params.set(URL_PARAMS.MIN_RESPONSE_TIME, filters.minResponseTime.toString());
+  }
+  if (filters.maxResponseTime !== undefined) {
+    params.set(URL_PARAMS.MAX_RESPONSE_TIME, filters.maxResponseTime.toString());
+  }
+
+  return params;
+}
+
+/**
+ * Serializes cursor pagination and filter parameters into URL search parameters.
+ * Omits default values to keep URLs clean and bookmarkable.
+ *
+ * @param pagination - Cursor pagination parameters to serialize
+ * @param filters - Filter parameters to serialize
+ * @returns URLSearchParams object ready for URL construction
+ */
+export function serializeCursorToUrlParams(
+  pagination: MessagesCursorPaginationParams,
+  filters: MessagesFilterParams = {}
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  // Cursor pagination parameters (only set if different from defaults)
+  if (pagination.limit !== DEFAULT_VALUES.LIMIT) {
+    params.set(URL_PARAMS.LIMIT, pagination.limit.toString());
+  }
+  if (pagination.cursor) {
+    params.set(URL_PARAMS.CURSOR, pagination.cursor);
+  }
+
+  // Sort parameters (only set if different from defaults)
+  if (pagination.sort.field !== DEFAULT_VALUES.SORT_FIELD) {
+    params.set(URL_PARAMS.SORT_FIELD, pagination.sort.field);
+  }
+  if (pagination.sort.direction !== DEFAULT_VALUES.SORT_DIRECTION) {
+    params.set(URL_PARAMS.SORT_DIRECTION, pagination.sort.direction);
+  }
+
+  // Filter parameters (only set if present) - reuse the same filter logic
   if (filters.model) params.set(URL_PARAMS.MODEL, filters.model);
   if (filters.provider) params.set(URL_PARAMS.PROVIDER, filters.provider);
   if (filters.searchTerm) params.set(URL_PARAMS.SEARCH_TERM, filters.searchTerm);
