@@ -5,9 +5,11 @@ import type {
   MessagesFilterParams,
   MessagesPaginationParams,
   MessagesPaginatedResult,
+  MessagesCursorPaginationParams,
+  MessagesCursorPaginatedResult,
   MessageSort,
 } from '../types/messages.js';
-import { transformAiInteractionToDisplay } from '../types/messages.js';
+import { transformAiInteractionToDisplay, CursorUtils } from '../types/messages.js';
 import { aiInteractions } from '../db/schema.js';
 import { db } from '../db/connection.js';
 
@@ -117,6 +119,120 @@ export class MessagesService {
     } catch (error) {
       throw new Error(
         `Failed to retrieve messages: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Retrieves messages using cursor-based pagination for efficient real-time updates.
+   *
+   * @param params - Cursor pagination parameters including limit, cursor, and sort configuration
+   * @param filters - Optional filtering criteria to narrow down results
+   * @returns Promise resolving to cursor-paginated result with messages and metadata
+   * @throws Error if pagination parameters are invalid or database query fails
+   */
+  static async getMessagesCursor(
+    params: MessagesCursorPaginationParams,
+    filters: MessagesFilterParams = {}
+  ): Promise<MessagesCursorPaginatedResult> {
+    // Validate cursor pagination parameters
+    if (params.limit < 1 || params.limit > 100) {
+      throw new Error('Limit must be between 1 and 100');
+    }
+
+    try {
+      const whereConditions = [];
+
+      // Add filter conditions
+      const filterConditions = this.buildWhereConditions(filters);
+      if (filterConditions) {
+        whereConditions.push(filterConditions);
+      }
+
+      // Add cursor conditions if provided
+      if (params.cursor) {
+        const cursorData = CursorUtils.decode(params.cursor);
+        if (!cursorData) {
+          throw new Error('Invalid cursor format');
+        }
+
+        const cursorDate = new Date(cursorData.timestamp);
+
+        // For cursor pagination with newest first (desc), we want records older than the cursor
+        if (params.sort.direction === 'desc') {
+          whereConditions.push(
+            or(
+              // Records with older timestamp
+              sql`${aiInteractions.createdAt} < ${cursorDate}`,
+              // Records with same timestamp but lexicographically smaller ID
+              and(
+                sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                sql`${aiInteractions.id} < ${cursorData.id}`
+              )
+            )
+          );
+        } else {
+          // For asc order, we want records newer than the cursor
+          whereConditions.push(
+            or(
+              // Records with newer timestamp
+              sql`${aiInteractions.createdAt} > ${cursorDate}`,
+              // Records with same timestamp but lexicographically larger ID
+              and(
+                sql`${aiInteractions.createdAt} = ${cursorDate}`,
+                sql`${aiInteractions.id} > ${cursorData.id}`
+              )
+            )
+          );
+        }
+      }
+
+      const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+      const orderBy = this.buildOrderBy(params.sort);
+
+      // Query one extra record to determine if there are more pages
+      const queryLimit = params.limit + 1;
+
+      // Execute queries in parallel
+      const [messagesResult, statsResult] = await Promise.all([
+        // Main cursor query
+        db
+          .select()
+          .from(aiInteractions)
+          .where(whereClause)
+          .orderBy(...orderBy)
+          .limit(queryLimit),
+
+        // Statistics query for aggregated data
+        this.getFilteredStats(filters),
+      ]);
+
+      // Check if there are more results
+      const hasMore = messagesResult.length > params.limit;
+      const messages = hasMore ? messagesResult.slice(0, params.limit) : messagesResult;
+
+      // Generate next cursor if there are more results
+      let nextCursor: string | undefined;
+      if (hasMore && messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        nextCursor = CursorUtils.encode(lastMessage.createdAt, lastMessage.id);
+      }
+
+      // Transform database records to display format
+      const displayMessages = messages.map(transformAiInteractionToDisplay);
+
+      return {
+        messages: displayMessages,
+        limit: params.limit,
+        nextCursor,
+        hasMore,
+        sort: params.sort,
+        filters,
+        stats: statsResult,
+      };
+    } catch (error) {
+      throw new Error(
+        `Failed to retrieve messages with cursor: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }

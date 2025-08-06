@@ -7,6 +7,7 @@ import {
   jsonb,
   integer,
   boolean,
+  index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -85,22 +86,33 @@ export const aiProviders = pgTable('ai_providers', {
  * API interactions table for logging AI API requests and responses.
  * Tracks all interactions with AI providers for monitoring and debugging.
  */
-export const aiInteractions = pgTable('ai_interactions', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  providerId: uuid('provider_id').references(() => aiProviders.id),
-  model: varchar('model', { length: 100 }).notNull(),
-  request: jsonb('request').notNull(),
-  response: jsonb('response'),
-  promptTokens: integer('prompt_tokens'),
-  completionTokens: integer('completion_tokens'),
-  totalTokens: integer('total_tokens'),
-  responseTimeMs: integer('response_time_ms'),
-  statusCode: integer('status_code'),
-  error: text('error'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+export const aiInteractions = pgTable(
+  'ai_interactions',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    providerId: uuid('provider_id').references(() => aiProviders.id),
+    model: varchar('model', { length: 100 }).notNull(),
+    request: jsonb('request').notNull(),
+    response: jsonb('response'),
+    promptTokens: integer('prompt_tokens'),
+    completionTokens: integer('completion_tokens'),
+    totalTokens: integer('total_tokens'),
+    responseTimeMs: integer('response_time_ms'),
+    statusCode: integer('status_code'),
+    error: text('error'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Composite index for cursor pagination - orders by created_at DESC, then id for stability
+    cursorPaginationIdx: index('ai_interactions_cursor_idx').on(table.createdAt.desc(), table.id),
+    // Index for filtering by model (commonly used filter)
+    modelIdx: index('ai_interactions_model_idx').on(table.model),
+    // Index for filtering by error status (successful vs failed interactions)
+    errorStatusIdx: index('ai_interactions_error_status_idx').on(table.error),
+  })
+);
 
 /**
  * Type definitions for database tables.

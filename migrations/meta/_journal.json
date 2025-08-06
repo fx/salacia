@@ -15,6 +15,13 @@
       "when": 1754249913827,
       "tag": "0001_lazy_lenny_balinger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754501080310,
+      "tag": "0002_add_cursor_pagination_indexes",
+      "breakpoints": true
     }
   ]
 }

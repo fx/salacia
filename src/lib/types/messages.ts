@@ -136,6 +136,19 @@ export interface MessagesPaginationParams {
 }
 
 /**
+ * Parameters for cursor-based pagination of message queries.
+ * Provides efficient pagination for large datasets and real-time updates.
+ */
+export interface MessagesCursorPaginationParams {
+  /** Number of items per page (1-100) */
+  limit: number;
+  /** Cursor for pagination (timestamp + id for uniqueness) */
+  cursor?: string;
+  /** Sort configuration - cursor pagination typically uses createdAt desc for newest first */
+  sort: MessageSort;
+}
+
+/**
  * Result of a paginated message query.
  * Contains both the data and pagination metadata.
  */
@@ -161,6 +174,78 @@ export interface MessagesPaginatedResult {
   /** Aggregated statistics for the filtered dataset */
   stats: MessageStats;
 }
+
+/**
+ * Result of a cursor-based paginated message query.
+ * Contains both the data and cursor metadata for efficient pagination.
+ */
+export interface MessagesCursorPaginatedResult {
+  /** Array of message display objects */
+  messages: MessageDisplay[];
+  /** Number of items in this page */
+  limit: number;
+  /** Cursor for the next page (if available) */
+  nextCursor?: string;
+  /** Whether there are more items after this page */
+  hasMore: boolean;
+  /** Applied sort configuration */
+  sort: MessageSort;
+  /** Applied filters */
+  filters: MessagesFilterParams;
+  /** Aggregated statistics for the filtered dataset */
+  stats: MessageStats;
+}
+
+/**
+ * Utility functions for cursor-based pagination.
+ */
+export const CursorUtils = {
+  /**
+   * Creates a cursor from a message's timestamp and ID.
+   * Combines createdAt timestamp and id for stable, unique pagination.
+   *
+   * @param createdAt - Timestamp of the message
+   * @param id - Unique ID of the message
+   * @returns Base64 encoded cursor string
+   */
+  encode(createdAt: Date, id: string): string {
+    const cursorData = {
+      timestamp: createdAt.getTime(),
+      id,
+    };
+    return Buffer.from(JSON.stringify(cursorData)).toString('base64');
+  },
+
+  /**
+   * Decodes a cursor string into timestamp and ID components.
+   *
+   * @param cursor - Base64 encoded cursor string
+   * @returns Decoded cursor data or null if invalid
+   */
+  decode(cursor: string): { timestamp: number; id: string } | null {
+    try {
+      const decoded = Buffer.from(cursor, 'base64').toString('utf8');
+      const parsed = JSON.parse(decoded);
+
+      if (typeof parsed.timestamp === 'number' && typeof parsed.id === 'string') {
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Creates a cursor from a message display object.
+   *
+   * @param message - Message display object
+   * @returns Encoded cursor string
+   */
+  fromMessage(message: MessageDisplay): string {
+    return this.encode(message.createdAt, message.id);
+  },
+};
 
 /**
  * Transforms a database AI interaction record into a display-friendly format.
