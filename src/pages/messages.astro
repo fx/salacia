@@ -18,8 +18,9 @@ import { Layout } from '../components/Layout';
 import { MessagesLoadMore } from '../components/MessagesLoadMore';
 import '../styles/global.css';
 
-// Import the messages service for server-side data fetching
+// Import the messages services for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
+import { MessagesSequelizeService } from '../lib/services/messages-sequelize.js';
 import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
 import type { MessagesCursorPaginationParams } from '../lib/types/cursor.js';
 
@@ -41,7 +42,10 @@ let initialMessages: any;
 let initialError = null;
 
 try {
-  const response = await MessagesService.getMessagesWithCursor(defaultPagination, defaultFilters);
+  const useSequelize = process.env.USE_SEQUELIZE === 'true';
+  const response = useSequelize
+    ? await MessagesSequelizeService.getMessagesWithCursor(defaultPagination, defaultFilters)
+    : await MessagesService.getMessagesWithCursor(defaultPagination, defaultFilters);
   // Transform to simplified structure for frontend
   initialMessages = {
     items: response.data,
