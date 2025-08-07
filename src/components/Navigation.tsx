@@ -17,20 +17,41 @@ export function Navigation() {
 
   /**
    * Gets the appropriate badge variant for the connection status.
+   * Uses bright variants during flash for visual feedback.
    */
   const getStatusVariant = () => {
-    switch (status) {
-      case 'connected':
-        return 'green';
-      case 'connecting':
-        return 'yellow';
-      case 'disconnected':
-        return 'surface0';
-      case 'error':
-        return 'red';
-      default:
-        return 'surface0';
+    const baseVariant = () => {
+      switch (status) {
+        case 'connected':
+          return 'green';
+        case 'connecting':
+          return 'yellow';
+        case 'disconnected':
+          return 'surface0';
+        case 'error':
+          return 'red';
+        default:
+          return 'surface0';
+      }
+    };
+
+    // Use bright color variants during flash for visual feedback
+    if (isFlashing) {
+      switch (status) {
+        case 'connected':
+          return 'teal';
+        case 'connecting':
+          return 'peach';
+        case 'disconnected':
+          return 'overlay1';
+        case 'error':
+          return 'maroon';
+        default:
+          return 'overlay1';
+      }
     }
+
+    return baseVariant();
   };
 
   /**
@@ -62,12 +83,7 @@ export function Navigation() {
         </a>
       </span>
       <span>
-        <span
-          is-="badge"
-          variant-={getStatusVariant()}
-          style={isFlashing ? { animation: 'flash 0.8s ease-in-out' } : undefined}
-          title={`Connection status: ${status}`}
-        >
+        <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
           {getStatusText()}
         </span>
         <span is-="badge" variant-="yellow">
