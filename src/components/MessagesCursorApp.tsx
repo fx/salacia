@@ -4,11 +4,12 @@
  * cursor-based pagination for handling large datasets.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { MessagesTable } from './MessagesTable.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { SearchAndFilters } from './SearchAndFilters.js';
 import { MessagesClient, type SimplifiedCursorResponse } from '../lib/api/messages.js';
+import { useRealTimeMessages } from '../hooks/useRealTimeMessages.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -40,6 +41,26 @@ export function MessagesCursorApp({
 }: MessagesCursorAppProps): React.ReactElement {
   const [data, setData] =
     useState<MessagesCursorPaginationResponse<MessageDisplay>>(initialMessages);
+  const [showingRealTimeMessages, setShowingRealTimeMessages] = useState(false);
+
+  // Real-time messages hook
+  const { newMessages, hasNewMessages, clearNewMessages, connectionState } = useRealTimeMessages({
+    enabled: true,
+    onMessageReceived: message => {
+      // Only auto-integrate if on first page and no cursor set (showing latest)
+      if (!params.cursor && params.sortDirection === 'desc') {
+        setData(prev => ({
+          ...prev,
+          data: [message, ...prev.data],
+          meta: {
+            ...prev.meta,
+            count: prev.meta.count + 1,
+          },
+        }));
+        setShowingRealTimeMessages(true);
+      }
+    },
+  });
 
   // Helper function to transform SimplifiedCursorResponse to MessagesCursorPaginationResponse
   const transformResponse = (
@@ -157,6 +178,25 @@ export function MessagesCursorApp({
     fetchMessages(params, filters);
   }, [params, filters, fetchMessages]);
 
+  /**
+   * Load new messages from real-time updates.
+   */
+  const loadNewMessages = useCallback(() => {
+    if (hasNewMessages && !params.cursor) {
+      // Go to first page to see all new messages
+      fetchMessages({ ...params, cursor: undefined }, filters);
+      clearNewMessages();
+      setShowingRealTimeMessages(false);
+    }
+  }, [hasNewMessages, params, filters, fetchMessages, clearNewMessages]);
+
+  // Reset real-time flag when navigating
+  useEffect(() => {
+    if (params.cursor) {
+      setShowingRealTimeMessages(false);
+    }
+  }, [params.cursor]);
+
   // Calculate stats from current data
   const stats = {
     totalMessages: data.meta.hasMore ? '?' : data.data.length.toString(),
@@ -169,13 +209,49 @@ export function MessagesCursorApp({
       <div>
         {/* Header with title and stats */}
         <header box-="round" shear-="bottom">
-          <h1>AI Interaction Messages</h1>
-          <p>
-            <small>
-              Cursor-based pagination • Showing {stats.currentCount} messages
-              {stats.hasMore && ' • More available'}
-            </small>
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1>AI Interaction Messages</h1>
+              <p>
+                <small>
+                  Cursor-based pagination • Showing {stats.currentCount} messages
+                  {stats.hasMore && ' • More available'}
+                  {showingRealTimeMessages && ' • Including live updates'}
+                </small>
+              </p>
+            </div>
+
+            {/* Connection status and new message notification */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '0.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <small>
+                  Live:{' '}
+                  {connectionState.status === 'connected'
+                    ? '🟢'
+                    : connectionState.status === 'connecting'
+                      ? '🟡'
+                      : '🔴'}
+                </small>
+                {hasNewMessages && !params.cursor && (
+                  <button
+                    type="button"
+                    onClick={loadNewMessages}
+                    className="wui-button"
+                    style={{ fontSize: '0.875rem', padding: '0.25rem 0.5rem' }}
+                  >
+                    {newMessages.length} new message{newMessages.length !== 1 ? 's' : ''} ↻
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </header>
 
         {/* Search and filters */}
