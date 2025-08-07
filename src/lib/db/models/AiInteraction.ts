@@ -225,8 +225,8 @@ AiInteraction.init(
       beforeUpdate: async (instance: AiInteraction) => {
         console.log('[Hook] Before update:', {
           id: instance.id,
-          promptMessages: instance.promptMessages,
-          responseMessages: instance.responseMessages,
+          request: instance.request,
+          response: instance.response,
         });
       },
 
@@ -237,9 +237,9 @@ AiInteraction.init(
       afterUpdate: async (instance: AiInteraction) => {
         console.log('[Hook] After update:', {
           id: instance.id,
-          promptMessages: instance.promptMessages,
-          responseMessages: instance.responseMessages,
-          outputTokens: instance.outputTokens,
+          request: instance.request,
+          response: instance.response,
+          completionTokens: instance.completionTokens,
         });
       },
     },
