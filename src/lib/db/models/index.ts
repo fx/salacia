@@ -1,5 +1,7 @@
 import { SystemMetadata } from './SystemMetadata';
 import { ApiRequest } from './ApiRequest';
+import { HealthCheck } from './HealthCheck';
+import { AiProvider } from './AiProvider';
 
 /**
  * Sequelize model exports and associations.
@@ -20,9 +22,7 @@ import { ApiRequest } from './ApiRequest';
 
 /**
  * Define model associations.
- * Currently, SystemMetadata and ApiRequest are independent tables
- * without direct relationships, but this function is prepared for
- * future associations as the schema evolves.
+ * Sets up relationships between models based on the database schema.
  *
  * @remarks
  * Associations should be defined here to ensure they are set up
@@ -30,12 +30,13 @@ import { ApiRequest } from './ApiRequest';
  * with missing associations during application startup.
  */
 function setupAssociations(): void {
-  // SystemMetadata and ApiRequest are currently independent tables
-  // Future associations can be added here as the schema evolves
-  // Example of how to add associations:
-  // SystemMetadata.hasMany(SomeOtherModel, {
-  //   foreignKey: 'systemMetadataId',
-  //   as: 'relatedRecords',
+  // SystemMetadata, ApiRequest, and HealthCheck are independent tables
+  // without direct relationships to other models
+  // AiProvider has relationships with other models through foreign keys
+  // Note: AiInteraction model will be created in future phases
+  // AiProvider.hasMany(AiInteraction, {
+  //   foreignKey: 'providerId',
+  //   as: 'interactions',
   // });
 }
 
@@ -46,11 +47,16 @@ setupAssociations();
  * Export all Sequelize models.
  * These models provide ORM interfaces for database operations.
  */
-export { SystemMetadata, ApiRequest };
+export { SystemMetadata, ApiRequest, HealthCheck, AiProvider };
 
 /**
  * Export model classes for type checking and instance operations.
  * Use these when you need to check model instances or perform
  * model-specific operations.
  */
-export type { SystemMetadata as SystemMetadataModel, ApiRequest as ApiRequestModel };
+export type {
+  SystemMetadata as SystemMetadataModel,
+  ApiRequest as ApiRequestModel,
+  HealthCheck as HealthCheckModel,
+  AiProvider as AiProviderModel,
+};
