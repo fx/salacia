@@ -223,11 +223,11 @@ AiInteraction.init(
        * Captures the original state before changes are applied.
        */
       beforeUpdate: async (instance: AiInteraction) => {
-        console.log('[Hook] Before update:', {
-          id: instance.id,
-          request: instance.request,
-          response: instance.response,
-        });
+        console.log(
+          '[Hook] Before update: AI interaction record with id',
+          instance.id,
+          'being updated'
+        );
       },
 
       /**
@@ -235,12 +235,7 @@ AiInteraction.init(
        * Logs the new state after changes have been applied.
        */
       afterUpdate: async (instance: AiInteraction) => {
-        console.log('[Hook] After update:', {
-          id: instance.id,
-          request: instance.request,
-          response: instance.response,
-          completionTokens: instance.completionTokens,
-        });
+        console.log('[Hook] After update: AI interaction record with id', instance.id, 'updated');
       },
     },
   }

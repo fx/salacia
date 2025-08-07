@@ -1,4 +1,4 @@
-import { Op, fn, col, literal } from 'sequelize';
+import { Op, fn, col, literal, where } from 'sequelize';
 import type {
   MessageDisplay,
   MessageStats,
@@ -255,8 +255,8 @@ export class MessagesSequelizeService {
     if (filters.searchTerm) {
       const searchPattern = `%${filters.searchTerm}%`;
       conditions[Op.or] = [
-        literal(`request::text ILIKE '${searchPattern.replace(/'/g, "''")}'`),
-        literal(`response::text ILIKE '${searchPattern.replace(/'/g, "''")}'`),
+        where(literal('request::text'), Op.iLike, searchPattern),
+        where(literal('response::text'), Op.iLike, searchPattern),
       ];
     }
 
