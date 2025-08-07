@@ -30,6 +30,11 @@ export default [
         fetch: 'readonly',
         AbortController: 'readonly',
         clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        EventSource: 'readonly',
+        MessageEvent: 'readonly',
+        window: 'readonly',
         // Vitest globals
         describe: 'readonly',
         it: 'readonly',
