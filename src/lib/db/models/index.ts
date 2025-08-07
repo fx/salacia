@@ -2,6 +2,7 @@ import { SystemMetadata } from './SystemMetadata';
 import { ApiRequest } from './ApiRequest';
 import { HealthCheck } from './HealthCheck';
 import { AiProvider } from './AiProvider';
+import { AiInteraction } from './AiInteraction';
 
 /**
  * Sequelize model exports and associations.
@@ -32,12 +33,19 @@ import { AiProvider } from './AiProvider';
 function setupAssociations(): void {
   // SystemMetadata, ApiRequest, and HealthCheck are independent tables
   // without direct relationships to other models
-  // AiProvider has relationships with other models through foreign keys
-  // Note: AiInteraction model will be created in future phases
-  // AiProvider.hasMany(AiInteraction, {
-  //   foreignKey: 'providerId',
-  //   as: 'interactions',
-  // });
+
+  // Set up relationship between AiProvider and AiInteraction
+  AiProvider.hasMany(AiInteraction, {
+    foreignKey: 'providerId',
+    as: 'interactions',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  });
+
+  AiInteraction.belongsTo(AiProvider, {
+    foreignKey: 'providerId',
+    as: 'provider',
+  });
 }
 
 // Initialize associations
@@ -47,7 +55,7 @@ setupAssociations();
  * Export all Sequelize models.
  * These models provide ORM interfaces for database operations.
  */
-export { SystemMetadata, ApiRequest, HealthCheck, AiProvider };
+export { SystemMetadata, ApiRequest, HealthCheck, AiProvider, AiInteraction };
 
 /**
  * Export model classes for type checking and instance operations.
@@ -59,4 +67,5 @@ export type {
   ApiRequest as ApiRequestModel,
   HealthCheck as HealthCheckModel,
   AiProvider as AiProviderModel,
+  AiInteraction as AiInteractionModel,
 };
