@@ -182,7 +182,8 @@ ApiRequest.init(
   {
     sequelize,
     tableName: 'api_requests',
-    timestamps: { createdAt: true, updatedAt: false }, // Only using createdAt, not updatedAt
+    timestamps: true, // Enable timestamps
+    updatedAt: false, // Only using createdAt, not updatedAt
     underscored: true,
     indexes: [
       {
