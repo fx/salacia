@@ -1,6 +1,5 @@
 import { DataTypes, Model, type InferAttributes, type InferCreationAttributes } from 'sequelize';
 import { sequelize } from '../sequelize-connection';
-import { trackMessageUpdate } from '../hooks/message-hooks';
 
 /**
  * Sequelize model for the ai_interactions table.
@@ -221,31 +220,27 @@ AiInteraction.init(
     hooks: {
       /**
        * Hook executed before updating an AiInteraction record.
-       * Tracks the original state before changes are applied.
-       *
-       * This hook captures the current message data before an update occurs,
-       * allowing us to compare the before and after states for tracking purposes.
-       *
-       * @param instance - The AiInteraction instance being updated
-       * @param options - Sequelize hook options containing transaction info
+       * Captures the original state before changes are applied.
        */
-      beforeUpdate: async (instance: AiInteraction, options) => {
-        await trackMessageUpdate('before', instance, options);
+      beforeUpdate: async (instance: AiInteraction) => {
+        console.log('[Hook] Before update:', {
+          id: instance.id,
+          promptMessages: instance.promptMessages,
+          responseMessages: instance.responseMessages,
+        });
       },
 
       /**
        * Hook executed after updating an AiInteraction record.
-       * Tracks the new state after changes have been applied.
-       *
-       * This hook captures the updated message data after an update is completed,
-       * enabling comprehensive tracking of how AI interaction data changes over time.
-       * It can be used for audit trails, analytics, and debugging purposes.
-       *
-       * @param instance - The AiInteraction instance that was updated
-       * @param options - Sequelize hook options containing transaction info
+       * Logs the new state after changes have been applied.
        */
-      afterUpdate: async (instance: AiInteraction, options) => {
-        await trackMessageUpdate('after', instance, options);
+      afterUpdate: async (instance: AiInteraction) => {
+        console.log('[Hook] After update:', {
+          id: instance.id,
+          promptMessages: instance.promptMessages,
+          responseMessages: instance.responseMessages,
+          outputTokens: instance.outputTokens,
+        });
       },
     },
   }
