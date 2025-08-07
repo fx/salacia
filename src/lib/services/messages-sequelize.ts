@@ -9,6 +9,7 @@ import type {
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
 import { AiInteraction } from '../db/models/AiInteraction.js';
+import type { AiInteraction as DrizzleAiInteraction } from '../db/schema.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -43,7 +44,7 @@ export class MessagesSequelizeService {
         return null;
       }
 
-      return transformAiInteractionToDisplay(result.toJSON());
+      return transformAiInteractionToDisplay(result.toJSON() as DrizzleAiInteraction);
     } catch (error) {
       throw new Error(
         `Failed to retrieve message by ID: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -73,7 +74,7 @@ export class MessagesSequelizeService {
 
     try {
       const whereConditions = this.buildWhereConditions(filters);
-      const order = this.buildOrderBy(params.sort);
+      const order: Array<[string, string]> = this.buildOrderBy(params.sort);
 
       // Calculate offset for pagination
       const offset = (params.page - 1) * params.pageSize;
@@ -99,7 +100,7 @@ export class MessagesSequelizeService {
 
       // Transform database records to display format
       const messages = messagesResult.map(interaction =>
-        transformAiInteractionToDisplay(interaction.toJSON())
+        transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
       );
 
       return {
@@ -157,8 +158,8 @@ export class MessagesSequelizeService {
         }),
       ]);
 
-      const stats = statsResult[0] as Record<string, unknown>;
-      const mostUsedModelResult = modelStatsResult[0] as Record<string, unknown>;
+      const stats = statsResult[0] as unknown as Record<string, unknown>;
+      const mostUsedModelResult = modelStatsResult[0] as unknown as Record<string, unknown>;
 
       // Calculate successful messages
       const successfulMessages =
@@ -184,7 +185,9 @@ export class MessagesSequelizeService {
         totalTokens: Number(stats?.totalTokens || 0),
         averageResponseTime: Math.round(Number(stats?.averageResponseTime || 0)),
         mostUsedModel: mostUsedModelResult?.model as string | undefined,
-        uniqueModels: Number((uniqueModelsResult[0] as Record<string, unknown>)?.uniqueModels || 0),
+        uniqueModels: Number(
+          (uniqueModelsResult[0] as unknown as Record<string, unknown>)?.uniqueModels || 0
+        ),
       };
     } catch (error) {
       throw new Error(
@@ -254,7 +257,7 @@ export class MessagesSequelizeService {
     // Search term filtering (searches in request and response JSON)
     if (filters.searchTerm) {
       const searchPattern = `%${filters.searchTerm}%`;
-      conditions[Op.or] = [
+      (conditions as any)[Op.or] = [
         where(literal('request::text'), Op.iLike, searchPattern),
         where(literal('response::text'), Op.iLike, searchPattern),
       ];
@@ -270,7 +273,7 @@ export class MessagesSequelizeService {
    * @returns Array of order by clauses for use in Sequelize queries
    * @private
    */
-  private static buildOrderBy(sort: MessageSort) {
+  private static buildOrderBy(sort: MessageSort): Array<[string, string]> {
     const { field, direction } = sort;
 
     // Map sort fields to database columns
@@ -327,14 +330,14 @@ export class MessagesSequelizeService {
           if (sortBy === 'createdAt') {
             const cursorDate = new Date(cursorData.sortFieldValue);
             if (sortDirection === 'desc') {
-              whereConditions[Op.or] = [
+              (whereConditions as any)[Op.or] = [
                 { createdAt: { [Op.lt]: cursorDate } },
                 {
                   [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.lt]: cursorData.id } }],
                 },
               ];
             } else {
-              whereConditions[Op.or] = [
+              (whereConditions as any)[Op.or] = [
                 { createdAt: { [Op.gt]: cursorDate } },
                 {
                   [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.gt]: cursorData.id } }],
@@ -369,7 +372,9 @@ export class MessagesSequelizeService {
       const hasMore = results.length > limit;
       const items = results
         .slice(0, limit)
-        .map(interaction => transformAiInteractionToDisplay(interaction.toJSON()));
+        .map(interaction =>
+          transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
+        );
 
       // Generate cursors
       let nextCursor: string | undefined;
@@ -395,7 +400,7 @@ export class MessagesSequelizeService {
           const firstItemDate = firstItem.createdAt;
           if (sortDirection === 'desc') {
             // For desc order, previous items have createdAt > current first item
-            reverseWhereConditions[Op.or] = [
+            (reverseWhereConditions as any)[Op.or] = [
               { createdAt: { [Op.gt]: firstItemDate } },
               {
                 [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.gt]: firstItem.id } }],
@@ -403,7 +408,7 @@ export class MessagesSequelizeService {
             ];
           } else {
             // For asc order, previous items have createdAt < current first item
-            reverseWhereConditions[Op.or] = [
+            (reverseWhereConditions as any)[Op.or] = [
               { createdAt: { [Op.lt]: firstItemDate } },
               {
                 [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.lt]: firstItem.id } }],
