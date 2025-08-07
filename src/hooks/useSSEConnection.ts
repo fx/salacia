@@ -34,11 +34,19 @@ export function useSSEConnection(config: SSEConnectionConfig) {
     try {
       const sseEvent: SSEEvent = JSON.parse(event.data);
 
-      setConnectionState(prev => ({
-        ...prev,
-        connectionId:
-          sseEvent.type === 'heartbeat' ? sseEvent.data.connectionId : prev.connectionId,
-      }));
+      // Update connection ID for both heartbeat and connection_opened events
+      if (sseEvent.type === 'heartbeat') {
+        setConnectionState(prev => ({
+          ...prev,
+          connectionId: sseEvent.data.connectionId,
+        }));
+      } else if (sseEvent.type === 'connection_opened') {
+        // Connection opened events don't have connectionId in data, but we can extract from event
+        setConnectionState(prev => ({
+          ...prev,
+          connectionId: sseEvent.id || prev.connectionId,
+        }));
+      }
 
       // Dispatch to event handlers
       const handlers = eventHandlersRef.current.get(sseEvent.type) || [];
@@ -58,6 +66,75 @@ export function useSSEConnection(config: SSEConnectionConfig) {
       }));
     }
   }, []);
+
+  /**
+   * Creates reconnection logic that avoids stale closures.
+   */
+  const createReconnectionHandler = useCallback(
+    (currentConfig: SSEConnectionConfig) => {
+      return () => {
+        const error = new Error('SSE connection error');
+        setConnectionState(prev => ({ ...prev, status: 'error', lastError: error }));
+
+        if (currentConfig.autoReconnect) {
+          const delay = currentConfig.reconnectDelay || 1000;
+          const maxAttempts = currentConfig.maxReconnectAttempts;
+
+          setTimeout(() => {
+            setConnectionState(prev => {
+              const shouldReconnect = !maxAttempts || prev.reconnectAttempts < maxAttempts;
+
+              if (shouldReconnect) {
+                const newAttempts = prev.reconnectAttempts + 1;
+
+                // Schedule reconnection with fresh captured values
+                setTimeout(() => {
+                  if (eventSourceRef.current) {
+                    eventSourceRef.current.close();
+                  }
+
+                  setConnectionState(prev => ({ ...prev, status: 'connecting' }));
+
+                  try {
+                    const eventSource = new EventSource(currentConfig.url);
+                    eventSourceRef.current = eventSource;
+
+                    eventSource.onopen = () => {
+                      setConnectionState(prev => ({
+                        ...prev,
+                        status: 'connected',
+                        reconnectAttempts: 0,
+                        lastError: undefined,
+                      }));
+                    };
+
+                    eventSource.onmessage = handleSSEEvent;
+                    eventSource.onerror = createReconnectionHandler(currentConfig);
+                  } catch (reconnectError) {
+                    setConnectionState(prev => ({
+                      ...prev,
+                      status: 'error',
+                      lastError:
+                        reconnectError instanceof Error
+                          ? reconnectError
+                          : new Error('Reconnection failed'),
+                    }));
+                  }
+                }, 0);
+
+                return {
+                  ...prev,
+                  reconnectAttempts: newAttempts,
+                };
+              }
+              return prev;
+            });
+          }, delay);
+        }
+      };
+    },
+    [handleSSEEvent]
+  );
 
   /**
    * Establishes the SSE connection.
@@ -83,27 +160,7 @@ export function useSSEConnection(config: SSEConnectionConfig) {
       };
 
       eventSource.onmessage = handleSSEEvent;
-
-      eventSource.onerror = () => {
-        const error = new Error('SSE connection error');
-        setConnectionState(prev => ({ ...prev, status: 'error', lastError: error }));
-
-        // Basic reconnection
-        if (
-          config.autoReconnect &&
-          (!config.maxReconnectAttempts ||
-            connectionState.reconnectAttempts < config.maxReconnectAttempts)
-        ) {
-          const delay = config.reconnectDelay || 1000;
-          setTimeout(() => {
-            setConnectionState(prev => ({
-              ...prev,
-              reconnectAttempts: prev.reconnectAttempts + 1,
-            }));
-            connect();
-          }, delay);
-        }
-      };
+      eventSource.onerror = createReconnectionHandler(config);
     } catch (error) {
       setConnectionState(prev => ({
         ...prev,
@@ -111,7 +168,7 @@ export function useSSEConnection(config: SSEConnectionConfig) {
         lastError: error instanceof Error ? error : new Error('Connection failed'),
       }));
     }
-  }, [config, connectionState.reconnectAttempts, handleSSEEvent]);
+  }, [config, handleSSEEvent, createReconnectionHandler]);
 
   /**
    * Disconnects the SSE connection.
@@ -149,11 +206,11 @@ export function useSSEConnection(config: SSEConnectionConfig) {
     []
   );
 
-  // Auto-connect on mount
+  // Auto-connect on mount and URL changes
   useEffect(() => {
     connect();
     return disconnect;
-  }, [config.url]);
+  }, [connect, disconnect]);
 
   return {
     connectionState,

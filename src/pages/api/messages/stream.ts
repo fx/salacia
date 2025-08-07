@@ -14,6 +14,26 @@ const connections = new Map<
 >();
 
 /**
+ * Validates if the request origin is allowed for CORS.
+ */
+const isAllowedOrigin = (origin: string | null): boolean => {
+  if (!origin) return false;
+
+  // Allow localhost for development
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    return true;
+  }
+
+  // Add your production domains here
+  const allowedOrigins = [
+    // 'https://yourdomain.com',
+    // 'https://www.yourdomain.com'
+  ];
+
+  return allowedOrigins.includes(origin);
+};
+
+/**
  * Server-Sent Events endpoint for real-time message updates.
  *
  * Provides persistent HTTP connection for streaming real-time updates
@@ -29,7 +49,14 @@ export const GET: APIRoute = async ({ url, request }) => {
   const heartbeatInterval =
     Math.min(parseInt(url.searchParams.get('heartbeatInterval') || '30'), 300) * 1000;
 
-  logger.info('SSE connection request:', { connectionId, heartbeatInterval });
+  // Get request origin for CORS validation
+  const requestOrigin = request.headers.get('origin');
+
+  logger.info('SSE connection request:', {
+    connectionId,
+    heartbeatInterval,
+    origin: requestOrigin,
+  });
 
   // Create abort controller for cleanup
   const abortController = new AbortController();
@@ -87,9 +114,10 @@ export const GET: APIRoute = async ({ url, request }) => {
       sendEvent(connectionEvent);
 
       // Setup heartbeat interval
-      const heartbeatTimer = setInterval(() => {
+      let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+      heartbeatTimer = setInterval(() => {
         if (abortController.signal.aborted) {
-          clearInterval(heartbeatTimer);
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
           return;
         }
 
@@ -108,7 +136,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
       // Cleanup on abort
       abortController.signal.addEventListener('abort', () => {
-        clearInterval(heartbeatTimer);
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
         controller.close();
       });
 
@@ -128,7 +156,7 @@ export const GET: APIRoute = async ({ url, request }) => {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
+      ...(isAllowedOrigin(requestOrigin) ? { 'Access-Control-Allow-Origin': requestOrigin! } : {}),
       'X-Connection-Id': connectionId,
     },
   });
