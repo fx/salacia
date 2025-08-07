@@ -94,10 +94,13 @@ export function useRealTimeMessages(config: RealTimeMessagesConfig = {}) {
    * Useful for integrating messages while ensuring no race conditions.
    */
   const consumeNewMessages = useCallback((): MessageDisplay[] => {
-    const messages = newMessages;
-    setNewMessages([]);
+    let messages: MessageDisplay[] = [];
+    setNewMessages(prev => {
+      messages = prev;
+      return [];
+    });
     return messages;
-  }, [newMessages]);
+  }, []);
 
   // Set up SSE event listeners
   useEffect(() => {

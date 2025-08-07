@@ -233,11 +233,19 @@ export function MessagesCursorApp({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <small>
                   Live:{' '}
-                  {connectionState.status === 'connected'
-                    ? '🟢'
-                    : connectionState.status === 'connecting'
-                      ? '🟡'
-                      : '🔴'}
+                  {connectionState.status === 'connected' ? (
+                    <span role="img" aria-label="Connected">
+                      🟢
+                    </span>
+                  ) : connectionState.status === 'connecting' ? (
+                    <span role="img" aria-label="Connecting">
+                      🟡
+                    </span>
+                  ) : (
+                    <span role="img" aria-label="Disconnected">
+                      🔴
+                    </span>
+                  )}
                 </small>
                 {hasNewMessages && !params.cursor && (
                   <button

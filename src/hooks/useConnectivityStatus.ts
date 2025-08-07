@@ -42,7 +42,7 @@ export interface ConnectivityStatus {
 export function useConnectivityStatus(config: ConnectivityStatusConfig): ConnectivityStatus {
   const [isFlashing, setIsFlashing] = useState(false);
   const [flashCount, setFlashCount] = useState(0);
-  const flashTimeoutRef = useRef<number | null>(null);
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevStatusRef = useRef<string>('disconnected');
 
   const sseConfig: SSEConnectionConfig = {
