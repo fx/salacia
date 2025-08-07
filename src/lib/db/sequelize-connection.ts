@@ -8,7 +8,6 @@ import { sequelizeConfig } from './sequelize-config';
  */
 class SequelizeConnection {
   private static instance: Sequelize | null = null;
-  private static isConnected: boolean = false;
 
   /**
    * Gets the Sequelize connection instance.
@@ -23,6 +22,7 @@ class SequelizeConnection {
         logging: sequelizeConfig.logging,
         pool: sequelizeConfig.pool,
         define: sequelizeConfig.define,
+        dialectOptions: sequelizeConfig.dialectOptions,
       });
     }
 
@@ -39,10 +39,8 @@ class SequelizeConnection {
     try {
       const sequelize = SequelizeConnection.getInstance();
       await sequelize.authenticate();
-      SequelizeConnection.isConnected = true;
       return true;
     } catch (error) {
-      SequelizeConnection.isConnected = false;
       throw new Error(
         `Sequelize connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -59,17 +57,7 @@ class SequelizeConnection {
     if (SequelizeConnection.instance) {
       await SequelizeConnection.instance.close();
       SequelizeConnection.instance = null;
-      SequelizeConnection.isConnected = false;
     }
-  }
-
-  /**
-   * Returns the current connection status.
-   *
-   * @returns True if connection has been successfully tested
-   */
-  public static getConnectionStatus(): boolean {
-    return SequelizeConnection.isConnected;
   }
 
   /**
@@ -98,6 +86,5 @@ export const sequelize = SequelizeConnection.getInstance();
 export const {
   testConnection: testSequelizeConnection,
   closeConnection: closeSequelizeConnection,
-  getConnectionStatus: getSequelizeConnectionStatus,
   synchronize: synchronizeSequelize,
 } = SequelizeConnection;

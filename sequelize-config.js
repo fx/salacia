@@ -1,5 +1,10 @@
 require('dotenv').config();
 
+/**
+ * Sequelize CLI configuration file.
+ * This configuration should match the settings in src/lib/db/sequelize-config.ts
+ * Used by Sequelize CLI commands for migrations and seeders.
+ */
 const config = {
   development: {
     url: process.env.DATABASE_URL,
@@ -54,7 +59,7 @@ const config = {
     dialectOptions: {
       ssl: process.env.NODE_ENV === 'production' ? {
         require: true,
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
       } : false,
     },
   },

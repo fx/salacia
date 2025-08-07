@@ -34,6 +34,18 @@ export interface SequelizeConfig {
     /** Convert camelCase columns to snake_case field names */
     freezeTableName: boolean;
   };
+  /** Dialect-specific options */
+  dialectOptions?: {
+    /** SSL configuration for database connection */
+    ssl?:
+      | {
+          /** Require SSL connection */
+          require: boolean;
+          /** Reject unauthorized SSL certificates */
+          rejectUnauthorized: boolean;
+        }
+      | false;
+  };
 }
 
 /**
@@ -42,23 +54,36 @@ export interface SequelizeConfig {
  * @returns Sequelize configuration with database connection and settings
  */
 export function createSequelizeConfig(): SequelizeConfig {
-  return {
+  const config: SequelizeConfig = {
     connectionString: env.DATABASE_URL,
     dialect: 'postgres',
     logging: env.NODE_ENV === 'development' && env.LOG_LEVEL === 'debug',
     pool: {
-      max: 10,
-      min: 2,
+      max: env.NODE_ENV === 'production' ? 20 : 10,
+      min: env.NODE_ENV === 'production' ? 5 : 2,
       idle: 30000, // 30 seconds
       acquire: 60000, // 60 seconds
     },
     define: {
       timestamps: true,
       underscored: true,
+      // Soft deletes (paranoid mode) are intentionally disabled; records will be permanently deleted.
       paranoid: false,
       freezeTableName: true,
     },
   };
+
+  // Add SSL configuration for production
+  if (env.NODE_ENV === 'production') {
+    config.dialectOptions = {
+      ssl: {
+        require: true,
+        rejectUnauthorized: true,
+      },
+    };
+  }
+
+  return config;
 }
 
 /**
