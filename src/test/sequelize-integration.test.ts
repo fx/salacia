@@ -5,13 +5,15 @@ import {
   beforeAll,
   afterAll,
   beforeEach,
+  afterEach,
   vi,
   type MockInstance,
 } from 'vitest';
 import { testSequelizeConnection, closeSequelizeConnection } from '../lib/db/sequelize-connection';
 import { AiInteraction, AiProvider } from '../lib/db/models';
 import { MessagesSequelizeService } from '../lib/services/messages-sequelize';
-import type { MessagesCursorPaginationParams, MessagesFilterParams } from '../lib/types';
+import type { MessagesFilterParams } from '../lib/types/messages';
+import type { MessagesCursorPaginationParams } from '../lib/types/cursor';
 import { testUtils } from './setup';
 
 /**
@@ -98,7 +100,12 @@ describe('Sequelize Integration Tests', () => {
     it('should create AiProvider record', async () => {
       if (!process.env.DATABASE_URL) return;
 
-      const provider = await AiProvider.create(testProviderData);
+      const provider = await AiProvider.create({
+        ...testProviderData,
+        isDefault: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       expect(provider).toBeDefined();
       expect(provider.id).toBe(testProviderId);
       expect(provider.name).toBe('test-provider');
@@ -156,7 +163,10 @@ describe('Sequelize Integration Tests', () => {
     it('should create AiInteraction record', async () => {
       if (!process.env.DATABASE_URL) return;
 
-      const interaction = await AiInteraction.create(testInteractionData);
+      const interaction = await AiInteraction.create({
+        ...testInteractionData,
+        createdAt: new Date(),
+      });
       expect(interaction).toBeDefined();
       expect(interaction.id).toBe(testInteractionId);
       expect(interaction.model).toBe('claude-3-sonnet');
@@ -246,7 +256,10 @@ describe('Sequelize Integration Tests', () => {
 
       // Create test interactions
       for (const interaction of testInteractions) {
-        await AiInteraction.create(interaction);
+        await AiInteraction.create({
+          ...interaction,
+          createdAt: new Date(),
+        });
       }
     });
 
@@ -419,6 +432,9 @@ describe('Sequelize Integration Tests', () => {
         baseUrl: 'https://api.openai.com',
         apiKey: 'test-key',
         isActive: true,
+        isDefault: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       // Create interaction with provider reference
@@ -429,6 +445,7 @@ describe('Sequelize Integration Tests', () => {
         request: { messages: [{ role: 'user', content: 'Association test' }] },
         response: { content: 'Response' },
         statusCode: 200,
+        createdAt: new Date(),
       });
     });
 
@@ -449,8 +466,8 @@ describe('Sequelize Integration Tests', () => {
       });
 
       expect(provider).toBeDefined();
-      expect(provider?.interactions).toBeInstanceOf(Array);
-      expect(provider?.interactions?.length).toBeGreaterThanOrEqual(1);
+      expect((provider as any)?.interactions).toBeInstanceOf(Array);
+      expect((provider as any)?.interactions?.length).toBeGreaterThanOrEqual(1);
 
       // Test interaction → provider association
       const interaction = await AiInteraction.findByPk(testInteractionId, {
@@ -458,8 +475,8 @@ describe('Sequelize Integration Tests', () => {
       });
 
       expect(interaction).toBeDefined();
-      expect(interaction?.provider).toBeDefined();
-      expect(interaction?.provider?.name).toBe('test-association-provider');
+      expect((interaction as any)?.provider).toBeDefined();
+      expect((interaction as any)?.provider?.name).toBe('test-association-provider');
     });
   });
 });

@@ -47,11 +47,13 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "bash -c 'npm run type-check'"
     ],
     "*.astro": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write",
+      "bash -c 'npm run type-check'"
     ],
     "*.{json,md}": "prettier --write"
   },
