@@ -121,15 +121,29 @@ export const GET: APIRoute = async ({ url, request }) => {
     },
   });
 
+  // Configure CORS headers with origin validation
+  const requestOrigin = request.headers.get('origin');
+  const allowedOrigins = [
+    'http://localhost:4321',
+    'http://localhost:3000',
+    'https://localhost:4321',
+  ];
+  const isAllowedOrigin = requestOrigin && allowedOrigins.includes(requestOrigin);
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Connection: 'keep-alive',
+    'X-Connection-Id': connectionId,
+  };
+
+  if (isAllowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = requestOrigin;
+  }
+
   // Return SSE response with proper headers
   return new Response(stream, {
     status: 200,
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'X-Connection-Id': connectionId,
-    },
+    headers,
   });
 };

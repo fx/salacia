@@ -111,7 +111,7 @@ export function useSSEConnection(config: SSEConnectionConfig) {
         lastError: error instanceof Error ? error : new Error('Connection failed'),
       }));
     }
-  }, [config, connectionState.reconnectAttempts, handleSSEEvent]);
+  }, [config, handleSSEEvent]);
 
   /**
    * Disconnects the SSE connection.
@@ -152,7 +152,7 @@ export function useSSEConnection(config: SSEConnectionConfig) {
   // Auto-connect on mount
   useEffect(() => {
     connect();
-    return disconnect;
+    return () => disconnect();
   }, [config.url]);
 
   return {
