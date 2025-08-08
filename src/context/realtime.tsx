@@ -67,10 +67,6 @@ export interface RealtimeContextValue {
 const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefined);
 
 /**
- * React provider that exposes a single global SSE connection and recent message buffer.
- * Uses /api/sse/messages and listens to connected, heartbeat, message:created events.
- */
-/**
  * Provides realtime SSE data and maintains a burst window counter of new messages.
  * newMessagesCount increments for each message:created event and resets to 0 after
  * 3s of inactivity (no new messages). Clearing manually also resets the count.

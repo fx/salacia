@@ -32,6 +32,10 @@ export function Navigation() {
   const [currentTime, setCurrentTime] = useState(new Date()); // for relative time calculation
   const prevCountRef = React.useRef(0);
 
+  // Combined connection state for flashing logic
+  const combinedIsConnecting = isConnecting || statsIsConnecting;
+  const combinedIsConnected = isConnected && statsIsConnected;
+
   // Combined flash logic to avoid race condition with prevCountRef.current
   useEffect(() => {
     let plusTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -58,7 +62,7 @@ export function Navigation() {
       if (plusTimeout) clearTimeout(plusTimeout);
       if (variantTimeout) clearTimeout(variantTimeout);
     };
-  }, [newMessagesCount, isConnecting, statsIsConnecting]);
+  }, [newMessagesCount, combinedIsConnecting]);
 
   // Update current time every second for relative time display
   useEffect(() => {
@@ -67,10 +71,6 @@ export function Navigation() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Combined connection state for flashing logic
-  const combinedIsConnecting = isConnecting || statsIsConnecting;
-  const combinedIsConnected = isConnected && statsIsConnected;
 
   // Calculate combined status from both message and stats SSE connections
   const status = useMemo(() => {
@@ -98,6 +98,7 @@ export function Navigation() {
         case 'connected':
           return 'green';
         case 'connecting':
+        case 'reconnecting':
           return 'yellow';
         case 'error':
           return 'red';
@@ -112,6 +113,7 @@ export function Navigation() {
         case 'connected':
           return 'teal';
         case 'connecting':
+        case 'reconnecting':
           return 'peach';
         case 'error':
           return 'maroon';
@@ -128,6 +130,7 @@ export function Navigation() {
       case 'connected':
         return 'LIVE';
       case 'connecting':
+      case 'reconnecting':
         return 'SYNC';
       case 'error':
         return 'ERR';
