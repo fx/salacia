@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { MessagesSequelizeService } from '../../../lib/services/messages-sequelize.js';
+import { MessagesService } from '../../../lib/services/messages.js';
 import { createLogger } from '../../../lib/utils/logger.js';
 import {
   classifyMessagesServiceError,
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ params }) => {
     logger.debug('Fetching message by ID:', { messageId });
 
     // Fetch the message using the service layer
-    const message = await MessagesSequelizeService.getMessageById(messageId);
+    const message = await MessagesService.getMessageById(messageId);
 
     const responseTime = Date.now() - startTime;
 

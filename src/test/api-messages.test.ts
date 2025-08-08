@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { APIContext } from 'astro';
 import { GET as messagesListHandler } from '../pages/api/messages.js';
 import { GET as messageDetailHandler } from '../pages/api/messages/[id].js';
-import { MessagesSequelizeService } from '../lib/services/messages-sequelize.js';
+import { MessagesService } from '../lib/services/messages.js';
 import { HTTP_STATUS, parseJsonResponse } from './utils/request-helpers.js';
 import type { MessageDisplay } from '../lib/types/messages.js';
 import type { MessagesCursorPaginationResponse } from '../lib/types/cursor.js';
 
-// Mock the MessagesSequelizeService
-vi.mock('../lib/services/messages-sequelize.js', () => ({
-  MessagesSequelizeService: {
+// Mock the MessagesService
+vi.mock('../lib/services/messages.js', () => ({
+  MessagesService: {
     getMessagesWithCursor: vi.fn(),
     getMessageById: vi.fn(),
   },
@@ -64,7 +64,7 @@ describe('API Endpoints - Messages', () => {
     };
 
     it('should return cursor-paginated messages with default parameters', async () => {
-      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
+      vi.mocked(MessagesService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -89,7 +89,7 @@ describe('API Endpoints - Messages', () => {
       expect(data.nextCursor).toBeUndefined();
       expect(data.prevCursor).toBeUndefined();
 
-      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
+      expect(MessagesService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
           limit: 20,
           sortBy: 'createdAt',
@@ -100,7 +100,7 @@ describe('API Endpoints - Messages', () => {
     });
 
     it('should handle custom pagination parameters', async () => {
-      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
+      vi.mocked(MessagesService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL(
         'http://localhost:4321/api/messages?limit=50&sortBy=id&sortDirection=asc&cursor=abc123'
@@ -109,7 +109,7 @@ describe('API Endpoints - Messages', () => {
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
-      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
+      expect(MessagesService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
           limit: 50,
           cursor: 'abc123',
@@ -121,7 +121,7 @@ describe('API Endpoints - Messages', () => {
     });
 
     it('should handle filter parameters', async () => {
-      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
+      vi.mocked(MessagesService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL(
         'http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello'
@@ -130,7 +130,7 @@ describe('API Endpoints - Messages', () => {
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
-      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
+      expect(MessagesService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
           limit: 20,
           sortBy: 'createdAt',
@@ -159,7 +159,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should return 503 for database errors', async () => {
       const error = new Error('database connection failed');
-      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockRejectedValue(error);
+      vi.mocked(MessagesService.getMessagesWithCursor).mockRejectedValue(error);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -175,7 +175,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should return 500 for unexpected errors', async () => {
       const error = new Error('Unexpected error');
-      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockRejectedValue(error);
+      vi.mocked(MessagesService.getMessagesWithCursor).mockRejectedValue(error);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -210,7 +210,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should return message details for valid ID', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(mockMessage);
+      vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -231,7 +231,7 @@ describe('API Endpoints - Messages', () => {
       expect(data.totalTokens).toBe(mockMessage.totalTokens);
       expect(data.isSuccess).toBe(mockMessage.isSuccess);
 
-      expect(MessagesSequelizeService.getMessageById).toHaveBeenCalledWith(messageId);
+      expect(MessagesService.getMessageById).toHaveBeenCalledWith(messageId);
     });
 
     it('should return 400 for missing ID parameter', async () => {
@@ -247,12 +247,12 @@ describe('API Endpoints - Messages', () => {
         message: 'Message ID is required',
       });
 
-      expect(MessagesSequelizeService.getMessageById).not.toHaveBeenCalled();
+      expect(MessagesService.getMessageById).not.toHaveBeenCalled();
     });
 
     it('should return 404 for non-existent message', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(null);
+      vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -270,7 +270,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 400 for invalid UUID format', async () => {
       const invalidId = 'invalid-uuid';
       const error = new Error('Invalid UUID format: invalid-uuid');
-      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: invalidId },
@@ -288,7 +288,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 503 for database errors', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       const error = new Error('database connection timeout');
-      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -306,7 +306,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 500 for unexpected errors', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       const error = new Error('Unexpected error');
-      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -323,7 +323,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should include response time header in all responses', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(mockMessage);
+      vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -336,7 +336,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should include timestamp in error responses', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(null);
+      vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
 
       const response = await messageDetailHandler({
         params: { id: messageId },

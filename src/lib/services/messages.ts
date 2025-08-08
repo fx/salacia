@@ -1,18 +1,4 @@
-import {
-  desc,
-  asc,
-  and,
-  or,
-  gte,
-  lte,
-  gt,
-  lt,
-  like,
-  isNull,
-  isNotNull,
-  count,
-  sql,
-} from 'drizzle-orm';
+import { Op, fn, col, literal, where } from 'sequelize';
 import type {
   MessageDisplay,
   MessageStats,
@@ -22,8 +8,8 @@ import type {
   MessageSort,
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
-import { aiInteractions } from '../db/schema.js';
-import { db } from '../db/connection.js';
+import { AiInteraction } from '../db/models/AiInteraction.js';
+import type { AiInteraction as DrizzleAiInteraction } from '../db/schema.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -52,17 +38,13 @@ export class MessagesService {
         throw new Error(`Invalid UUID format: ${id}`);
       }
 
-      const result = await db
-        .select()
-        .from(aiInteractions)
-        .where(sql`${aiInteractions.id} = ${id}::text::uuid`)
-        .limit(1);
+      const result = await AiInteraction.findByPk(id);
 
-      if (result.length === 0) {
+      if (!result) {
         return null;
       }
 
-      return transformAiInteractionToDisplay(result[0]);
+      return transformAiInteractionToDisplay(result.toJSON() as DrizzleAiInteraction);
     } catch (error) {
       throw new Error(
         `Failed to retrieve message by ID: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -92,34 +74,34 @@ export class MessagesService {
 
     try {
       const whereConditions = this.buildWhereConditions(filters);
-      const orderBy = this.buildOrderBy(params.sort);
+      const order: Array<[string, string]> = this.buildOrderBy(params.sort);
 
       // Calculate offset for pagination
       const offset = (params.page - 1) * params.pageSize;
 
       // Execute queries in parallel for better performance
-      const [messagesResult, countResult, statsResult] = await Promise.all([
+      const [messagesResult, totalItems, statsResult] = await Promise.all([
         // Main query for paginated messages
-        db
-          .select()
-          .from(aiInteractions)
-          .where(whereConditions)
-          .orderBy(...orderBy)
-          .limit(params.pageSize)
-          .offset(offset),
+        AiInteraction.findAll({
+          where: whereConditions,
+          order: order,
+          limit: params.pageSize,
+          offset: offset,
+        }),
 
         // Count query for total items
-        db.select({ count: count() }).from(aiInteractions).where(whereConditions),
+        AiInteraction.count({ where: whereConditions }),
 
         // Statistics query for aggregated data
         this.getFilteredStats(filters),
       ]);
 
-      const totalItems = countResult[0]?.count ?? 0;
       const totalPages = Math.ceil(totalItems / params.pageSize);
 
       // Transform database records to display format
-      const messages = messagesResult.map(transformAiInteractionToDisplay);
+      const messages = messagesResult.map(interaction =>
+        transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
+      );
 
       return {
         messages,
@@ -154,55 +136,58 @@ export class MessagesService {
       // Execute aggregation queries
       const [statsResult, modelStatsResult] = await Promise.all([
         // Main statistics aggregation
-        db
-          .select({
-            totalMessages: count(),
-            successfulMessages: count(sql`CASE WHEN ${aiInteractions.error} IS NULL THEN 1 END`),
-            failedMessages: count(sql`CASE WHEN ${aiInteractions.error} IS NOT NULL THEN 1 END`),
-            totalTokens: sql<number>`COALESCE(SUM(${aiInteractions.totalTokens}), 0)::integer`,
-            averageResponseTime: sql<number>`COALESCE(AVG(${aiInteractions.responseTimeMs}), 0)::integer`,
-          })
-          .from(aiInteractions)
-          .where(whereConditions),
+        AiInteraction.findAll({
+          attributes: [
+            [fn('COUNT', col('*')), 'totalMessages'],
+            [fn('COUNT', fn('NULLIF', col('error'), null)), 'failedMessages'],
+            [fn('COALESCE', fn('SUM', col('total_tokens')), 0), 'totalTokens'],
+            [fn('COALESCE', fn('AVG', col('response_time_ms')), 0), 'averageResponseTime'],
+          ],
+          where: whereConditions,
+          raw: true,
+        }),
 
         // Model usage statistics
-        db
-          .select({
-            model: aiInteractions.model,
-            count: count(),
-          })
-          .from(aiInteractions)
-          .where(whereConditions)
-          .groupBy(aiInteractions.model)
-          .orderBy(desc(count()))
-          .limit(1),
+        AiInteraction.findAll({
+          attributes: ['model', [fn('COUNT', col('*')), 'count']],
+          where: whereConditions,
+          group: ['model'],
+          order: [[literal('count'), 'DESC']],
+          limit: 1,
+          raw: true,
+        }),
       ]);
 
-      const stats = statsResult[0];
-      const mostUsedModelResult = modelStatsResult[0];
+      const stats = statsResult[0] as unknown as Record<string, unknown>;
+      const mostUsedModelResult = modelStatsResult[0] as unknown as Record<string, unknown>;
+
+      // Calculate successful messages
+      const successfulMessages =
+        Number(stats?.totalMessages || 0) - Number(stats?.failedMessages || 0);
 
       // Calculate derived metrics
+      const totalMessages = Number(stats?.totalMessages || 0);
       const successRate =
-        stats?.totalMessages > 0
-          ? Math.round((stats.successfulMessages / stats.totalMessages) * 100)
-          : 0;
+        totalMessages > 0 ? Math.round((successfulMessages / totalMessages) * 100) : 0;
 
       // Count unique models
-      const uniqueModelsResult = await db
-        .select({ model: aiInteractions.model })
-        .from(aiInteractions)
-        .where(whereConditions)
-        .groupBy(aiInteractions.model);
+      const uniqueModelsResult = await AiInteraction.findAll({
+        attributes: [[fn('COUNT', fn('DISTINCT', col('model'))), 'uniqueModels']],
+        where: whereConditions,
+        raw: true,
+      });
 
       return {
-        totalMessages: stats?.totalMessages ?? 0,
-        successfulMessages: stats?.successfulMessages ?? 0,
-        failedMessages: stats?.failedMessages ?? 0,
+        totalMessages,
+        successfulMessages,
+        failedMessages: Number(stats?.failedMessages || 0),
         successRate,
-        totalTokens: stats?.totalTokens ?? 0,
-        averageResponseTime: stats?.averageResponseTime ?? 0,
-        mostUsedModel: mostUsedModelResult?.model,
-        uniqueModels: uniqueModelsResult.length,
+        totalTokens: Number(stats?.totalTokens || 0),
+        averageResponseTime: Math.round(Number(stats?.averageResponseTime || 0)),
+        mostUsedModel: mostUsedModelResult?.model as string | undefined,
+        uniqueModels: Number(
+          (uniqueModelsResult[0] as unknown as Record<string, unknown>)?.uniqueModels || 0
+        ),
       };
     } catch (error) {
       throw new Error(
@@ -214,84 +199,93 @@ export class MessagesService {
   /**
    * Builds WHERE conditions for filtering queries based on provided filter parameters.
    *
-   * @param filters - Filtering parameters to convert to SQL conditions
-   * @returns Combined WHERE condition for use in Drizzle queries
+   * @param filters - Filtering parameters to convert to Sequelize conditions
+   * @returns Combined WHERE condition for use in Sequelize queries
    * @private
    */
   private static buildWhereConditions(filters: MessagesFilterParams) {
-    const conditions = [];
+    const conditions: Record<string, unknown> = {};
 
     // Model filtering
     if (filters.model) {
-      conditions.push(sql`${aiInteractions.model} = ${filters.model}`);
+      conditions.model = filters.model;
     }
 
     // Date range filtering
+    const dateConditions: Record<symbol, Date> = {};
     if (filters.startDate) {
-      conditions.push(gte(aiInteractions.createdAt, filters.startDate));
+      dateConditions[Op.gte] = filters.startDate;
     }
     if (filters.endDate) {
-      conditions.push(lte(aiInteractions.createdAt, filters.endDate));
+      dateConditions[Op.lte] = filters.endDate;
+    }
+    if (Object.keys(dateConditions).length > 0) {
+      conditions.createdAt = dateConditions;
     }
 
     // Error status filtering
     if (filters.hasError === true) {
-      conditions.push(isNotNull(aiInteractions.error));
+      conditions.error = { [Op.not]: null };
     } else if (filters.hasError === false) {
-      conditions.push(isNull(aiInteractions.error));
+      conditions.error = null;
     }
 
     // Token count filtering
+    const tokenConditions: Record<symbol, number> = {};
     if (filters.minTokens !== undefined) {
-      conditions.push(gte(aiInteractions.totalTokens, filters.minTokens));
+      tokenConditions[Op.gte] = filters.minTokens;
     }
     if (filters.maxTokens !== undefined) {
-      conditions.push(lte(aiInteractions.totalTokens, filters.maxTokens));
+      tokenConditions[Op.lte] = filters.maxTokens;
+    }
+    if (Object.keys(tokenConditions).length > 0) {
+      conditions.totalTokens = tokenConditions;
     }
 
     // Response time filtering
+    const responseTimeConditions: Record<symbol, number> = {};
     if (filters.minResponseTime !== undefined) {
-      conditions.push(gte(aiInteractions.responseTimeMs, filters.minResponseTime));
+      responseTimeConditions[Op.gte] = filters.minResponseTime;
     }
     if (filters.maxResponseTime !== undefined) {
-      conditions.push(lte(aiInteractions.responseTimeMs, filters.maxResponseTime));
+      responseTimeConditions[Op.lte] = filters.maxResponseTime;
+    }
+    if (Object.keys(responseTimeConditions).length > 0) {
+      conditions.responseTimeMs = responseTimeConditions;
     }
 
     // Search term filtering (searches in request and response JSON)
     if (filters.searchTerm) {
       const searchPattern = `%${filters.searchTerm}%`;
-      conditions.push(
-        or(
-          like(sql`${aiInteractions.request}::text`, searchPattern),
-          like(sql`${aiInteractions.response}::text`, searchPattern)
-        )
-      );
+      (conditions as any)[Op.or] = [
+        where(literal('request::text'), Op.iLike, searchPattern),
+        where(literal('response::text'), Op.iLike, searchPattern),
+      ];
     }
 
-    return conditions.length > 0 ? and(...conditions) : undefined;
+    return conditions;
   }
 
   /**
    * Builds ORDER BY clauses for sorting queries based on sort configuration.
    *
    * @param sort - Sort configuration specifying field and direction
-   * @returns Array of order by clauses for use in Drizzle queries
+   * @returns Array of order by clauses for use in Sequelize queries
    * @private
    */
-  private static buildOrderBy(sort: MessageSort) {
+  private static buildOrderBy(sort: MessageSort): Array<[string, string]> {
     const { field, direction } = sort;
-    const orderFunc = direction === 'asc' ? asc : desc;
 
     // Map sort fields to database columns
     switch (field) {
       case 'createdAt':
-        return [orderFunc(aiInteractions.createdAt)];
+        return [['createdAt', direction.toUpperCase()]];
       case 'model':
-        return [orderFunc(aiInteractions.model)];
+        return [['model', direction.toUpperCase()]];
       case 'totalTokens':
-        return [orderFunc(aiInteractions.totalTokens)];
+        return [['totalTokens', direction.toUpperCase()]];
       case 'responseTime':
-        return [orderFunc(aiInteractions.responseTimeMs)];
+        return [['responseTimeMs', direction.toUpperCase()]];
       default:
         throw new Error(`Invalid sort field: ${field}`);
     }
@@ -326,13 +320,7 @@ export class MessagesService {
     const sortDirection = params.sortDirection || 'desc';
 
     try {
-      const whereConditions = [];
-
-      // Add filter conditions
-      const filterConditions = this.buildWhereConditions(filters);
-      if (filterConditions) {
-        whereConditions.push(filterConditions);
-      }
+      const whereConditions: Record<string, unknown> = this.buildWhereConditions(filters);
 
       // Add cursor conditions if cursor provided
       if (params.cursor && CursorUtils.isValid(params.cursor)) {
@@ -341,62 +329,52 @@ export class MessagesService {
           // Build cursor comparison based on sort field
           if (sortBy === 'createdAt') {
             const cursorDate = new Date(cursorData.sortFieldValue);
-            const cursorTimestamp = cursorDate.toISOString();
             if (sortDirection === 'desc') {
-              whereConditions.push(
-                or(
-                  sql`${aiInteractions.createdAt} < ${cursorTimestamp}::timestamp`,
-                  and(
-                    sql`${aiInteractions.createdAt} = ${cursorTimestamp}::timestamp`,
-                    lt(aiInteractions.id, cursorData.id)
-                  )
-                )
-              );
+              (whereConditions as any)[Op.or] = [
+                { createdAt: { [Op.lt]: cursorDate } },
+                {
+                  [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.lt]: cursorData.id } }],
+                },
+              ];
             } else {
-              whereConditions.push(
-                or(
-                  sql`${aiInteractions.createdAt} > ${cursorTimestamp}::timestamp`,
-                  and(
-                    sql`${aiInteractions.createdAt} = ${cursorTimestamp}::timestamp`,
-                    gt(aiInteractions.id, cursorData.id)
-                  )
-                )
-              );
+              (whereConditions as any)[Op.or] = [
+                { createdAt: { [Op.gt]: cursorDate } },
+                {
+                  [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.gt]: cursorData.id } }],
+                },
+              ];
             }
           } else if (sortBy === 'id') {
             if (sortDirection === 'desc') {
-              whereConditions.push(lt(aiInteractions.id, cursorData.id));
+              whereConditions.id = { [Op.lt]: cursorData.id };
             } else {
-              whereConditions.push(gt(aiInteractions.id, cursorData.id));
+              whereConditions.id = { [Op.gt]: cursorData.id };
             }
           }
         }
       }
 
-      const combinedWhere = whereConditions.length > 0 ? and(...whereConditions) : undefined;
-
       // Build order by
-      const orderByClause = [];
+      const order: [string, string][] = [];
       if (sortBy === 'createdAt') {
-        orderByClause.push(
-          sortDirection === 'desc' ? desc(aiInteractions.createdAt) : asc(aiInteractions.createdAt)
-        );
+        order.push(['createdAt', sortDirection.toUpperCase()]);
       }
-      orderByClause.push(
-        sortDirection === 'desc' ? desc(aiInteractions.id) : asc(aiInteractions.id)
-      );
+      order.push(['id', sortDirection.toUpperCase()]);
 
       // For bidirectional cursor navigation, we need to check if there are items before and after
       // First, get the main results plus one extra to check hasMore
-      const results = await db
-        .select()
-        .from(aiInteractions)
-        .where(combinedWhere)
-        .orderBy(...orderByClause)
-        .limit(limit + 1);
+      const results = await AiInteraction.findAll({
+        where: whereConditions,
+        order: order,
+        limit: limit + 1,
+      });
 
       const hasMore = results.length > limit;
-      const items = results.slice(0, limit).map(transformAiInteractionToDisplay);
+      const items = results
+        .slice(0, limit)
+        .map(interaction =>
+          transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
+        );
 
       // Generate cursors
       let nextCursor: string | undefined;
@@ -412,62 +390,46 @@ export class MessagesService {
       // Generate previous cursor if we're not on the first page
       // We can determine this by checking if we have a cursor parameter
       if (params.cursor && items.length > 0) {
-        // For proper bidirectional pagination, we need to check if there are items
-        // before the current page by querying in reverse direction
         const firstItem = items[0];
 
         // Build reverse query conditions to check for previous items
-        const reverseWhereConditions = [];
-
-        if (filterConditions) {
-          reverseWhereConditions.push(filterConditions);
-        }
+        const reverseWhereConditions = this.buildWhereConditions(filters);
 
         // Add reverse cursor conditions
         if (sortBy === 'createdAt') {
           const firstItemDate = firstItem.createdAt;
-          const firstItemTimestamp = firstItemDate.toISOString();
           if (sortDirection === 'desc') {
             // For desc order, previous items have createdAt > current first item
-            reverseWhereConditions.push(
-              or(
-                sql`${aiInteractions.createdAt} > ${firstItemTimestamp}::timestamp`,
-                and(
-                  sql`${aiInteractions.createdAt} = ${firstItemTimestamp}::timestamp`,
-                  gt(aiInteractions.id, firstItem.id)
-                )
-              )
-            );
+            (reverseWhereConditions as any)[Op.or] = [
+              { createdAt: { [Op.gt]: firstItemDate } },
+              {
+                [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.gt]: firstItem.id } }],
+              },
+            ];
           } else {
             // For asc order, previous items have createdAt < current first item
-            reverseWhereConditions.push(
-              or(
-                sql`${aiInteractions.createdAt} < ${firstItemTimestamp}::timestamp`,
-                and(
-                  sql`${aiInteractions.createdAt} = ${firstItemTimestamp}::timestamp`,
-                  lt(aiInteractions.id, firstItem.id)
-                )
-              )
-            );
+            (reverseWhereConditions as any)[Op.or] = [
+              { createdAt: { [Op.lt]: firstItemDate } },
+              {
+                [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.lt]: firstItem.id } }],
+              },
+            ];
           }
         } else if (sortBy === 'id') {
           if (sortDirection === 'desc') {
-            reverseWhereConditions.push(gt(aiInteractions.id, firstItem.id));
+            reverseWhereConditions.id = { [Op.gt]: firstItem.id };
           } else {
-            reverseWhereConditions.push(lt(aiInteractions.id, firstItem.id));
+            reverseWhereConditions.id = { [Op.lt]: firstItem.id };
           }
         }
 
         // Check if there are previous items
-        const reverseWhere =
-          reverseWhereConditions.length > 0 ? and(...reverseWhereConditions) : undefined;
-        const previousExists = await db
-          .select({ id: aiInteractions.id })
-          .from(aiInteractions)
-          .where(reverseWhere)
-          .limit(1);
+        const previousExists = await AiInteraction.findOne({
+          where: reverseWhereConditions,
+          attributes: ['id'],
+        });
 
-        if (previousExists.length > 0) {
+        if (previousExists) {
           // Create a cursor that when used will return the previous page
           // This is done by creating a cursor from the first item of current page
           const sortValue = sortBy === 'createdAt' ? firstItem.createdAt : firstItem.id;

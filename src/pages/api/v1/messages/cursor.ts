@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { MessagesSequelizeService } from '../../../../lib/services/messages-sequelize.js';
+import { MessagesService } from '../../../../lib/services/messages.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -68,7 +68,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Fetch messages with cursor pagination
     const result: MessagesCursorPaginationResponse<MessageDisplay> =
-      await MessagesSequelizeService.getMessagesWithCursor(params, filters);
+      await MessagesService.getMessagesWithCursor(params, filters);
 
     return new Response(JSON.stringify(result), {
       status: 200,

@@ -11,7 +11,7 @@ import {
 } from 'vitest';
 import { testSequelizeConnection, closeSequelizeConnection } from '../lib/db/sequelize-connection';
 import { AiInteraction, AiProvider } from '../lib/db/models';
-import { MessagesSequelizeService } from '../lib/services/messages-sequelize';
+import { MessagesService } from '../lib/services/messages';
 import type { MessagesFilterParams } from '../lib/types/messages';
 import type { MessagesCursorPaginationParams } from '../lib/types/cursor';
 import { testUtils } from './setup';
@@ -281,7 +281,7 @@ describe('Sequelize Integration Tests', () => {
         sort: { field: 'createdAt' as const, direction: 'desc' as const },
       };
 
-      const result = await MessagesSequelizeService.getMessages(params);
+      const result = await MessagesService.getMessages(params);
       expect(result).toBeDefined();
       expect(result.messages).toBeInstanceOf(Array);
       expect(result.messages.length).toBeGreaterThanOrEqual(2);
@@ -292,7 +292,7 @@ describe('Sequelize Integration Tests', () => {
     it('should retrieve message by ID', async () => {
       if (!process.env.DATABASE_URL) return;
 
-      const message = await MessagesSequelizeService.getMessageById(testInteractions[0].id);
+      const message = await MessagesService.getMessageById(testInteractions[0].id);
       expect(message).toBeDefined();
       expect(message?.id).toBe(testInteractions[0].id);
       expect(message?.model).toBe('gpt-4');
@@ -307,7 +307,7 @@ describe('Sequelize Integration Tests', () => {
         sortDirection: 'desc',
       };
 
-      const result = await MessagesSequelizeService.getMessagesWithCursor(params);
+      const result = await MessagesService.getMessagesWithCursor(params);
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
       expect(result.data.length).toBeGreaterThanOrEqual(2);
@@ -328,7 +328,7 @@ describe('Sequelize Integration Tests', () => {
         sort: { field: 'createdAt' as const, direction: 'desc' as const },
       };
 
-      const result = await MessagesSequelizeService.getMessages(params, filters);
+      const result = await MessagesService.getMessages(params, filters);
       expect(result.messages).toBeInstanceOf(Array);
 
       // Should contain at least our test message
@@ -339,7 +339,7 @@ describe('Sequelize Integration Tests', () => {
     it('should return statistics', async () => {
       if (!process.env.DATABASE_URL) return;
 
-      const stats = await MessagesSequelizeService.getFilteredStats();
+      const stats = await MessagesService.getFilteredStats();
       expect(stats).toBeDefined();
       expect(typeof stats.totalMessages).toBe('number');
       expect(typeof stats.successfulMessages).toBe('number');
@@ -367,7 +367,7 @@ describe('Sequelize Integration Tests', () => {
         if (model) filters.model = model;
 
         // Use Sequelize service
-        const result = await MessagesSequelizeService.getMessagesWithCursor(params, filters);
+        const result = await MessagesService.getMessagesWithCursor(params, filters);
 
         return {
           items: result.data,
@@ -391,7 +391,7 @@ describe('Sequelize Integration Tests', () => {
 
       // Test with invalid UUID
       try {
-        await MessagesSequelizeService.getMessageById('invalid-uuid');
+        await MessagesService.getMessageById('invalid-uuid');
         expect.fail('Should have thrown an error');
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
@@ -404,7 +404,7 @@ describe('Sequelize Integration Tests', () => {
 
       // Test with invalid page size
       try {
-        await MessagesSequelizeService.getMessages({
+        await MessagesService.getMessages({
           page: 1,
           pageSize: 150, // Above limit
           sort: { field: 'createdAt', direction: 'desc' },

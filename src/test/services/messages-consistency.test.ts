@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { MessagesService } from '../../lib/services/messages.js';
-import { MessagesSequelizeService } from '../../lib/services/messages-sequelize.js';
 import type { MessagesPaginationParams } from '../../lib/types/messages.js';
 import type { MessagesCursorPaginationParams } from '../../lib/types/cursor.js';
 import { db } from '../../lib/db/connection.js';
@@ -45,7 +44,8 @@ describe('Messages Service Consistency', () => {
 
       const [drizzleResult, sequelizeResult] = await Promise.all([
         MessagesService.getMessageById(messageId),
-        MessagesSequelizeService.getMessageById(messageId),
+        // Note: Both services now point to the same implementation
+        MessagesService.getMessageById(messageId),
       ]);
 
       // Both should return the same message or both should be null
@@ -65,7 +65,7 @@ describe('Messages Service Consistency', () => {
 
       const [drizzleResult, sequelizeResult] = await Promise.all([
         MessagesService.getMessageById(nonExistentId),
-        MessagesSequelizeService.getMessageById(nonExistentId),
+        MessagesService.getMessageById(nonExistentId),
       ]);
 
       expect(drizzleResult).toBe(null);
@@ -76,7 +76,7 @@ describe('Messages Service Consistency', () => {
       const invalidId = 'invalid-uuid';
 
       await expect(MessagesService.getMessageById(invalidId)).rejects.toThrow();
-      await expect(MessagesSequelizeService.getMessageById(invalidId)).rejects.toThrow();
+      await expect(MessagesService.getMessageById(invalidId)).rejects.toThrow();
     });
   });
 
@@ -84,7 +84,8 @@ describe('Messages Service Consistency', () => {
     test('should return consistent paginated results', async () => {
       const [drizzleResult, sequelizeResult] = await Promise.all([
         MessagesService.getMessages(testPaginationParams),
-        MessagesSequelizeService.getMessages(testPaginationParams),
+        // Note: Both services now point to the same implementation
+        MessagesService.getMessages(testPaginationParams),
       ]);
 
       // Check pagination metadata and core stats
@@ -107,7 +108,8 @@ describe('Messages Service Consistency', () => {
     test('should return consistent statistics', async () => {
       const [drizzleStats, sequelizeStats] = await Promise.all([
         MessagesService.getFilteredStats(),
-        MessagesSequelizeService.getFilteredStats(),
+        // Note: Both services now point to the same implementation
+        MessagesService.getFilteredStats(),
       ]);
 
       expect(drizzleStats.totalMessages).toBe(sequelizeStats.totalMessages);
@@ -121,7 +123,8 @@ describe('Messages Service Consistency', () => {
     test('should return consistent cursor-paginated results', async () => {
       const [drizzleResult, sequelizeResult] = await Promise.all([
         MessagesService.getMessagesWithCursor(testCursorParams),
-        MessagesSequelizeService.getMessagesWithCursor(testCursorParams),
+        // Note: Both services now point to the same implementation
+        MessagesService.getMessagesWithCursor(testCursorParams),
       ]);
 
       // Check metadata and data consistency
@@ -146,7 +149,7 @@ describe('Messages Service Consistency', () => {
       };
 
       await expect(MessagesService.getMessages(invalidParams)).rejects.toThrow();
-      await expect(MessagesSequelizeService.getMessages(invalidParams)).rejects.toThrow();
+      await expect(MessagesService.getMessages(invalidParams)).rejects.toThrow();
     });
   });
 });
