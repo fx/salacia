@@ -229,8 +229,14 @@ AiInteraction.init(
             id: instance.id,
             createdAt: instance.createdAt,
             model: instance.model,
-            statusCode: instance.statusCode ?? undefined,
-            error: instance.error ?? undefined,
+            promptTokens: instance.promptTokens ?? null,
+            completionTokens: instance.completionTokens ?? null,
+            totalTokens: instance.totalTokens ?? null,
+            responseTimeMs: instance.responseTimeMs ?? null,
+            statusCode: instance.statusCode ?? null,
+            error: instance.error ?? null,
+            request: instance.request,
+            response: instance.response,
           });
 
         const tx = options?.transaction as { afterCommit?: (_fn: () => void) => void } | undefined;

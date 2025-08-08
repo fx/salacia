@@ -28,19 +28,41 @@ export interface MessageCreatedEventData {
   createdAt: Date;
 
   /**
-   * Optional model name used to quickly render UI hints.
+   * Model name used for this interaction.
    */
-  model?: string;
+  model: string;
 
   /**
-   * Optional HTTP status code for success/failure quick checks.
+   * Token usage metrics (if available).
    */
-  statusCode?: number;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  totalTokens?: number | null;
 
   /**
-   * Optional error field for failed interactions.
+   * Response time in milliseconds (if available).
    */
-  error?: string;
+  responseTimeMs?: number | null;
+
+  /**
+   * HTTP status code for success/failure quick checks.
+   */
+  statusCode?: number | null;
+
+  /**
+   * Error field for failed interactions (if any).
+   */
+  error?: string | null;
+
+  /**
+   * Raw request payload.
+   */
+  request: unknown;
+
+  /**
+   * Raw response payload (if available).
+   */
+  response?: unknown;
 }
 
 /**

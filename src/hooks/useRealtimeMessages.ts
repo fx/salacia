@@ -24,7 +24,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSSE, type SSEEvent } from './useSSE.js';
-import type { MessageDisplay } from '../lib/types/messages.js';
+import { MESSAGES_CONSTANTS, type MessageDisplay } from '../lib/types/messages.js';
 import type { MessageCreatedEventData } from '../lib/realtime/types.js';
 
 /**
@@ -86,22 +86,59 @@ const DEFAULT_OPTIONS: Required<Omit<RealtimeMessagesOptions, 'transformMessage'
  * Converts SSE event data to MessageDisplay format.
  */
 const defaultTransformMessage = (eventData: MessageCreatedEventData): MessageDisplay => {
+  // Build a MessageDisplay consistent with DB transformation
+  // Reuse preview extraction rules similar to transformAiInteractionToDisplay
+  let requestPreview = 'No request data';
+  if (eventData.request) {
+    try {
+      const reqStr =
+        typeof eventData.request === 'string'
+          ? eventData.request
+          : JSON.stringify(eventData.request);
+      requestPreview =
+        reqStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${reqStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : reqStr;
+    } catch {
+      requestPreview = 'Invalid request data';
+    }
+  }
+
+  let responsePreview: string | undefined;
+  if (eventData.response) {
+    try {
+      const resStr =
+        typeof eventData.response === 'string'
+          ? eventData.response
+          : JSON.stringify(eventData.response);
+      responsePreview =
+        resStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${resStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : resStr;
+    } catch {
+      responsePreview = 'Invalid response data';
+    }
+  }
+
+  const statusCode = eventData.statusCode ?? undefined;
+  const error = eventData.error ?? undefined;
+
   return {
     id: eventData.id,
-    model: eventData.model || 'unknown',
-    provider: undefined, // Provider info not available in real-time events
+    model: eventData.model ?? 'unknown',
+    provider: undefined,
     createdAt: new Date(eventData.createdAt),
-    responseTime: undefined,
-    totalTokens: undefined,
-    promptTokens: undefined,
-    completionTokens: undefined,
-    statusCode: eventData.statusCode,
-    error: eventData.error,
-    requestPreview: 'Real-time message', // Minimal preview for real-time events
-    responsePreview: eventData.error ? `Error: ${eventData.error}` : 'Processing...',
-    isSuccess: !eventData.error && (eventData.statusCode === 200 || eventData.statusCode === undefined),
-    request: null, // Full request data not available in real-time events
-    response: eventData.error ? { error: eventData.error } : null,
+    responseTime: eventData.responseTimeMs ?? undefined,
+    totalTokens: eventData.totalTokens ?? undefined,
+    promptTokens: eventData.promptTokens ?? undefined,
+    completionTokens: eventData.completionTokens ?? undefined,
+    statusCode,
+    error,
+    requestPreview,
+    responsePreview,
+    isSuccess: !error && statusCode === 200,
+    request: eventData.request ?? null,
+    response: eventData.response,
   };
 };
 
@@ -139,7 +176,7 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
     errorCount: 0,
     connectionUptime: 0,
   });
-  
+
   // Connection start time for uptime calculation
   const [connectionStartTime, setConnectionStartTime] = useState<Date | null>(null);
 
@@ -165,45 +202,48 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
   /**
    * Handle incoming message:created events.
    */
-  const handleMessageCreated = useCallback((event: SSEEvent) => {
-    try {
-      const eventData = event.data as MessageCreatedEventData;
-      const newMessage = transformMessage(eventData);
+  const handleMessageCreated = useCallback(
+    (event: SSEEvent) => {
+      try {
+        const eventData = event.data as MessageCreatedEventData;
+        const newMessage = transformMessage(eventData);
 
-      setMessages(prevMessages => {
-        // Check if message already exists (deduplicate)
-        const existingIndex = prevMessages.findIndex(msg => msg.id === newMessage.id);
-        
-        let updatedMessages: MessageDisplay[];
-        if (existingIndex !== -1) {
-          // Update existing message
-          updatedMessages = [...prevMessages];
-          updatedMessages[existingIndex] = newMessage;
-        } else {
-          // Add new message at the beginning (most recent first)
-          updatedMessages = [newMessage, ...prevMessages];
-        }
+        setMessages(prevMessages => {
+          // Check if message already exists (deduplicate)
+          const existingIndex = prevMessages.findIndex(msg => msg.id === newMessage.id);
 
-        // Apply max messages limit
-        if (mergedOptions.maxMessages > 0 && updatedMessages.length > mergedOptions.maxMessages) {
-          updatedMessages = updatedMessages.slice(0, mergedOptions.maxMessages);
-        }
+          let updatedMessages: MessageDisplay[];
+          if (existingIndex !== -1) {
+            // Update existing message
+            updatedMessages = [...prevMessages];
+            updatedMessages[existingIndex] = newMessage;
+          } else {
+            // Add new message at the beginning (most recent first)
+            updatedMessages = [newMessage, ...prevMessages];
+          }
 
-        return updatedMessages;
-      });
+          // Apply max messages limit
+          if (mergedOptions.maxMessages > 0 && updatedMessages.length > mergedOptions.maxMessages) {
+            updatedMessages = updatedMessages.slice(0, mergedOptions.maxMessages);
+          }
 
-      // Update statistics
-      setStats(prevStats => ({
-        totalReceived: prevStats.totalReceived + 1,
-        successCount: newMessage.isSuccess ? prevStats.successCount + 1 : prevStats.successCount,
-        errorCount: !newMessage.isSuccess ? prevStats.errorCount + 1 : prevStats.errorCount,
-        connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
-        lastEventTime: new Date(),
-      }));
-    } catch (error) {
-      console.error('Failed to process message:created event:', error);
-    }
-  }, [transformMessage, mergedOptions.maxMessages, connectionStartTime]);
+          return updatedMessages;
+        });
+
+        // Update statistics
+        setStats(prevStats => ({
+          totalReceived: prevStats.totalReceived + 1,
+          successCount: newMessage.isSuccess ? prevStats.successCount + 1 : prevStats.successCount,
+          errorCount: !newMessage.isSuccess ? prevStats.errorCount + 1 : prevStats.errorCount,
+          connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
+          lastEventTime: new Date(),
+        }));
+      } catch (error) {
+        console.error('Failed to process message:created event:', error);
+      }
+    },
+    [transformMessage, mergedOptions.maxMessages, connectionStartTime]
+  );
 
   /**
    * Handle connection established events.
@@ -216,13 +256,16 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
   /**
    * Handle heartbeat events.
    */
-  const handleHeartbeat = useCallback((_event: SSEEvent) => {
-    // Update connection uptime
-    setStats(prevStats => ({
-      ...prevStats,
-      connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
-    }));
-  }, [connectionStartTime]);
+  const handleHeartbeat = useCallback(
+    (_event: SSEEvent) => {
+      // Update connection uptime
+      setStats(prevStats => ({
+        ...prevStats,
+        connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
+      }));
+    },
+    [connectionStartTime]
+  );
 
   /**
    * Handle SSE connection errors.
@@ -247,7 +290,14 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
       unsubscribeHeartbeat();
       unsubscribeError();
     };
-  }, [addEventListener, addErrorListener, handleMessageCreated, handleConnected, handleHeartbeat, handleSSEError]);
+  }, [
+    addEventListener,
+    addErrorListener,
+    handleMessageCreated,
+    handleConnected,
+    handleHeartbeat,
+    handleSSEError,
+  ]);
 
   // Reset connection start time when connection state changes
   useEffect(() => {
@@ -262,40 +312,41 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
    * Manually add a message to the local state.
    * Useful for optimistic updates or manual message injection.
    */
-  const addMessage = useCallback((message: MessageDisplay) => {
-    setMessages(prevMessages => {
-      // Check for duplicates
-      const existingIndex = prevMessages.findIndex(msg => msg.id === message.id);
-      
-      let updatedMessages: MessageDisplay[];
-      if (existingIndex !== -1) {
-        // Update existing message
-        updatedMessages = [...prevMessages];
-        updatedMessages[existingIndex] = message;
-      } else {
-        // Add new message, maintaining sort order (newest first)
-        updatedMessages = [message, ...prevMessages].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
+  const addMessage = useCallback(
+    (message: MessageDisplay) => {
+      setMessages(prevMessages => {
+        // Check for duplicates
+        const existingIndex = prevMessages.findIndex(msg => msg.id === message.id);
 
-      // Apply max messages limit
-      if (mergedOptions.maxMessages > 0 && updatedMessages.length > mergedOptions.maxMessages) {
-        updatedMessages = updatedMessages.slice(0, mergedOptions.maxMessages);
-      }
+        let updatedMessages: MessageDisplay[];
+        if (existingIndex !== -1) {
+          // Update existing message
+          updatedMessages = [...prevMessages];
+          updatedMessages[existingIndex] = message;
+        } else {
+          // Add new message, maintaining sort order (newest first)
+          updatedMessages = [message, ...prevMessages].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }
 
-      return updatedMessages;
-    });
-  }, [mergedOptions.maxMessages]);
+        // Apply max messages limit
+        if (mergedOptions.maxMessages > 0 && updatedMessages.length > mergedOptions.maxMessages) {
+          updatedMessages = updatedMessages.slice(0, mergedOptions.maxMessages);
+        }
+
+        return updatedMessages;
+      });
+    },
+    [mergedOptions.maxMessages]
+  );
 
   /**
    * Update an existing message in the local state.
    */
   const updateMessage = useCallback((messageId: string, updates: Partial<MessageDisplay>) => {
     setMessages(prevMessages =>
-      prevMessages.map(message =>
-        message.id === messageId ? { ...message, ...updates } : message
-      )
+      prevMessages.map(message => (message.id === messageId ? { ...message, ...updates } : message))
     );
   }, []);
 
@@ -303,9 +354,7 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
    * Remove a message from the local state.
    */
   const removeMessage = useCallback((messageId: string) => {
-    setMessages(prevMessages =>
-      prevMessages.filter(message => message.id !== messageId)
-    );
+    setMessages(prevMessages => prevMessages.filter(message => message.id !== messageId));
   }, []);
 
   /**
@@ -342,20 +391,20 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
     // Message state
     messages,
     stats: computedStats,
-    
+
     // Connection state
     connectionState,
     lastEventId,
     error: sseError,
     isConnected,
     isConnecting,
-    
+
     // Message operations
     addMessage,
     updateMessage,
     removeMessage,
     clearMessages,
-    
+
     // Connection operations
     connect,
     disconnect,
