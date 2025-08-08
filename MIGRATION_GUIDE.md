@@ -1,57 +1,14 @@
-# ORM Migration Guide
+# Sequelize ORM Migration Guide
 
-This project supports both Drizzle ORM and Sequelize ORM. This guide explains how to switch between them and manage database migrations.
+This project uses Sequelize ORM for all database operations. This guide explains how to work with Sequelize and manage database migrations.
 
-## Current Status
+## Overview
 
-- **Primary ORM**: Drizzle ORM (default)
-- **Secondary ORM**: Sequelize (optional)
-- **Switch Control**: `USE_SEQUELIZE` environment variable
-
-## Switching Between ORMs
-
-### Using Drizzle ORM (Default)
-
-1. Set environment variable:
-
-   ```bash
-   USE_SEQUELIZE=false
-   ```
-
-2. Use Drizzle commands:
-   ```bash
-   npm run db:generate    # Generate migrations
-   npm run db:migrate     # Run migrations
-   npm run db:push        # Push schema changes
-   npm run db:studio      # Open database studio
-   ```
-
-### Using Sequelize ORM
-
-1. Set environment variable:
-
-   ```bash
-   USE_SEQUELIZE=true
-   ```
-
-2. Use Sequelize commands:
-   ```bash
-   npm run sequelize:migrate:up    # Run migrations
-   npm run sequelize:migrate:down  # Rollback last migration
-   npm run sequelize:seed          # Run all seeders
-   npm run sequelize:sync          # Sync models with database
-   ```
+- **ORM**: Sequelize ORM
+- **Database**: PostgreSQL
+- **Migration Tool**: Sequelize CLI
 
 ## Database Operations
-
-### Drizzle Commands
-
-| Command               | Description                          |
-| --------------------- | ------------------------------------ |
-| `npm run db:generate` | Generate migration files from schema |
-| `npm run db:migrate`  | Apply pending migrations             |
-| `npm run db:push`     | Push schema changes directly         |
-| `npm run db:studio`   | Launch Drizzle Studio web interface  |
 
 ### Sequelize Commands
 
@@ -66,26 +23,92 @@ This project supports both Drizzle ORM and Sequelize ORM. This guide explains ho
 
 ### Development Environment
 
-1. **Choose your ORM** based on project requirements
-2. **Use consistent tooling** throughout development
-3. **Test migrations** in a safe environment first
+1. **Create migrations** for schema changes
+2. **Test migrations** in a safe environment first
+3. **Use transactions** for complex migrations
 
 ### Production Considerations
 
-- **Drizzle**: More type-safe, better TypeScript integration
-- **Sequelize**: More mature ecosystem, extensive feature set
-- **Migration Path**: Consider data compatibility when switching
+- **Always backup** database before migrations
+- **Test thoroughly** in staging environment
+- **Monitor** application after migrations
 
 ## Configuration Files
 
-- **Drizzle**: `drizzle.config.ts`
-- **Sequelize**: `.sequelizerc`, `src/database/sequelize/config.ts`
-- **Environment**: `.env` (USE_SEQUELIZE variable)
+- **Sequelize Config**: `.sequelizerc`, `src/database/sequelize/config.ts`
+- **Models**: `src/lib/db/models/`
+- **Migrations**: `src/database/migrations/`
 
 ## Best Practices
 
-1. **Backup data** before switching ORMs
-2. **Test thoroughly** in development environment
-3. **Use transactions** for complex migrations
-4. **Document changes** in migration files
-5. **Version control** all migration files
+1. **Version control** all migration files
+2. **Document changes** in migration files
+3. **Use transactions** for data integrity
+4. **Test rollback** procedures
+5. **Monitor performance** after migrations
+
+## Creating New Migrations
+
+```bash
+# Generate a new migration
+npx sequelize-cli migration:generate --name add-new-feature
+
+# Run the migration
+npm run sequelize:migrate:up
+
+# Rollback if needed
+npm run sequelize:migrate:down
+```
+
+## Model Management
+
+Models are defined in `src/lib/db/models/` and follow Sequelize conventions:
+
+- Each model is a separate file
+- Models define table structure and relationships
+- Use TypeScript for type safety
+- Include comprehensive TSDoc documentation
+
+## Common Operations
+
+### Adding a New Model
+
+1. Create model file in `src/lib/db/models/`
+2. Define model attributes and options
+3. Create migration for the table
+4. Run migration to create table
+
+### Modifying Existing Tables
+
+1. Create migration file
+2. Define up() and down() methods
+3. Test migration locally
+4. Apply to production after testing
+
+### Data Seeding
+
+1. Create seeder files for initial data
+2. Run seeders with `npm run sequelize:seed`
+3. Use seeders for development/test data
+
+## Troubleshooting
+
+### Migration Failures
+
+- Check migration syntax
+- Verify database connectivity
+- Review error logs
+- Test in development first
+
+### Rollback Procedures
+
+- Use `npm run sequelize:migrate:down` for single rollback
+- Multiple rollbacks: specify migration name
+- Always test rollback procedures
+
+### Performance Issues
+
+- Monitor query performance
+- Use indexes appropriately
+- Optimize model associations
+- Consider query caching

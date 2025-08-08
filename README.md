@@ -1,11 +1,11 @@
 # Salacia
 
-An LLM inference API proxy with database recording capabilities built with Astro, TypeScript, PostgreSQL, and Drizzle ORM.
+An LLM inference API proxy with database recording capabilities built with Astro, TypeScript, PostgreSQL, and Sequelize ORM.
 
 ## 🚀 Features
 
 - **TypeScript-first**: 100% TypeScript codebase with strict type checking
-- **Modern Database Stack**: PostgreSQL with Drizzle ORM for type-safe database operations
+- **Modern Database Stack**: PostgreSQL with Sequelize ORM for type-safe database operations
 - **Health Monitoring**: Built-in health check API with database connectivity testing
 - **Development Ready**: Docker Compose for PostgreSQL, ESLint, Prettier, and comprehensive scripts
 - **Code Quality**: Pre-commit hooks with lint-staged to ensure clean code
@@ -52,8 +52,7 @@ Wait for PostgreSQL to be ready (check with `docker compose logs postgres`).
 ### 4. Run Database Migrations
 
 ```bash
-npm run db:generate
-npm run db:migrate
+npm run sequelize:migrate:up
 ```
 
 ### 5. Start Development Server
@@ -85,7 +84,7 @@ salacia/
 │       └── index.astro          # Homepage
 ├── migrations/                  # Database migration files
 ├── docker-compose.yml          # PostgreSQL container setup
-├── drizzle.config.ts           # Drizzle ORM configuration
+├── .sequelizerc                # Sequelize ORM configuration
 ├── eslint.config.js            # ESLint configuration
 ├── .prettierrc                 # Prettier configuration
 └── package.json                # Dependencies and scripts
@@ -93,20 +92,20 @@ salacia/
 
 ## 🧞 Commands
 
-| Command               | Action                                       |
-| --------------------- | -------------------------------------------- |
-| `npm install`         | Install dependencies                         |
-| `npm run dev`         | Start development server at `localhost:4321` |
-| `npm run build`       | Build production site to `./dist/`           |
-| `npm run preview`     | Preview production build locally             |
-| `npm run type-check`  | Run TypeScript type checking                 |
-| `npm run lint`        | Run ESLint                                   |
-| `npm run lint:fix`    | Fix ESLint issues automatically              |
-| `npm run format`      | Format code with Prettier                    |
-| `npm run db:generate` | Generate database migration files            |
-| `npm run db:migrate`  | Run database migrations                      |
-| `npm run db:push`     | Push schema changes to database              |
-| `npm run db:studio`   | Open Drizzle Studio (database GUI)           |
+| Command                          | Action                                       |
+| -------------------------------- | -------------------------------------------- |
+| `npm install`                    | Install dependencies                         |
+| `npm run dev`                    | Start development server at `localhost:4321` |
+| `npm run build`                  | Build production site to `./dist/`           |
+| `npm run preview`                | Preview production build locally             |
+| `npm run type-check`             | Run TypeScript type checking                 |
+| `npm run lint`                   | Run ESLint                                   |
+| `npm run lint:fix`               | Fix ESLint issues automatically              |
+| `npm run format`                 | Format code with Prettier                    |
+| `npm run sequelize:migrate:up`   | Run database migrations                      |
+| `npm run sequelize:migrate:down` | Rollback last migration                      |
+| `npm run sequelize:seed`         | Run database seeders                         |
+| `npm run sequelize:sync`         | Sync models with database                    |
 
 ## 🐳 Docker Commands
 
@@ -121,19 +120,19 @@ salacia/
 
 ### Creating Migrations
 
-After modifying the schema in `src/lib/db/schema.ts`:
+After modifying models in `src/lib/db/models/`:
 
 ```bash
-npm run db:generate
-npm run db:migrate
+npm run sequelize:migrate:up
 ```
 
-### Database Studio
+### Database Management
 
-Access the visual database editor:
+Manage migrations and seeders using Sequelize CLI:
 
 ```bash
-npm run db:studio
+npm run sequelize:migrate:up
+npm run sequelize:seed
 ```
 
 ### Direct Database Access
@@ -182,9 +181,9 @@ Example response:
 
 ### Database Schema
 
-- Use Drizzle ORM for all database operations
-- Generate migrations for schema changes
-- Include proper TSDoc documentation for schema definitions
+- Use Sequelize ORM for all database operations
+- Create migrations for schema changes
+- Include proper TSDoc documentation for model definitions
 
 ### Environment Variables
 
@@ -231,6 +230,6 @@ The application builds to a standalone Node.js server in the `dist/` directory.
 - [Astro](https://astro.build) - Web framework
 - [TypeScript](https://typescriptlang.org) - Language
 - [PostgreSQL](https://postgresql.org) - Database
-- [Drizzle ORM](https://orm.drizzle.team) - Database ORM
+- [Sequelize](https://sequelize.org) - Database ORM
 - [Docker](https://docker.com) - Containerization
 - [Zod](https://zod.dev) - Schema validation
