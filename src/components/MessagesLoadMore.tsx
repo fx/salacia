@@ -157,16 +157,10 @@ export function MessagesLoadMore({
 
   return (
     <div>
-      {/* Realtime status indicator */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}
-      >
-        <h2>Messages</h2>
+      <SearchAndFilters filters={filters} onFiltersChange={handleFiltersChange} />
+      
+      {/* Realtime status in a subtle location */}
+      <div style={{ marginBottom: '0.5rem', textAlign: 'right' }}>
         <RealtimeStatus
           connectionState={connectionState}
           messageCount={stats.totalReceived}
@@ -174,8 +168,6 @@ export function MessagesLoadMore({
           onClearNewMessages={() => setHasNewMessages(false)}
         />
       </div>
-
-      <SearchAndFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       {error && (
         <div box-="square" variant-="red" role="alert">
