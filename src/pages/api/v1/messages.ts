@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { AnthropicRequestSchema } from '../../../lib/ai/types';
+import { AnthropicRequestSchema, type AnthropicRequest } from '../../../lib/ai/types';
 import { AIService } from '../../../lib/ai/ai-service';
 import {
   validateHeaders,
@@ -26,7 +26,7 @@ export const OPTIONS: APIRoute = () => handleOptions();
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
-  let requestData: any = null;
+  let requestData: AnthropicRequest | null = null;
 
   try {
     // Validate headers
@@ -60,6 +60,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (parseError) {
       return parseError;
+    }
+
+    if (!parsedData) {
+      return createErrorResponse(
+        API_ERROR_TYPES.INVALID_REQUEST_ERROR,
+        'Failed to parse request data',
+        400
+      );
     }
 
     requestData = parsedData;
