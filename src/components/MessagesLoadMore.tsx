@@ -1,9 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { MessagesCursorPaginationParams } from '../lib/types/cursor';
 import type { MessagesFilterParams, MessageDisplay, MessageSort } from '../lib/types/messages';
 import { MessagesTable } from './MessagesTable';
 import { SearchAndFilters } from './SearchAndFilters';
+import { RealtimeStatus } from './RealtimeStatus';
 import { MessagesClient, type SimplifiedCursorResponse } from '../lib/api/messages';
+import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 
 interface MessagesLoadMoreProps {
   initialMessages: SimplifiedCursorResponse;
@@ -27,8 +29,20 @@ export function MessagesLoadMore({
   const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | undefined>(initialMessages.nextCursor);
   const [hasMore, setHasMore] = useState(initialMessages.hasMore);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   const client = new MessagesClient();
+
+  // Initialize realtime messages hook
+  const {
+    messages: realtimeMessages,
+    connectionState,
+    stats,
+  } = useRealtimeMessages({
+    endpoint: '/api/sse/messages',
+    autoConnect: true,
+    maxMessages: 100,
+  });
 
   /**
    * Loads the next page of messages and appends them to the existing list.
@@ -106,8 +120,61 @@ export function MessagesLoadMore({
     reloadMessages();
   }, [filters, sort]);
 
+  // Merge realtime messages with fetched messages
+  const displayMessages = useMemo(() => {
+    if (realtimeMessages.length === 0) {
+      return messages;
+    }
+
+    // Create a map for deduplication
+    const messageMap = new Map<string, MessageDisplay>();
+
+    // Add realtime messages first (newest)
+    realtimeMessages.forEach(msg => messageMap.set(msg.id, msg));
+
+    // Add existing messages (avoid duplicates)
+    messages.forEach(msg => {
+      if (!messageMap.has(msg.id)) {
+        messageMap.set(msg.id, msg);
+      }
+    });
+
+    // Convert back to array and sort by createdAt desc
+    return Array.from(messageMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [messages, realtimeMessages]);
+
+  // Track when new realtime messages arrive
+  useEffect(() => {
+    if (realtimeMessages.length > 0) {
+      setHasNewMessages(true);
+      // Auto-clear the indicator after 3 seconds
+      const timer = setTimeout(() => setHasNewMessages(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [realtimeMessages.length]);
+
   return (
     <div>
+      {/* Realtime status indicator */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
+        <h2>Messages</h2>
+        <RealtimeStatus
+          connectionState={connectionState}
+          messageCount={stats.totalReceived}
+          hasNewMessages={hasNewMessages}
+          onClearNewMessages={() => setHasNewMessages(false)}
+        />
+      </div>
+
       <SearchAndFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       {error && (
@@ -116,7 +183,7 @@ export function MessagesLoadMore({
         </div>
       )}
 
-      <MessagesTable messages={messages} sort={sort} onSortChange={handleSortChange} />
+      <MessagesTable messages={displayMessages} sort={sort} onSortChange={handleSortChange} />
 
       {hasMore && (
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
@@ -126,13 +193,13 @@ export function MessagesLoadMore({
         </div>
       )}
 
-      {!hasMore && messages.length > 0 && (
+      {!hasMore && displayMessages.length > 0 && (
         <div style={{ textAlign: 'center', marginTop: '2rem', opacity: 0.7 }}>
           <small>No more messages to load</small>
         </div>
       )}
 
-      {messages.length === 0 && !loading && (
+      {displayMessages.length === 0 && !loading && (
         <div box-="square" style={{ textAlign: 'center', padding: '2rem' }}>
           <p>No messages found</p>
         </div>
