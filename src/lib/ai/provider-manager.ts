@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { aiProviders } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and } from '../db/schema.js';
 import { ProviderFactory } from './provider-factory';
 import { env } from '../env';
 import type { AiProvider } from '../db/schema';

@@ -1,5 +1,4 @@
 import type { APIRoute } from 'astro';
-import { MessagesService } from '../../lib/services/messages.js';
 import { MessagesSequelizeService } from '../../lib/services/messages-sequelize.js';
 import type {
   MessagesCursorPaginationParams,
@@ -87,10 +86,7 @@ export const GET: APIRoute = async ({ url }) => {
     });
 
     // Fetch messages using cursor pagination
-    const useSequelize = process.env.USE_SEQUELIZE === 'true';
-    const result: MessagesCursorPaginationResponse<MessageDisplay> = useSequelize
-      ? await MessagesSequelizeService.getMessagesWithCursor(params, filters)
-      : await MessagesService.getMessagesWithCursor(params, filters);
+    const result: MessagesCursorPaginationResponse<MessageDisplay> = await MessagesSequelizeService.getMessagesWithCursor(params, filters);
 
     const responseTime = Date.now() - startTime;
 

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { db, testConnection } from '@/lib/db';
-import { healthChecks } from '@/lib/db/schema';
+import { testSequelizeConnection } from '../../lib/db/sequelize-connection.js';
+import { HealthCheck } from '../../lib/db/models/HealthCheck.js';
 
 /**
  * Health check API endpoint.
@@ -19,7 +19,7 @@ export const GET: APIRoute = async () => {
   try {
     // Test database connection
     const dbTestStart = Date.now();
-    databaseStatus = await testConnection();
+    databaseStatus = await testSequelizeConnection();
     const dbTestEnd = Date.now();
 
     details.database = {
@@ -61,7 +61,7 @@ export const GET: APIRoute = async () => {
   // Record health check in database if database is available
   try {
     if (databaseStatus) {
-      await db.insert(healthChecks).values({
+      await HealthCheck.create({
         status,
         databaseStatus,
         responseTime,

@@ -6,7 +6,7 @@
  */
 
 // Database types and utilities
-export * from './db/index.js';
+// export * from './db/index.js'; // Removed - using Sequelize now
 
 // Type definitions
 export * from './types/index.js';

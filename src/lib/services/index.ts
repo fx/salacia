@@ -7,4 +7,4 @@
  */
 
 // Message management services
-export * from './messages.js';
+export * from './messages-sequelize.js';
