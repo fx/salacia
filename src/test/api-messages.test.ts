@@ -2,14 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { APIContext } from 'astro';
 import { GET as messagesListHandler } from '../pages/api/messages.js';
 import { GET as messageDetailHandler } from '../pages/api/messages/[id].js';
-import { MessagesService } from '../lib/services/messages.js';
+import { MessagesSequelizeService } from '../lib/services/messages-sequelize.js';
 import { HTTP_STATUS, parseJsonResponse } from './utils/request-helpers.js';
-import type { MessagesPaginatedResult, MessageDisplay } from '../lib/types/messages.js';
+import type { MessageDisplay } from '../lib/types/messages.js';
+import type { MessagesCursorPaginationResponse } from '../lib/types/cursor.js';
 
-// Mock the MessagesService
-vi.mock('../lib/services/messages.js', () => ({
-  MessagesService: {
-    getMessages: vi.fn(),
+// Mock the MessagesSequelizeService
+vi.mock('../lib/services/messages-sequelize.js', () => ({
+  MessagesSequelizeService: {
+    getMessagesWithCursor: vi.fn(),
     getMessageById: vi.fn(),
   },
 }));
@@ -30,8 +31,8 @@ describe('API Endpoints - Messages', () => {
   });
 
   describe('GET /api/messages', () => {
-    const mockPaginatedResult: MessagesPaginatedResult = {
-      messages: [
+    const mockCursorResult: MessagesCursorPaginationResponse<MessageDisplay> = {
+      data: [
         {
           id: '123e4567-e89b-12d3-a456-426614174000',
           model: 'claude-3-sonnet',
@@ -49,28 +50,21 @@ describe('API Endpoints - Messages', () => {
           response: { content: 'Hi there!' },
         },
       ],
-      currentPage: 1,
-      pageSize: 20,
-      totalItems: 1,
-      totalPages: 1,
-      hasPreviousPage: false,
-      hasNextPage: false,
-      sort: { field: 'createdAt', direction: 'desc' },
-      filters: {},
-      stats: {
-        totalMessages: 1,
-        successfulMessages: 1,
-        failedMessages: 0,
-        successRate: 100,
-        totalTokens: 100,
-        averageResponseTime: 250,
-        mostUsedModel: 'claude-3-sonnet',
-        uniqueModels: 1,
+      meta: {
+        count: 1,
+        limit: 20,
+        hasMore: false,
+        sortBy: 'createdAt',
+        sortDirection: 'desc',
+      },
+      cursors: {
+        next: undefined,
+        prev: undefined,
       },
     };
 
-    it('should return paginated messages with default parameters', async () => {
-      vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
+    it('should return cursor-paginated messages with default parameters', async () => {
+      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -80,48 +74,54 @@ describe('API Endpoints - Messages', () => {
       expect(response.headers.get('cache-control')).toBe('no-cache, no-store, must-revalidate');
       expect(response.headers.get('x-response-time')).toMatch(/\d+ms/);
 
-      const data = await parseJsonResponse<MessagesPaginatedResult>(response);
+      const data = await parseJsonResponse<{
+        items: MessageDisplay[];
+        hasMore: boolean;
+        nextCursor?: string;
+        prevCursor?: string;
+      }>(response);
 
-      // Check the structure matches, accounting for date serialization
-      expect(data.messages).toHaveLength(1);
-      expect(data.messages[0].id).toBe(mockPaginatedResult.messages[0].id);
-      expect(data.messages[0].model).toBe(mockPaginatedResult.messages[0].model);
-      expect(data.currentPage).toBe(1);
-      expect(data.pageSize).toBe(20);
-      expect(data.totalItems).toBe(1);
+      // Check the structure matches the simplified response format
+      expect(data.items).toHaveLength(1);
+      expect(data.items[0].id).toBe(mockCursorResult.data[0].id);
+      expect(data.items[0].model).toBe(mockCursorResult.data[0].model);
+      expect(data.hasMore).toBe(false);
+      expect(data.nextCursor).toBeUndefined();
+      expect(data.prevCursor).toBeUndefined();
 
-      expect(MessagesService.getMessages).toHaveBeenCalledWith(
+      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
-          page: 1,
-          pageSize: 20,
-          sort: { field: 'createdAt', direction: 'desc' },
+          limit: 20,
+          sortBy: 'createdAt',
+          sortDirection: 'desc',
         },
         {}
       );
     });
 
     it('should handle custom pagination parameters', async () => {
-      vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
+      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL(
-        'http://localhost:4321/api/messages?page=2&pageSize=50&sortField=model&sortDirection=asc'
+        'http://localhost:4321/api/messages?limit=50&sortBy=id&sortDirection=asc&cursor=abc123'
       );
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
-      expect(MessagesService.getMessages).toHaveBeenCalledWith(
+      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
-          page: 2,
-          pageSize: 50,
-          sort: { field: 'model', direction: 'asc' },
+          limit: 50,
+          cursor: 'abc123',
+          sortBy: 'id',
+          sortDirection: 'asc',
         },
         {}
       );
     });
 
     it('should handle filter parameters', async () => {
-      vi.mocked(MessagesService.getMessages).mockResolvedValue(mockPaginatedResult);
+      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockResolvedValue(mockCursorResult);
 
       const url = new globalThis.URL(
         'http://localhost:4321/api/messages?model=claude-3-sonnet&hasError=false&minTokens=10&searchTerm=hello'
@@ -130,11 +130,11 @@ describe('API Endpoints - Messages', () => {
 
       expect(response.status).toBe(HTTP_STATUS.OK);
 
-      expect(MessagesService.getMessages).toHaveBeenCalledWith(
+      expect(MessagesSequelizeService.getMessagesWithCursor).toHaveBeenCalledWith(
         {
-          page: 1,
-          pageSize: 20,
-          sort: { field: 'createdAt', direction: 'desc' },
+          limit: 20,
+          sortBy: 'createdAt',
+          sortDirection: 'desc',
         },
         {
           model: 'claude-3-sonnet',
@@ -146,24 +146,20 @@ describe('API Endpoints - Messages', () => {
     });
 
     it('should return 400 for invalid pagination parameters', async () => {
-      const error = new Error('Page number must be greater than 0');
-      vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
-
-      const url = new globalThis.URL('http://localhost:4321/api/messages?page=0');
+      const url = new globalThis.URL('http://localhost:4321/api/messages?limit=200');
       const response = await messagesListHandler({ url } as APIContext);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
 
       const data = await parseJsonResponse(response);
       expect(data).toMatchObject({
-        error: 'PAGINATION_ERROR',
-        message: 'Page number must be greater than 0',
+        error: 'Invalid limit parameter. Must be a number between 1 and 100.',
       });
     });
 
     it('should return 503 for database errors', async () => {
       const error = new Error('database connection failed');
-      vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
+      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockRejectedValue(error);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -179,7 +175,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should return 500 for unexpected errors', async () => {
       const error = new Error('Unexpected error');
-      vi.mocked(MessagesService.getMessages).mockRejectedValue(error);
+      vi.mocked(MessagesSequelizeService.getMessagesWithCursor).mockRejectedValue(error);
 
       const url = new globalThis.URL('http://localhost:4321/api/messages');
       const response = await messagesListHandler({ url } as APIContext);
@@ -214,7 +210,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should return message details for valid ID', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(mockMessage);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -235,7 +231,7 @@ describe('API Endpoints - Messages', () => {
       expect(data.totalTokens).toBe(mockMessage.totalTokens);
       expect(data.isSuccess).toBe(mockMessage.isSuccess);
 
-      expect(MessagesService.getMessageById).toHaveBeenCalledWith(messageId);
+      expect(MessagesSequelizeService.getMessageById).toHaveBeenCalledWith(messageId);
     });
 
     it('should return 400 for missing ID parameter', async () => {
@@ -251,12 +247,12 @@ describe('API Endpoints - Messages', () => {
         message: 'Message ID is required',
       });
 
-      expect(MessagesService.getMessageById).not.toHaveBeenCalled();
+      expect(MessagesSequelizeService.getMessageById).not.toHaveBeenCalled();
     });
 
     it('should return 404 for non-existent message', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(null);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -274,7 +270,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 400 for invalid UUID format', async () => {
       const invalidId = 'invalid-uuid';
       const error = new Error('Invalid UUID format: invalid-uuid');
-      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: invalidId },
@@ -292,7 +288,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 503 for database errors', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       const error = new Error('database connection timeout');
-      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -310,7 +306,7 @@ describe('API Endpoints - Messages', () => {
     it('should return 500 for unexpected errors', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
       const error = new Error('Unexpected error');
-      vi.mocked(MessagesService.getMessageById).mockRejectedValue(error);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockRejectedValue(error);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -327,7 +323,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should include response time header in all responses', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesService.getMessageById).mockResolvedValue(mockMessage);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(mockMessage);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
@@ -340,7 +336,7 @@ describe('API Endpoints - Messages', () => {
 
     it('should include timestamp in error responses', async () => {
       const messageId = '123e4567-e89b-12d3-a456-426614174000';
-      vi.mocked(MessagesService.getMessageById).mockResolvedValue(null);
+      vi.mocked(MessagesSequelizeService.getMessageById).mockResolvedValue(null);
 
       const response = await messageDetailHandler({
         params: { id: messageId },
