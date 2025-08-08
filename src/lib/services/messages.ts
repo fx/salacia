@@ -139,7 +139,10 @@ export class MessagesService {
         AiInteraction.findAll({
           attributes: [
             [fn('COUNT', col('*')), 'totalMessages'],
-            [fn('COUNT', fn('NULLIF', col('error'), null)), 'failedMessages'],
+            [
+              fn('COUNT', fn('CASE', where(col('error'), { [Op.not]: null }), literal('1'), null)),
+              'failedMessages',
+            ],
             [fn('COALESCE', fn('SUM', col('total_tokens')), 0), 'totalTokens'],
             [fn('COALESCE', fn('AVG', col('response_time_ms')), 0), 'averageResponseTime'],
           ],
@@ -258,8 +261,8 @@ export class MessagesService {
     if (filters.searchTerm) {
       const searchPattern = `%${filters.searchTerm}%`;
       (conditions as any)[Op.or] = [
-        where(literal('request::text'), Op.iLike, searchPattern),
-        where(literal('response::text'), Op.iLike, searchPattern),
+        where(fn('CAST', col('request'), 'TEXT'), Op.iLike, searchPattern),
+        where(fn('CAST', col('response'), 'TEXT'), Op.iLike, searchPattern),
       ];
     }
 

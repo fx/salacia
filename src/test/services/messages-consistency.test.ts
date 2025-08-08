@@ -41,34 +41,34 @@ describe('Messages Service Consistency', () => {
 
       const messageId = existingMessage.id;
 
-      const [drizzleResult, sequelizeResult] = await Promise.all([
+      const [firstResult, secondResult] = await Promise.all([
         MessagesService.getMessageById(messageId),
-        // Note: Both services now point to the same implementation
+        // Note: Both calls use the same implementation for consistency testing
         MessagesService.getMessageById(messageId),
       ]);
 
       // Both should return the same message or both should be null
-      if (drizzleResult === null) {
-        expect(sequelizeResult).toBe(null);
+      if (firstResult === null) {
+        expect(secondResult).toBe(null);
       } else {
-        expect(sequelizeResult).not.toBe(null);
-        expect(drizzleResult.id).toBe(sequelizeResult!.id);
-        expect(drizzleResult.model).toBe(sequelizeResult!.model);
-        expect(drizzleResult.createdAt.getTime()).toBe(sequelizeResult!.createdAt.getTime());
-        expect(drizzleResult.isSuccess).toBe(sequelizeResult!.isSuccess);
+        expect(secondResult).not.toBe(null);
+        expect(firstResult.id).toBe(secondResult!.id);
+        expect(firstResult.model).toBe(secondResult!.model);
+        expect(firstResult.createdAt.getTime()).toBe(secondResult!.createdAt.getTime());
+        expect(firstResult.isSuccess).toBe(secondResult!.isSuccess);
       }
     });
 
     test('should return null for non-existent message', async () => {
       const nonExistentId = '12345678-1234-4234-a234-123456789abc';
 
-      const [drizzleResult, sequelizeResult] = await Promise.all([
+      const [firstResult, secondResult] = await Promise.all([
         MessagesService.getMessageById(nonExistentId),
         MessagesService.getMessageById(nonExistentId),
       ]);
 
-      expect(drizzleResult).toBe(null);
-      expect(sequelizeResult).toBe(null);
+      expect(firstResult).toBe(null);
+      expect(secondResult).toBe(null);
     });
 
     test('should throw consistent errors for invalid UUID', async () => {
@@ -81,60 +81,60 @@ describe('Messages Service Consistency', () => {
 
   describe('getMessages', () => {
     test('should return consistent paginated results', async () => {
-      const [drizzleResult, sequelizeResult] = await Promise.all([
+      const [firstResult, secondResult] = await Promise.all([
         MessagesService.getMessages(testPaginationParams),
-        // Note: Both services now point to the same implementation
+        // Note: Both calls use the same implementation for consistency testing
         MessagesService.getMessages(testPaginationParams),
       ]);
 
       // Check pagination metadata and core stats
-      expect(drizzleResult.currentPage).toBe(sequelizeResult.currentPage);
-      expect(drizzleResult.totalItems).toBe(sequelizeResult.totalItems);
-      expect(drizzleResult.messages.length).toBe(sequelizeResult.messages.length);
-      expect(drizzleResult.stats.totalMessages).toBe(sequelizeResult.stats.totalMessages);
+      expect(firstResult.currentPage).toBe(secondResult.currentPage);
+      expect(firstResult.totalItems).toBe(secondResult.totalItems);
+      expect(firstResult.messages.length).toBe(secondResult.messages.length);
+      expect(firstResult.stats.totalMessages).toBe(secondResult.stats.totalMessages);
 
       // Check message data consistency for first few items
-      for (let i = 0; i < Math.min(3, drizzleResult.messages.length); i++) {
-        const drizzleMsg = drizzleResult.messages[i];
-        const sequelizeMsg = sequelizeResult.messages[i];
-        expect(drizzleMsg.id).toBe(sequelizeMsg.id);
-        expect(drizzleMsg.model).toBe(sequelizeMsg.model);
+      for (let i = 0; i < Math.min(3, firstResult.messages.length); i++) {
+        const firstMsg = firstResult.messages[i];
+        const secondMsg = secondResult.messages[i];
+        expect(firstMsg.id).toBe(secondMsg.id);
+        expect(firstMsg.model).toBe(secondMsg.model);
       }
     });
   });
 
   describe('getFilteredStats', () => {
     test('should return consistent statistics', async () => {
-      const [drizzleStats, sequelizeStats] = await Promise.all([
+      const [firstStats, secondStats] = await Promise.all([
         MessagesService.getFilteredStats(),
-        // Note: Both services now point to the same implementation
+        // Note: Both calls use the same implementation for consistency testing
         MessagesService.getFilteredStats(),
       ]);
 
-      expect(drizzleStats.totalMessages).toBe(sequelizeStats.totalMessages);
-      expect(drizzleStats.successfulMessages).toBe(sequelizeStats.successfulMessages);
-      expect(drizzleStats.failedMessages).toBe(sequelizeStats.failedMessages);
-      expect(drizzleStats.successRate).toBe(sequelizeStats.successRate);
+      expect(firstStats.totalMessages).toBe(secondStats.totalMessages);
+      expect(firstStats.successfulMessages).toBe(secondStats.successfulMessages);
+      expect(firstStats.failedMessages).toBe(secondStats.failedMessages);
+      expect(firstStats.successRate).toBe(secondStats.successRate);
     });
   });
 
   describe('getMessagesWithCursor', () => {
     test('should return consistent cursor-paginated results', async () => {
-      const [drizzleResult, sequelizeResult] = await Promise.all([
+      const [firstResult, secondResult] = await Promise.all([
         MessagesService.getMessagesWithCursor(testCursorParams),
-        // Note: Both services now point to the same implementation
+        // Note: Both calls use the same implementation for consistency testing
         MessagesService.getMessagesWithCursor(testCursorParams),
       ]);
 
       // Check metadata and data consistency
-      expect(drizzleResult.meta.count).toBe(sequelizeResult.meta.count);
-      expect(drizzleResult.data.length).toBe(sequelizeResult.data.length);
+      expect(firstResult.meta.count).toBe(secondResult.meta.count);
+      expect(firstResult.data.length).toBe(secondResult.data.length);
 
       // Check first few items match
-      for (let i = 0; i < Math.min(2, drizzleResult.data.length); i++) {
-        const drizzleMsg = drizzleResult.data[i];
-        const sequelizeMsg = sequelizeResult.data[i];
-        expect(drizzleMsg.id).toBe(sequelizeMsg.id);
+      for (let i = 0; i < Math.min(2, firstResult.data.length); i++) {
+        const firstMsg = firstResult.data[i];
+        const secondMsg = secondResult.data[i];
+        expect(firstMsg.id).toBe(secondMsg.id);
       }
     });
   });
