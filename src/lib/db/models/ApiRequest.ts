@@ -204,5 +204,8 @@ ApiRequest.init(
       },
     ],
     comment: 'API requests table for logging all incoming API requests',
+    // Do NOT emit realtime message events for ApiRequest records.
+    // Only AiInteraction events should appear in the realtime messages feed.
+    hooks: {},
   }
 );

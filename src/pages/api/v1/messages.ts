@@ -10,6 +10,7 @@ import {
   CORS_HEADERS,
 } from '../../../lib/ai/api-utils';
 import { createLogger } from '../../../lib/utils/logger';
+import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
 
 const logger = createLogger('API/Messages');
 
@@ -25,6 +26,7 @@ export const OPTIONS: APIRoute = () => handleOptions();
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
+  let requestData: any = null;
 
   try {
     // Validate headers
@@ -34,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Parse and validate request body
-    const { data: requestData, error: parseError } = await parseRequestBody(request, data => {
+    const { data: parsedData, error: parseError } = await parseRequestBody(request, data => {
       // Only log a summary in debug mode - full requests are too verbose
       if (data && typeof data === 'object' && 'model' in data) {
         // Use proper type guards instead of type assertion
@@ -60,12 +62,30 @@ export const POST: APIRoute = async ({ request }) => {
       return parseError;
     }
 
+    requestData = parsedData;
+
     // Check if streaming is requested
     const isStreaming = requestData!.stream === true;
 
     if (isStreaming) {
       // Generate streaming response using AI service
       const stream = await AIService.generateStreamingCompletion(requestData!);
+      const responseTime = Date.now() - startTime;
+
+      // Log streaming request (we can't log the full response for streams)
+      await logAiInteraction({
+        request: requestData!,
+        response: undefined, // Response will be streamed
+        responseTime,
+        statusCode: 200,
+      });
+
+      // Log API request
+      await logApiRequest({
+        request,
+        statusCode: 200,
+        responseTime,
+      });
 
       return new Response(stream, {
         status: 200,
@@ -73,7 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
-          'X-Response-Time': `${Date.now() - startTime}ms`,
+          'X-Response-Time': `${responseTime}ms`,
           ...CORS_HEADERS,
         },
       });
@@ -81,6 +101,22 @@ export const POST: APIRoute = async ({ request }) => {
       // Generate standard response using AI service
       const response = await AIService.generateCompletion(requestData!);
       const responseTime = Date.now() - startTime;
+
+      // Log successful interaction to database
+      await logAiInteraction({
+        request: requestData!,
+        response,
+        responseTime,
+        statusCode: 200,
+      });
+
+      // Log API request
+      await logApiRequest({
+        request,
+        statusCode: 200,
+        responseTime,
+        responseSize: JSON.stringify(response).length,
+      });
 
       return new Response(JSON.stringify(response), {
         status: 200,
@@ -92,6 +128,8 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
   } catch (error) {
+    const responseTime = Date.now() - startTime;
+
     // Log errors appropriately based on type
     if (error instanceof Error) {
       if (error.message.includes('authentication') || error.message.includes('invalid x-api-key')) {
@@ -103,20 +141,45 @@ export const POST: APIRoute = async ({ request }) => {
       logger.error('Unknown error:', error);
     }
 
-    // Return appropriate error response
+    // Determine status code based on error type
+    let statusCode = 500;
+    let errorMessage = 'Internal server error';
+
     if (error instanceof Error) {
       // Handle various configuration issues
       if (
         error.message.includes('No AI provider configured') ||
         error.message.includes('invalid x-api-key') ||
-        error.message.includes('authentication')
+        error.message.includes('authentication') ||
+        error.message.includes('credit balance')
       ) {
-        return createErrorResponse(
-          API_ERROR_TYPES.PERMISSION_ERROR,
-          'AI provider not configured. Please contact administrator.',
-          503
-        );
+        statusCode = 503;
+        errorMessage = error.message.includes('credit balance')
+          ? error.message
+          : 'AI provider not configured. Please contact administrator.';
       }
+    }
+
+    // Log failed interaction to database (if we have request data)
+    if (requestData) {
+      await logAiInteraction({
+        request: requestData,
+        error: error instanceof Error ? error.message : String(error),
+        responseTime,
+        statusCode,
+      });
+    }
+
+    // Log API request
+    await logApiRequest({
+      request,
+      statusCode,
+      responseTime,
+    });
+
+    // Return appropriate error response
+    if (statusCode === 503) {
+      return createErrorResponse(API_ERROR_TYPES.PERMISSION_ERROR, errorMessage, 503);
     }
 
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);
