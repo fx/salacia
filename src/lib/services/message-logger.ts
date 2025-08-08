@@ -9,8 +9,43 @@ import { AiInteraction } from '../db/models/AiInteraction';
 import { ApiRequest } from '../db/models/ApiRequest';
 import type { AnthropicRequest, AnthropicResponse } from '../ai/types';
 import { createLogger } from '../utils/logger';
+import type { InferCreationAttributes } from 'sequelize';
 
 const logger = createLogger('MessageLogger');
+
+/**
+ * Interface for AI interaction creation data structure.
+ * Provides type safety for database operations.
+ */
+interface InteractionCreationData {
+  providerId?: string;
+  model: string;
+  request: Record<string, unknown>;
+  response?: Record<string, unknown>;
+  error?: string;
+  statusCode?: number;
+  responseTimeMs?: number;
+  totalTokens?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+}
+
+/**
+ * Interface for API request creation data structure.
+ * Provides type safety for database operations.
+ */
+interface ApiRequestCreationData {
+  method: string;
+  path: string;
+  headers?: Record<string, unknown>;
+  query?: Record<string, unknown>;
+  body?: Record<string, unknown>;
+  userAgent?: string;
+  ipAddress?: string;
+  statusCode?: number;
+  responseTime?: number;
+  responseSize?: number;
+}
 
 /**
  * Log an AI interaction to the database.
@@ -37,21 +72,22 @@ export async function logAiInteraction({
 }) {
   try {
     // Prepare the interaction data
-    const interactionData: any = {
+    const interactionData: InteractionCreationData = {
       model: request.model,
-      provider: 'anthropic', // Could be extended to support other providers
-      request: JSON.stringify(request),
-      response: response ? JSON.stringify(response) : null,
-      error: error ? (typeof error === 'string' ? error : error.message) : null,
+      request: request as Record<string, unknown>,
+      response: response as Record<string, unknown> | undefined,
+      error: error ? (typeof error === 'string' ? error : error.message) : undefined,
       statusCode,
-      responseTime,
-      totalTokens: response?.usage?.output_tokens ?? null,
-      promptTokens: response?.usage?.input_tokens ?? null,
-      completionTokens: response?.usage?.output_tokens ?? null,
+      responseTimeMs: responseTime,
+      totalTokens: response?.usage?.output_tokens ?? undefined,
+      promptTokens: response?.usage?.input_tokens ?? undefined,
+      completionTokens: response?.usage?.output_tokens ?? undefined,
     };
 
     // Create the database record
-    const interaction = await AiInteraction.create(interactionData);
+    const interaction = await AiInteraction.create(
+      interactionData as InferCreationAttributes<AiInteraction>
+    );
 
     logger.debug('Logged AI interaction:', {
       id: interaction.id,
@@ -98,11 +134,11 @@ export async function logApiRequest({
       }
     });
 
-    const apiRequestData: any = {
+    const apiRequestData: ApiRequestCreationData = {
       method: request.method,
       path: url.pathname,
-      headers,
-      query: Object.fromEntries(url.searchParams),
+      headers: headers as Record<string, unknown>,
+      query: Object.fromEntries(url.searchParams) as Record<string, unknown>,
       userAgent: request.headers.get('user-agent') ?? undefined,
       ipAddress:
         request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? undefined,
@@ -111,7 +147,9 @@ export async function logApiRequest({
       responseSize,
     };
 
-    const apiRequest = await ApiRequest.create(apiRequestData);
+    const apiRequest = await ApiRequest.create(
+      apiRequestData as InferCreationAttributes<ApiRequest>
+    );
 
     logger.debug('Logged API request:', {
       id: apiRequest.id,

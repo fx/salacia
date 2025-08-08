@@ -252,7 +252,6 @@ AiInteraction.init(
        * Captures the original state before changes are applied.
        */
       beforeUpdate: async (instance: AiInteraction) => {
-        // Debug: console.log('[Hook] Before update: AI interaction record with id', instance.id, 'being updated');
         void instance; // Prevent unused parameter warning
       },
 
@@ -261,7 +260,6 @@ AiInteraction.init(
        * Logs the new state after changes have been applied.
        */
       afterUpdate: async (instance: AiInteraction) => {
-        // Debug: console.log('[Hook] After update: AI interaction record with id', instance.id, 'updated');
         void instance; // Prevent unused parameter warning
       },
     },

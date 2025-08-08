@@ -1,7 +1,7 @@
 /**
  * RealtimeStatus component shows the connection status for SSE realtime updates.
  * Displays connection state with visual indicators and message counts.
- * 
+ *
  * @module RealtimeStatus
  */
 
@@ -56,7 +56,7 @@ const stateConfig = {
 /**
  * RealtimeStatus component displays the current SSE connection status.
  * Shows visual indicators for connection state and new message notifications.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the realtime status indicator
  */
@@ -84,11 +84,12 @@ export function RealtimeStatus({
       <span
         style={{
           color: config.color,
-          animation: connectionState === 'connecting' || connectionState === 'reconnecting'
-            ? 'pulse 1.5s ease-in-out infinite'
-            : hasNewMessages
-            ? 'flash 0.5s ease-in-out 3'
-            : undefined,
+          animation:
+            connectionState === 'connecting' || connectionState === 'reconnecting'
+              ? 'pulse 1.5s ease-in-out infinite'
+              : hasNewMessages
+                ? 'flash 0.5s ease-in-out 3'
+                : undefined,
         }}
         title={config.label}
       >
@@ -96,9 +97,7 @@ export function RealtimeStatus({
       </span>
 
       {/* Status label */}
-      <span style={{ opacity: 0.8 }}>
-        {config.label}
-      </span>
+      <span style={{ opacity: 0.8 }}>{config.label}</span>
 
       {/* Message count */}
       {connectionState === 'connected' && messageCount > 0 && (
@@ -111,9 +110,6 @@ export function RealtimeStatus({
       {hasNewMessages && onClearNewMessages && (
         <button
           onClick={onClearNewMessages}
-          is-="button"
-          variant-="text"
-          size-="small"
           type="button"
           style={{
             marginLeft: '0.5ch',
@@ -126,7 +122,9 @@ export function RealtimeStatus({
       )}
 
       {/* CSS animations */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes pulse {
           0%, 100% {
             opacity: 1;
@@ -144,7 +142,9 @@ export function RealtimeStatus({
             opacity: 0.3;
           }
         }
-      ` }} />
+      `,
+        }}
+      />
     </div>
   );
 }
