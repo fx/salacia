@@ -7,4 +7,4 @@
  */
 
 // Message management services
-export * from './messages.js';
+// Note: messages.js removed in Phase 5 - Sequelize service is used instead
