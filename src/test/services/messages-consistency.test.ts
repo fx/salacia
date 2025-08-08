@@ -2,9 +2,8 @@ import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { MessagesService } from '../../lib/services/messages.js';
 import type { MessagesPaginationParams } from '../../lib/types/messages.js';
 import type { MessagesCursorPaginationParams } from '../../lib/types/cursor.js';
-import { db } from '../../lib/db/connection.js';
-import { aiInteractions } from '../../lib/db/schema.js';
 import { sequelize } from '../../lib/db/sequelize-connection.js';
+import { AiInteraction } from '../../lib/db/models/AiInteraction.js';
 
 describe('Messages Service Consistency', () => {
   const testPaginationParams: MessagesPaginationParams = {
@@ -30,17 +29,17 @@ describe('Messages Service Consistency', () => {
   describe('getMessageById', () => {
     test('should return consistent results for existing message', async () => {
       // Get a message ID from the database first
-      const existingMessage = await db
-        .select({ id: aiInteractions.id })
-        .from(aiInteractions)
-        .limit(1);
+      const existingMessage = await AiInteraction.findOne({
+        attributes: ['id'],
+        limit: 1,
+      });
 
-      if (existingMessage.length === 0) {
+      if (!existingMessage) {
         console.warn('No messages in database for testing');
         return;
       }
 
-      const messageId = existingMessage[0].id;
+      const messageId = existingMessage.id;
 
       const [drizzleResult, sequelizeResult] = await Promise.all([
         MessagesService.getMessageById(messageId),

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { AiInteraction } from '../lib/db/schema.js';
+import type { AiInteractionData } from '../lib/types/messages.js';
 import { transformAiInteractionToDisplay, MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
 describe('Messages Types', () => {
@@ -12,9 +12,8 @@ describe('Messages Types', () => {
   });
 
   describe('transformAiInteractionToDisplay', () => {
-    const mockInteraction: AiInteraction = {
+    const mockInteraction: AiInteractionData = {
       id: '123e4567-e89b-12d3-a456-426614174000',
-      providerId: null,
       model: 'gpt-4',
       request: { prompt: 'Hello world' },
       response: { content: 'Hi there!' },
@@ -77,9 +76,8 @@ describe('Messages Types', () => {
     });
 
     it('should handle missing optional fields', () => {
-      const minimalInteraction: AiInteraction = {
+      const minimalInteraction: AiInteractionData = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        providerId: null,
         model: 'gpt-4',
         request: { prompt: 'test' },
         response: null,

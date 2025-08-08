@@ -1,10 +1,8 @@
 import { generateText } from 'ai';
 import { ProviderManager } from './provider-manager';
 import { ProviderFactory } from './provider-factory';
-import { db } from '../db';
-import { aiInteractions } from '../db/schema';
 import type { AnthropicRequest, AnthropicResponse, AIProviderType } from './types';
-import type { AiProvider } from '../db/schema';
+import type { AiProvider } from './provider-manager';
 import { generateMessageId, estimateTokens } from './api-utils';
 import { createLogger } from '../utils/logger';
 
@@ -77,19 +75,12 @@ export class AIService {
         },
       };
 
-      // Log interaction
-      const responseTime = Date.now() - startTime;
-      await this.logInteraction(selectedProvider, request, response, responseTime, null);
-
       return response;
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      // Log error
-      if (selectedProvider) {
-        await this.logInteraction(selectedProvider, request, null, responseTime, errorMessage);
-      }
+      logger.error('AI completion failed:', { error: errorMessage, responseTime });
 
       throw error;
     }
@@ -293,34 +284,5 @@ export class AIService {
    */
   private static estimateOutputTokens(text: string): number {
     return Math.ceil(text.length / 4);
-  }
-
-  /**
-   * Log interaction to database
-   */
-  private static async logInteraction(
-    provider: AiProvider,
-    request: AnthropicRequest,
-    response: AnthropicResponse | null,
-    responseTime: number,
-    error: string | null
-  ): Promise<void> {
-    try {
-      await db.insert(aiInteractions).values({
-        providerId: provider.id.startsWith('env-') ? null : provider.id, // Don't store env provider IDs
-        model: request.model,
-        request,
-        response,
-        promptTokens: response?.usage.input_tokens || estimateTokens(request.messages),
-        completionTokens: response?.usage.output_tokens || null,
-        totalTokens: response ? response.usage.input_tokens + response.usage.output_tokens : null,
-        responseTimeMs: responseTime,
-        statusCode: error ? 500 : 200,
-        error,
-      });
-    } catch (dbError) {
-      logger.warn('Failed to log interaction:', dbError);
-      // Don't throw - logging failures shouldn't break the API
-    }
   }
 }

@@ -8,8 +8,8 @@ import type {
   MessageSort,
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
+import type { AiInteractionData } from '../types/messages.js';
 import { AiInteraction } from '../db/models/AiInteraction.js';
-import type { AiInteraction as DrizzleAiInteraction } from '../db/schema.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -44,7 +44,7 @@ export class MessagesService {
         return null;
       }
 
-      return transformAiInteractionToDisplay(result.toJSON() as DrizzleAiInteraction);
+      return transformAiInteractionToDisplay(result.toJSON() as AiInteractionData);
     } catch (error) {
       throw new Error(
         `Failed to retrieve message by ID: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -100,7 +100,7 @@ export class MessagesService {
 
       // Transform database records to display format
       const messages = messagesResult.map(interaction =>
-        transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
+        transformAiInteractionToDisplay(interaction.toJSON() as AiInteractionData)
       );
 
       return {
@@ -373,7 +373,7 @@ export class MessagesService {
       const items = results
         .slice(0, limit)
         .map(interaction =>
-          transformAiInteractionToDisplay(interaction.toJSON() as DrizzleAiInteraction)
+          transformAiInteractionToDisplay(interaction.toJSON() as AiInteractionData)
         );
 
       // Generate cursors
