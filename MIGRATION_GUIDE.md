@@ -1,59 +1,14 @@
-# ORM Migration Guide
+# Database Migration Guide
 
-This project supports both Drizzle ORM and Sequelize ORM. This guide explains how to switch between them and manage database migrations.
+This project uses Sequelize ORM for all database operations. This guide explains how to manage database migrations and models.
 
 ## Current Status
 
-- **Primary ORM**: Drizzle ORM (default)
-- **Secondary ORM**: Sequelize (optional)
-- **Switch Control**: `USE_SEQUELIZE` environment variable
-
-## Switching Between ORMs
-
-### Using Drizzle ORM (Default)
-
-1. Set environment variable:
-
-   ```bash
-   USE_SEQUELIZE=false
-   ```
-
-2. Use Drizzle commands:
-   ```bash
-   npm run db:generate    # Generate migrations
-   npm run db:migrate     # Run migrations
-   npm run db:push        # Push schema changes
-   npm run db:studio      # Open database studio
-   ```
-
-### Using Sequelize ORM
-
-1. Set environment variable:
-
-   ```bash
-   USE_SEQUELIZE=true
-   ```
-
-2. Use Sequelize commands:
-   ```bash
-   npm run sequelize:migrate:up    # Run migrations
-   npm run sequelize:migrate:down  # Rollback last migration
-   npm run sequelize:seed          # Run all seeders
-   npm run sequelize:sync          # Sync models with database
-   ```
+- **Primary ORM**: Sequelize ORM
+- **Database**: PostgreSQL
+- **Migration System**: Sequelize CLI
 
 ## Database Operations
-
-### Drizzle Commands
-
-| Command               | Description                          |
-| --------------------- | ------------------------------------ |
-| `npm run db:generate` | Generate migration files from schema |
-| `npm run db:migrate`  | Apply pending migrations             |
-| `npm run db:push`     | Push schema changes directly         |
-| `npm run db:studio`   | Launch Drizzle Studio web interface  |
-
-### Sequelize Commands
 
 | Command                          | Description                                  |
 | -------------------------------- | -------------------------------------------- |
@@ -66,26 +21,31 @@ This project supports both Drizzle ORM and Sequelize ORM. This guide explains ho
 
 ### Development Environment
 
-1. **Choose your ORM** based on project requirements
-2. **Use consistent tooling** throughout development
-3. **Test migrations** in a safe environment first
+1. **Create migrations** for all schema changes
+2. **Test migrations** in a safe environment first
+3. **Use transactions** for complex operations
+4. **Document changes** in migration files
 
 ### Production Considerations
 
-- **Drizzle**: More type-safe, better TypeScript integration
-- **Sequelize**: More mature ecosystem, extensive feature set
-- **Migration Path**: Consider data compatibility when switching
+- **Sequelize**: Mature ecosystem with extensive features
+- **Type Safety**: Full TypeScript integration with models
+- **Performance**: Optimized query generation and connection pooling
+- **Reliability**: Proven in production environments
 
 ## Configuration Files
 
-- **Drizzle**: `drizzle.config.ts`
-- **Sequelize**: `.sequelizerc`, `src/database/sequelize/config.ts`
-- **Environment**: `.env` (USE_SEQUELIZE variable)
+- **Sequelize CLI**: `.sequelizerc`
+- **Database Config**: `src/database/sequelize/config.ts`
+- **Models**: `src/lib/db/models/`
+- **Migrations**: `src/database/migrations/`
 
 ## Best Practices
 
-1. **Backup data** before switching ORMs
+1. **Backup data** before running migrations in production
 2. **Test thoroughly** in development environment
 3. **Use transactions** for complex migrations
 4. **Document changes** in migration files
 5. **Version control** all migration files
+6. **Review generated SQL** before applying to production
+7. **Plan rollback strategy** for each migration

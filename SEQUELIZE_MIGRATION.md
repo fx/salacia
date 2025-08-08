@@ -1,10 +1,10 @@
-# Sequelize Migration Documentation
+# Sequelize Implementation Documentation
 
 ## Overview
 
-This document outlines the comprehensive migration from Drizzle ORM to Sequelize ORM implemented in the Salacia application. The migration provides a dual-ORM setup that allows seamless switching between Drizzle and Sequelize implementations while maintaining backward compatibility.
+This document outlines the comprehensive Sequelize ORM implementation in the Salacia application. The project now uses Sequelize as the primary and only ORM, providing enhanced features and capabilities for database operations.
 
-**Why the Migration Was Performed:**
+**Why Sequelize Was Chosen:**
 
 - Enhanced ORM features including built-in hooks system
 - Advanced query capabilities and relationship management
@@ -13,13 +13,13 @@ This document outlines the comprehensive migration from Drizzle ORM to Sequelize
 
 ## Key Features Implemented
 
-### 1. Dual-ORM Architecture
+### 1. Sequelize Architecture
 
-The system supports both Drizzle and Sequelize simultaneously:
+The system uses Sequelize ORM exclusively for all database operations:
 
-- Environment variable `USE_SEQUELIZE=true` switches to Sequelize
-- Existing Drizzle implementation remains untouched
-- Runtime ORM selection with graceful fallback
+- Single, unified ORM implementation
+- Consistent data access patterns across the application
+- Simplified configuration and maintenance
 
 ### 2. Sequelize Model System
 
@@ -74,19 +74,11 @@ AiInteraction.belongsTo(AiProvider, {
 });
 ```
 
-## Using the Dual-ORM Setup
+## Using Sequelize ORM
 
 ### Environment Configuration
 
-Set the environment variable to use Sequelize:
-
-```bash
-# Use Sequelize ORM
-export USE_SEQUELIZE=true
-
-# Use Drizzle ORM (default)
-export USE_SEQUELIZE=false
-```
+Sequelize is now the default and only ORM. No additional configuration is needed.
 
 ### Basic Usage Examples
 
@@ -142,7 +134,7 @@ const interaction = await AiInteraction.findByPk(interactionId, {
 });
 ```
 
-## Migration Phases Completed
+## Implementation Phases Completed
 
 ### Phase 1: Database Connection Setup
 
@@ -178,26 +170,17 @@ const interaction = await AiInteraction.findByPk(interactionId, {
 - ✅ Logging and monitoring capabilities
 - ✅ Extensible hook architecture
 
-### Phase 6: Testing Framework
+### Phase 6: API Integration
 
-- ✅ Comprehensive integration tests
-- ✅ Hook validation testing
-- ✅ Service layer testing
-- ✅ API endpoint integration tests
+- ✅ Full Sequelize integration in API endpoints
+- ✅ Consistent response formats
+- ✅ Comprehensive error handling
 
-### Phase 7: API Integration
+### Phase 7: Documentation Cleanup
 
-- ✅ Runtime ORM switching in API endpoints
-- ✅ Backward compatibility maintenance
-- ✅ Response format consistency
-- ✅ Error handling parity
-
-### Phase 8: Documentation
-
-- ✅ Complete migration documentation
-- ✅ Usage examples and best practices
-- ✅ Testing instructions
-- ✅ Rollback procedures
+- ✅ Updated all documentation to reflect Sequelize-only setup
+- ✅ Removed dual-ORM references
+- ✅ Updated environment configuration guides
 
 ## Testing Instructions
 
@@ -214,11 +197,10 @@ npm test -- --grep "Service Layer Integration"
 
 ### Manual Testing
 
-1. Set `USE_SEQUELIZE=true` in your environment
-2. Start the application: `npm run dev`
-3. Test API endpoints at `/api/messages`
-4. Verify hooks are triggered by updating records
-5. Check database consistency
+1. Start the application: `npm run dev`
+2. Test API endpoints at `/api/messages`
+3. Verify hooks are triggered by updating records
+4. Check database consistency
 
 ### Validation Checklist
 
@@ -226,60 +208,39 @@ npm test -- --grep "Service Layer Integration"
 - [ ] All CRUD operations work on all models
 - [ ] Hooks are triggered on AiInteraction updates
 - [ ] Service layer returns correct data formats
-- [ ] API endpoints function with both ORMs
+- [ ] API endpoints function correctly
 - [ ] Statistics and aggregation queries work
 - [ ] Error handling behaves consistently
 
-## Rollback Procedures
+## Database Schema Management
 
-### Emergency Rollback
+### Current Schema State
 
-If issues are encountered, immediately disable Sequelize:
+- All database tables are managed by Sequelize models
+- Migration system tracks schema changes
+- No legacy ORM dependencies remain
 
-```bash
-export USE_SEQUELIZE=false
-```
+### Schema Modifications
 
-This immediately reverts to the stable Drizzle implementation.
+To modify the database schema:
 
-### Gradual Rollback
-
-1. Monitor application metrics and error rates
-2. If Sequelize shows issues, set `USE_SEQUELIZE=false`
-3. Restart application services
-4. Verify Drizzle functionality
-5. Investigate and fix Sequelize issues offline
-
-### Database State
-
-- No database schema changes were made
-- Both ORMs work with the same database structure
-- No data migration is required for rollback
-- Existing data remains fully compatible
-
-### Code Removal (if needed)
-
-To completely remove Sequelize implementation:
-
-1. Remove Sequelize dependencies from `package.json`
-2. Delete `/src/lib/db/models/` directory
-3. Delete `/src/lib/db/sequelize-*` files
-4. Delete `/src/lib/services/messages-sequelize.ts`
-5. Remove Sequelize test files
-6. Update API endpoints to remove USE_SEQUELIZE checks
+1. Update model definitions in `/src/lib/db/models/`
+2. Create migrations using Sequelize CLI
+3. Run migrations with `npm run sequelize:migrate:up`
+4. Test changes thoroughly in development
 
 ## Performance Considerations
 
-- Sequelize adds ~50ms to cold start time
-- Query performance is comparable to Drizzle
-- Hook execution adds minimal overhead (~1-2ms per update)
+- Sequelize provides optimized query generation
 - Connection pooling optimizes database usage
+- Hook execution adds minimal overhead (~1-2ms per update)
 - Cursor pagination improves large dataset handling
+- TypeScript integration eliminates runtime type errors
 
-## Next Steps
+## Maintenance and Monitoring
 
-- Monitor production performance metrics
-- Gather developer feedback on new features
-- Consider migrating additional endpoints to Sequelize
-- Evaluate removing Drizzle dependency in future releases
-- Implement additional hooks for audit trails
+- Monitor database query performance
+- Review hook execution logs for insights
+- Update models as business requirements evolve
+- Maintain comprehensive test coverage
+- Document schema changes in migration files
