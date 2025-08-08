@@ -1,7 +1,7 @@
 /**
  * Service for logging AI interactions to the database.
  * Handles both successful and failed API requests.
- * 
+ *
  * @module MessageLogger
  */
 
@@ -15,7 +15,7 @@ const logger = createLogger('MessageLogger');
 /**
  * Log an AI interaction to the database.
  * Records both the request and response/error for audit and realtime purposes.
- * 
+ *
  * @param request - The original Anthropic request
  * @param response - The response (if successful)
  * @param error - The error (if failed)
@@ -52,7 +52,7 @@ export async function logAiInteraction({
 
     // Create the database record
     const interaction = await AiInteraction.create(interactionData);
-    
+
     logger.debug('Logged AI interaction:', {
       id: interaction.id,
       model: interaction.model,
@@ -71,7 +71,7 @@ export async function logAiInteraction({
 /**
  * Log an API request to the database.
  * Records HTTP request details for monitoring and debugging.
- * 
+ *
  * @param request - The HTTP request object
  * @param response - Response details
  * @returns The created ApiRequest record
@@ -89,7 +89,7 @@ export async function logApiRequest({
 }) {
   try {
     const url = new globalThis.URL(request.url);
-    
+
     // Extract headers (excluding sensitive ones)
     const headers: Record<string, string> = {};
     request.headers.forEach((value, key) => {
@@ -104,16 +104,15 @@ export async function logApiRequest({
       headers,
       query: Object.fromEntries(url.searchParams),
       userAgent: request.headers.get('user-agent') ?? undefined,
-      ipAddress: request.headers.get('x-forwarded-for') ?? 
-                 request.headers.get('x-real-ip') ?? 
-                 undefined,
+      ipAddress:
+        request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? undefined,
       statusCode,
       responseTime,
       responseSize,
     };
 
     const apiRequest = await ApiRequest.create(apiRequestData);
-    
+
     logger.debug('Logged API request:', {
       id: apiRequest.id,
       method: apiRequest.method,

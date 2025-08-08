@@ -17,7 +17,7 @@ import { getSSEConfig, formatSSEMessage, createHeartbeatMessage } from '../../..
 export const GET: APIRoute = async ({ request }) => {
   // Get SSE configuration
   const config = getSSEConfig();
-  
+
   // Extract Last-Event-ID header for resuming from a specific point
   const lastEventId =
     request.headers.get('Last-Event-ID') ||
@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ request }) => {
         try {
           const message = formatSSEMessage(data, eventType, id);
           controller.enqueue(new TextEncoder().encode(message));
-          
+
           // Reset connection timeout on activity
           if (connectionTimeout) {
             globalThis.clearTimeout(connectionTimeout);
@@ -125,11 +125,13 @@ export const GET: APIRoute = async ({ request }) => {
       if (lastEventId) {
         const missedEvents = broker.getEventsSince(lastEventId);
         const eventsToReplay = missedEvents.slice(0, config.maxReplayEvents);
-        
+
         if (config.debugMode && missedEvents.length > config.maxReplayEvents) {
-          console.warn(`Replaying ${config.maxReplayEvents} of ${missedEvents.length} missed events`);
+          console.warn(
+            `Replaying ${config.maxReplayEvents} of ${missedEvents.length} missed events`
+          );
         }
-        
+
         for (const event of eventsToReplay) {
           handleRealtimeEvent(event);
         }
@@ -145,7 +147,7 @@ export const GET: APIRoute = async ({ request }) => {
         const heartbeat = createHeartbeatMessage();
         controller.enqueue(new TextEncoder().encode(heartbeat));
       }, config.heartbeatInterval);
-      
+
       // Set up connection timeout
       connectionTimeout = globalThis.setTimeout(() => {
         if (config.debugMode) {

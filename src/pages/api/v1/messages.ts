@@ -129,7 +129,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
   } catch (error) {
     const responseTime = Date.now() - startTime;
-    
+
     // Log errors appropriately based on type
     if (error instanceof Error) {
       if (error.message.includes('authentication') || error.message.includes('invalid x-api-key')) {
@@ -144,7 +144,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Determine status code based on error type
     let statusCode = 500;
     let errorMessage = 'Internal server error';
-    
+
     if (error instanceof Error) {
       // Handle various configuration issues
       if (
@@ -154,8 +154,8 @@ export const POST: APIRoute = async ({ request }) => {
         error.message.includes('credit balance')
       ) {
         statusCode = 503;
-        errorMessage = error.message.includes('credit balance') 
-          ? error.message 
+        errorMessage = error.message.includes('credit balance')
+          ? error.message
           : 'AI provider not configured. Please contact administrator.';
       }
     }
@@ -179,11 +179,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Return appropriate error response
     if (statusCode === 503) {
-      return createErrorResponse(
-        API_ERROR_TYPES.PERMISSION_ERROR,
-        errorMessage,
-        503
-      );
+      return createErrorResponse(API_ERROR_TYPES.PERMISSION_ERROR, errorMessage, 503);
     }
 
     return createErrorResponse(API_ERROR_TYPES.API_ERROR, 'Internal server error', 500);

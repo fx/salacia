@@ -26,11 +26,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 /**
  * SSE connection states.
  */
-export type SSEConnectionState = 
-  | 'disconnected' 
-  | 'connecting' 
-  | 'connected' 
-  | 'reconnecting' 
+export type SSEConnectionState =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
   | 'error';
 
 /**
@@ -121,7 +121,7 @@ const DEFAULT_OPTIONS: Required<Omit<SSEOptions, 'lastEventId'>> = {
  */
 export function useSSE(url: string, options: SSEOptions = {}) {
   const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
-  
+
   // Connection state
   const [connectionState, setConnectionState] = useState<SSEConnectionState>('disconnected');
   const [lastEventId, setLastEventId] = useState<string | undefined>(options.lastEventId);
@@ -186,7 +186,12 @@ export function useSSE(url: string, options: SSEOptions = {}) {
     setError(null);
 
     // Build URL with Last-Event-ID parameter if available
-    const connectionUrl = new globalThis.URL(url, typeof globalThis.window !== 'undefined' ? globalThis.window.location.origin : 'http://localhost');
+    const connectionUrl = new globalThis.URL(
+      url,
+      typeof globalThis.window !== 'undefined'
+        ? globalThis.window.location.origin
+        : 'http://localhost'
+    );
     if (lastEventId) {
       connectionUrl.searchParams.set('lastEventId', lastEventId);
     }
@@ -201,21 +206,22 @@ export function useSSE(url: string, options: SSEOptions = {}) {
     };
 
     // Handle connection errors
-    eventSource.onerror = (_event) => {
+    eventSource.onerror = _event => {
       const errorObj = new Error('SSE connection error');
       setError(errorObj);
-      
+
       // Notify error handlers
       errorHandlersRef.current.forEach(handler => handler(errorObj));
 
       if (eventSource.readyState === globalThis.EventSource.CLOSED) {
         setConnectionState('error');
-        
+
         // Attempt reconnection if enabled and not manually disconnected
         if (mergedOptions.reconnect && !isManuallyDisconnectedRef.current) {
-          const shouldReconnect = mergedOptions.maxReconnectAttempts === 0 || 
-                                  reconnectAttemptsRef.current < mergedOptions.maxReconnectAttempts;
-          
+          const shouldReconnect =
+            mergedOptions.maxReconnectAttempts === 0 ||
+            reconnectAttemptsRef.current < mergedOptions.maxReconnectAttempts;
+
           if (shouldReconnect) {
             setConnectionState('reconnecting');
             reconnectTimeoutRef.current = setTimeout(() => {
@@ -230,10 +236,10 @@ export function useSSE(url: string, options: SSEOptions = {}) {
     };
 
     // Handle all SSE messages
-    eventSource.onmessage = (event) => {
+    eventSource.onmessage = event => {
       try {
         const sseEvent: SSEEvent = JSON.parse(event.data);
-        
+
         // Update last event ID for reconnection tracking
         if (event.lastEventId) {
           setLastEventId(event.lastEventId);
@@ -242,12 +248,13 @@ export function useSSE(url: string, options: SSEOptions = {}) {
         // Call registered handlers for this event type
         const handlers = eventHandlersRef.current.get(sseEvent.type) || [];
         handlers.forEach(handler => handler(sseEvent));
-        
+
         // Also call handlers for 'message' type (catch-all)
         const messageHandlers = eventHandlersRef.current.get('message') || [];
         messageHandlers.forEach(handler => handler(sseEvent));
       } catch (parseError) {
-        const error = parseError instanceof Error ? parseError : new Error('Failed to parse SSE event');
+        const error =
+          parseError instanceof Error ? parseError : new Error('Failed to parse SSE event');
         setError(error);
         errorHandlersRef.current.forEach(handler => handler(error));
       }
@@ -260,7 +267,7 @@ export function useSSE(url: string, options: SSEOptions = {}) {
         const messageEvent = event as globalThis.MessageEvent;
         try {
           const sseEvent: SSEEvent = JSON.parse(messageEvent.data);
-          
+
           // Update last event ID
           if (messageEvent.lastEventId) {
             setLastEventId(messageEvent.lastEventId);
@@ -270,7 +277,10 @@ export function useSSE(url: string, options: SSEOptions = {}) {
           const handlers = eventHandlersRef.current.get(eventType) || [];
           handlers.forEach(handler => handler(sseEvent));
         } catch (parseError) {
-          const error = parseError instanceof Error ? parseError : new Error(`Failed to parse ${eventType} event`);
+          const error =
+            parseError instanceof Error
+              ? parseError
+              : new Error(`Failed to parse ${eventType} event`);
           setError(error);
           errorHandlersRef.current.forEach(handler => handler(error));
         }
@@ -278,7 +288,13 @@ export function useSSE(url: string, options: SSEOptions = {}) {
     });
 
     return eventSource;
-  }, [url, lastEventId, mergedOptions.reconnect, mergedOptions.reconnectDelay, mergedOptions.maxReconnectAttempts]);
+  }, [
+    url,
+    lastEventId,
+    mergedOptions.reconnect,
+    mergedOptions.reconnectDelay,
+    mergedOptions.maxReconnectAttempts,
+  ]);
 
   /**
    * Manually connect to SSE endpoint.
@@ -286,7 +302,7 @@ export function useSSE(url: string, options: SSEOptions = {}) {
   const connect = useCallback(() => {
     isManuallyDisconnectedRef.current = false;
     reconnectAttemptsRef.current = 0;
-    
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -300,7 +316,7 @@ export function useSSE(url: string, options: SSEOptions = {}) {
    */
   const disconnect = useCallback(() => {
     isManuallyDisconnectedRef.current = true;
-    
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
