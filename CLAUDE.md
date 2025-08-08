@@ -9,7 +9,7 @@ This project uses the following core technologies:
 - **Astro** - Web framework for building the application
 - **React** - Frontend components and interactivity
 - **WebTUI** - Design system and CSS framework
-- **Drizzle ORM** - Database ORM and migration management
+- **Sequelize ORM** - Database ORM and migration management
 
 ## Development Standards
 
@@ -22,12 +22,14 @@ We enforce strict pull request size limits to maintain code quality and review e
 - **Ideal**: 50 lines or fewer of actual code changes
 
 **Important**: These limits apply to human-written code only. The following do NOT count toward PR size limits:
+
 - Generated files (migrations, lock files, snapshots)
 - Configuration files that are mostly boilerplate
 - Auto-generated type definitions
 - Documentation files when appropriate
 
 **CRITICAL ENFORCEMENT**:
+
 - ALWAYS check PR size with `git diff main --stat` before creating PR
 - If approaching 500 lines, STOP immediately and break into smaller PRs
 - The pr-reviewer agent MUST check size limits as the FIRST review step
@@ -35,6 +37,7 @@ We enforce strict pull request size limits to maintain code quality and review e
 - Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests
 
 **PR Review Requirements**:
+
 - Every PR MUST be reviewed by the pr-reviewer agent after creation
 - All Copilot and automated review comments MUST be addressed
 - Continue iterating on feedback until PR is ready for merge
@@ -121,6 +124,7 @@ The Catppuccin theme provides all necessary colors, spacing, and typography thro
 Essential box patterns for terminal-style UI:
 
 **Box Types** (must suffix with `-`):
+
 ```html
 <div box-="square">Square Box</div>
 <div box-="round">Round Box</div>
@@ -129,6 +133,7 @@ Essential box patterns for terminal-style UI:
 ```
 
 **Shearing** (overlap edges):
+
 ```html
 <div box-="square" shear-="top">Top overlap</div>
 <div box-="square" shear-="bottom">Bottom overlap</div>
