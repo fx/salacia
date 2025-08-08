@@ -5,6 +5,8 @@
  * Creates database tables based on Sequelize model definitions.
  */
 
+/* eslint-disable no-console */
+
 import { Sequelize, DataTypes } from 'sequelize';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -27,7 +29,7 @@ const sequelize = new Sequelize(DATABASE_URL, {
 });
 
 // Define AiInteraction model
-const AiInteraction = sequelize.define('AiInteraction', {
+const _AiInteraction = sequelize.define('AiInteraction', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
