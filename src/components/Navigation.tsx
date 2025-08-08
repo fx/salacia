@@ -1,4 +1,5 @@
-import { useConnectivityStatus } from '../hooks/useConnectivityStatus.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRealtime } from '../context/realtime.js';
 
 /**
  * Terminal-style navigation component designed to mimic Claude Code's interface.
@@ -9,41 +10,43 @@ import { useConnectivityStatus } from '../hooks/useConnectivityStatus.js';
  * @returns The terminal-style navigation bar with integrated header and navigation
  */
 export function Navigation() {
-  const { status, isFlashing } = useConnectivityStatus({
-    sseUrl: '/api/messages/stream',
-    autoReconnect: true,
-    flashDuration: 800,
-  });
+  const { connectionState, isConnected, isConnecting, hasNewMessages, clearNewMessages } =
+    useRealtime();
+  const [isFlashing, setIsFlashing] = useState(false);
 
-  /**
-   * Gets the appropriate badge variant for the connection status.
-   * Uses bright variants during flash for visual feedback.
-   */
+  useEffect(() => {
+    if (hasNewMessages || isConnecting) {
+      setIsFlashing(true);
+      const t = setTimeout(() => setIsFlashing(false), 800);
+      return () => clearTimeout(t);
+    }
+  }, [hasNewMessages, isConnecting, connectionState]);
+
+  const status = useMemo(() => connectionState, [connectionState]);
+
   const getStatusVariant = () => {
-    const baseVariant = () => {
+    const base = () => {
       switch (status) {
         case 'connected':
           return 'green';
         case 'connecting':
+        case 'reconnecting':
           return 'yellow';
-        case 'disconnected':
-          return 'surface0';
         case 'error':
           return 'red';
+        case 'disconnected':
         default:
           return 'surface0';
       }
     };
 
-    // Use bright color variants during flash for visual feedback
     if (isFlashing) {
       switch (status) {
         case 'connected':
           return 'teal';
         case 'connecting':
+        case 'reconnecting':
           return 'peach';
-        case 'disconnected':
-          return 'overlay1';
         case 'error':
           return 'maroon';
         default:
@@ -51,22 +54,19 @@ export function Navigation() {
       }
     }
 
-    return baseVariant();
+    return base();
   };
 
-  /**
-   * Gets the display text for the connection status.
-   */
   const getStatusText = () => {
     switch (status) {
       case 'connected':
         return 'LIVE';
       case 'connecting':
+      case 'reconnecting':
         return 'SYNC';
-      case 'disconnected':
-        return 'OFF';
       case 'error':
         return 'ERR';
+      case 'disconnected':
       default:
         return 'OFF';
     }
@@ -86,6 +86,17 @@ export function Navigation() {
         <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
           {getStatusText()}
         </span>
+        {isConnected && hasNewMessages && (
+          <button
+            type="button"
+            onClick={clearNewMessages}
+            is-="badge"
+            variant-="teal"
+            title="New realtime messages"
+          >
+            NEW
+          </button>
+        )}
         <span is-="badge" variant-="yellow">
           SALACIA
         </span>
