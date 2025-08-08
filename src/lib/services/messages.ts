@@ -139,10 +139,7 @@ export class MessagesService {
         AiInteraction.findAll({
           attributes: [
             [fn('COUNT', col('*')), 'totalMessages'],
-            [
-              fn('COUNT', fn('CASE', where(col('error'), { [Op.not]: null }), literal('1'), null)),
-              'failedMessages',
-            ],
+            [literal('COUNT(CASE WHEN error IS NOT NULL THEN 1 END)'), 'failedMessages'],
             [fn('COALESCE', fn('SUM', col('total_tokens')), 0), 'totalTokens'],
             [fn('COALESCE', fn('AVG', col('response_time_ms')), 0), 'averageResponseTime'],
           ],

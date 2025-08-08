@@ -10,8 +10,18 @@ import type { APIRoute } from 'astro';
  */
 export const GET: APIRoute = async () => {
   const startTime = Date.now();
-  const status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+
+  // List of required environment variables for basic health
+  const requiredEnvVars = ['NODE_ENV']; // Add more as needed, e.g., 'API_KEY'
+  const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
+
+  let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
   const details: Record<string, unknown> = {};
+
+  if (missingEnvVars.length > 0) {
+    status = 'degraded';
+    details.missingEnvVars = missingEnvVars;
+  }
 
   const endTime = Date.now();
   const responseTime = endTime - startTime;
