@@ -97,7 +97,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Sequelize migrations
-        run: npm run sequelize:migrate:up
+      - name: Run Sequelize database sync
+        run: npm run sequelize:sync
         env:
           DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
