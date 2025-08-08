@@ -64,7 +64,7 @@ export class MessagesClient {
     // Parse dates in the response
     return {
       ...data,
-      items: data.items.map((item: any) => ({
+      items: data.items.map((item: MessageDisplay & { createdAt: string }) => ({
         ...item,
         createdAt: new Date(item.createdAt),
       })),

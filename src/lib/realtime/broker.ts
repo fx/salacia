@@ -48,8 +48,8 @@ class RealtimeBroker extends EventEmitter {
    * @returns Unsubscribe function to remove the listener
    */
   subscribe<T = unknown>(type: RealtimeEventType, handler: (_event: RealtimeEvent<T>) => void) {
-    this.on(type, handler as any);
-    return () => this.off(type, handler as any);
+    this.on(type, handler as (_event: RealtimeEvent<T>) => void);
+    return () => this.off(type, handler as (_event: RealtimeEvent<T>) => void);
   }
 
   /**

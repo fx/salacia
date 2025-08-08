@@ -257,7 +257,7 @@ export class MessagesService {
     // Search term filtering (searches in request and response JSON)
     if (filters.searchTerm) {
       const searchPattern = `%${filters.searchTerm}%`;
-      (conditions as any)[Op.or] = [
+      (conditions as Record<string | symbol, unknown>)[Op.or] = [
         where(fn('CAST', col('request'), 'TEXT'), Op.iLike, searchPattern),
         where(fn('CAST', col('response'), 'TEXT'), Op.iLike, searchPattern),
       ];
@@ -330,14 +330,14 @@ export class MessagesService {
           if (sortBy === 'createdAt') {
             const cursorDate = new Date(cursorData.sortFieldValue);
             if (sortDirection === 'desc') {
-              (whereConditions as any)[Op.or] = [
+              (whereConditions as Record<string | symbol, unknown>)[Op.or] = [
                 { createdAt: { [Op.lt]: cursorDate } },
                 {
                   [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.lt]: cursorData.id } }],
                 },
               ];
             } else {
-              (whereConditions as any)[Op.or] = [
+              (whereConditions as Record<string | symbol, unknown>)[Op.or] = [
                 { createdAt: { [Op.gt]: cursorDate } },
                 {
                   [Op.and]: [{ createdAt: cursorDate }, { id: { [Op.gt]: cursorData.id } }],
@@ -400,7 +400,7 @@ export class MessagesService {
           const firstItemDate = firstItem.createdAt;
           if (sortDirection === 'desc') {
             // For desc order, previous items have createdAt > current first item
-            (reverseWhereConditions as any)[Op.or] = [
+            (reverseWhereConditions as Record<string | symbol, unknown>)[Op.or] = [
               { createdAt: { [Op.gt]: firstItemDate } },
               {
                 [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.gt]: firstItem.id } }],
@@ -408,7 +408,7 @@ export class MessagesService {
             ];
           } else {
             // For asc order, previous items have createdAt < current first item
-            (reverseWhereConditions as any)[Op.or] = [
+            (reverseWhereConditions as Record<string | symbol, unknown>)[Op.or] = [
               { createdAt: { [Op.lt]: firstItemDate } },
               {
                 [Op.and]: [{ createdAt: firstItemDate }, { id: { [Op.lt]: firstItem.id } }],

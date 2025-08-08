@@ -7,3 +7,6 @@
 
 // Message-related types and utilities
 export * from './messages.js';
+
+// Server-Sent Events types and utilities
+export * from './sse.js';

@@ -466,8 +466,12 @@ describe('Sequelize Integration Tests', () => {
       });
 
       expect(provider).toBeDefined();
-      expect((provider as any)?.interactions).toBeInstanceOf(Array);
-      expect((provider as any)?.interactions?.length).toBeGreaterThanOrEqual(1);
+      expect(
+        (provider as AiProvider & { interactions?: AiInteraction[] })?.interactions
+      ).toBeInstanceOf(Array);
+      expect(
+        (provider as AiProvider & { interactions?: AiInteraction[] })?.interactions?.length
+      ).toBeGreaterThanOrEqual(1);
 
       // Test interaction → provider association
       const interaction = await AiInteraction.findByPk(testInteractionId, {
@@ -475,8 +479,10 @@ describe('Sequelize Integration Tests', () => {
       });
 
       expect(interaction).toBeDefined();
-      expect((interaction as any)?.provider).toBeDefined();
-      expect((interaction as any)?.provider?.name).toBe('test-association-provider');
+      expect((interaction as AiInteraction & { provider?: AiProvider })?.provider).toBeDefined();
+      expect((interaction as AiInteraction & { provider?: AiProvider })?.provider?.name).toBe(
+        'test-association-provider'
+      );
     });
   });
 });
