@@ -1,8 +1,6 @@
 /**
  * Database module entry point.
- * Exports all database utilities, schema definitions, and connection management.
+ * Placeholder file for database utilities (Drizzle layer removed).
  */
 
-export { db, closeConnection, testConnection } from './connection';
-export * from './schema';
 export type { Env } from '../env';

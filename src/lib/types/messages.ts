@@ -1,4 +1,4 @@
-import type { AiInteraction } from '../db/schema.js';
+// AiInteraction type is now defined inline where needed
 
 /**
  * Constants for pagination and display configuration.
@@ -163,6 +163,24 @@ export interface MessagesPaginatedResult {
 }
 
 /**
+ * Basic AI interaction interface for transformation.
+ * Defines the required properties from database records.
+ */
+export interface AiInteractionData {
+  id: string;
+  model: string;
+  createdAt: Date;
+  responseTimeMs?: number | null;
+  totalTokens?: number | null;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  statusCode?: number | null;
+  error?: string | null;
+  request: unknown;
+  response?: unknown;
+}
+
+/**
  * Transforms a database AI interaction record into a display-friendly format.
  * Computes derived fields and formats data for frontend consumption.
  *
@@ -173,7 +191,7 @@ export interface MessagesPaginatedResult {
  * @param interaction - Raw database record from aiInteractions table
  * @returns Formatted message display object with provider field undefined
  */
-export function transformAiInteractionToDisplay(interaction: AiInteraction): MessageDisplay {
+export function transformAiInteractionToDisplay(interaction: AiInteractionData): MessageDisplay {
   // Extract request preview
   let requestPreview = 'No request data';
   if (interaction.request) {

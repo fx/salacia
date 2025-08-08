@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 /**
  * Sequelize CLI configuration file.
  * This configuration should match the settings in src/lib/db/sequelize-config.ts

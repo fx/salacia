@@ -1,71 +1,53 @@
-# Sequelize Migration Documentation
+# Sequelize ORM Implementation
 
 ## Overview
 
-This document outlines the comprehensive migration from Drizzle ORM to Sequelize ORM implemented in the Salacia application. The migration provides a dual-ORM setup that allows seamless switching between Drizzle and Sequelize implementations while maintaining backward compatibility.
+This document describes the Sequelize ORM implementation in the Salacia application. Sequelize is now the sole ORM used for all database operations.
 
-**Why the Migration Was Performed:**
+## Key Features
 
-- Enhanced ORM features including built-in hooks system
-- Advanced query capabilities and relationship management
-- Better support for complex database operations
-- Improved developer experience with comprehensive model definitions
-
-## Key Features Implemented
-
-### 1. Dual-ORM Architecture
-
-The system supports both Drizzle and Sequelize simultaneously:
-
-- Environment variable `USE_SEQUELIZE=true` switches to Sequelize
-- Existing Drizzle implementation remains untouched
-- Runtime ORM selection with graceful fallback
-
-### 2. Sequelize Model System
+### 1. Sequelize Model System
 
 Complete model definitions for all database entities:
 
 - **SystemMetadata**: System configuration storage
 - **ApiRequest**: HTTP request logging
 - **HealthCheck**: System health monitoring
-- **AiProvider**: AI service provider configuration
-- **AiInteraction**: AI API interaction tracking (with hooks)
+- **AiProvider**: AI provider configurations
+- **AiInteraction**: AI API interaction tracking
 
-### 3. Hooks Implementation
+### 2. Automatic Hooks System
 
-Advanced lifecycle hooks on the AiInteraction model:
+Sequelize hooks provide automatic tracking of message updates:
 
 ```typescript
-hooks: {
-  beforeUpdate: async (instance: AiInteraction) => {
-    console.log('[Hook] Before update: AI interaction record with id', instance.id, 'being updated');
+// Example: AiInteraction model with hooks
+AiInteraction.init(
+  {
+    // ... model attributes
   },
-  afterUpdate: async (instance: AiInteraction) => {
-    console.log('[Hook] After update: AI interaction record with id', instance.id, 'updated');
-  },
-}
+  {
+    hooks: {
+      beforeUpdate: instance => {
+        console.log('AI interaction being updated:', instance.id);
+      },
+      afterUpdate: instance => {
+        console.log('AI interaction updated:', instance.id);
+      },
+    },
+  }
+);
 ```
 
-### 4. Service Layer Integration
+### 3. Relationship Management
 
-Dedicated `MessagesSequelizeService` class providing:
-
-- Paginated message retrieval with filtering
-- Cursor-based pagination for large datasets
-- Statistical aggregation and analytics
-- Advanced search capabilities across JSON fields
-- Comprehensive error handling
-
-### 5. Model Associations
-
-Proper relationships between models:
+Models support complex relationships:
 
 ```typescript
+// Define associations
 AiProvider.hasMany(AiInteraction, {
   foreignKey: 'providerId',
   as: 'interactions',
-  onDelete: 'SET NULL',
-  onUpdate: 'CASCADE',
 });
 
 AiInteraction.belongsTo(AiProvider, {
@@ -74,66 +56,49 @@ AiInteraction.belongsTo(AiProvider, {
 });
 ```
 
-## Using the Dual-ORM Setup
+## Basic Usage
 
-### Environment Configuration
-
-Set the environment variable to use Sequelize:
-
-```bash
-# Use Sequelize ORM
-export USE_SEQUELIZE=true
-
-# Use Drizzle ORM (default)
-export USE_SEQUELIZE=false
-```
-
-### Basic Usage Examples
-
-#### Creating Records
+### Creating Records
 
 ```typescript
 import { AiInteraction } from '@/lib/db/models';
 
 // Create new AI interaction
 const interaction = await AiInteraction.create({
-  model: 'claude-3-sonnet',
-  request: { messages: [{ role: 'user', content: 'Hello' }] },
-  response: { content: 'Hi there!' },
-  promptTokens: 10,
-  completionTokens: 5,
-  totalTokens: 15,
-  responseTimeMs: 1200,
-  statusCode: 200,
+  model: 'gpt-4',
+  request: { prompt: 'Hello' },
+  response: { completion: 'Hi there!' },
+  totalTokens: 10,
+  responseTimeMs: 250,
 });
 ```
 
-#### Querying with Service Layer
+### Querying Data
 
 ```typescript
-import { MessagesSequelizeService } from '@/lib/services/messages-sequelize';
-
-// Get paginated messages
-const result = await MessagesSequelizeService.getMessages({
-  page: 1,
-  pageSize: 20,
-  sort: { field: 'createdAt', direction: 'desc' },
-});
-
-// Get cursor-based pagination
-const cursorResult = await MessagesSequelizeService.getMessagesWithCursor({
-  limit: 20,
-  sortBy: 'createdAt',
-  sortDirection: 'desc',
+// Find with conditions
+const interactions = await AiInteraction.findAll({
+  where: {
+    model: 'gpt-4',
+    error: null,
+  },
+  order: [['createdAt', 'DESC']],
+  limit: 10,
 });
 ```
 
-#### Working with Associations
+### Using Associations
 
 ```typescript
-// Load provider with interactions
-const provider = await AiProvider.findByPk(providerId, {
-  include: [{ association: 'interactions' }],
+// Find with related data
+const providers = await AiProvider.findAll({
+  include: [
+    {
+      model: AiInteraction,
+      as: 'interactions',
+      where: { error: null },
+    },
+  ],
 });
 
 // Load interaction with provider
@@ -142,66 +107,62 @@ const interaction = await AiInteraction.findByPk(interactionId, {
 });
 ```
 
-## Migration Phases Completed
+## Configuration
 
-### Phase 1: Database Connection Setup
+### Database Connection
 
-- ✅ Sequelize connection configuration
-- ✅ Environment-based connection string management
-- ✅ Connection pooling and optimization
-- ✅ Connection testing utilities
+Sequelize connects to PostgreSQL using environment variables:
 
-### Phase 2: Model Definitions
+```typescript
+// src/database/sequelize/config.ts
+export default {
+  development: {
+    url: process.env.DATABASE_URL,
+    dialect: 'postgres',
+    logging: false,
+  },
+  production: {
+    url: process.env.DATABASE_URL,
+    dialect: 'postgres',
+    logging: false,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+  },
+};
+```
 
-- ✅ Complete model schema for all tables
-- ✅ Field mappings and validation rules
-- ✅ Database constraints and indexes
-- ✅ TypeScript type safety integration
+### Model Registration
 
-### Phase 3: Model Associations
+Models are automatically loaded and registered:
 
-- ✅ One-to-many relationship (Provider → Interactions)
-- ✅ Foreign key constraints
-- ✅ Cascading delete/update rules
-- ✅ Association aliases for query building
+```typescript
+// src/lib/db/models/index.ts
+import { sequelize } from '@/database/sequelize';
+import { AiInteraction } from './ai-interaction';
+import { AiProvider } from './ai-provider';
 
-### Phase 4: Service Layer
+// Initialize models
+const models = {
+  AiInteraction,
+  AiProvider,
+  // ... other models
+};
 
-- ✅ Dedicated service classes for business logic
-- ✅ Advanced querying with filtering and sorting
-- ✅ Statistical aggregation methods
-- ✅ Error handling and validation
+// Setup associations
+Object.values(models).forEach(model => {
+  if (model.associate) {
+    model.associate(models);
+  }
+});
+```
 
-### Phase 5: Hooks System
+## Testing
 
-- ✅ beforeUpdate/afterUpdate hooks on AiInteraction
-- ✅ Logging and monitoring capabilities
-- ✅ Extensible hook architecture
-
-### Phase 6: Testing Framework
-
-- ✅ Comprehensive integration tests
-- ✅ Hook validation testing
-- ✅ Service layer testing
-- ✅ API endpoint integration tests
-
-### Phase 7: API Integration
-
-- ✅ Runtime ORM switching in API endpoints
-- ✅ Backward compatibility maintenance
-- ✅ Response format consistency
-- ✅ Error handling parity
-
-### Phase 8: Documentation
-
-- ✅ Complete migration documentation
-- ✅ Usage examples and best practices
-- ✅ Testing instructions
-- ✅ Rollback procedures
-
-## Testing Instructions
-
-### Running the Test Suite
+### Running Tests
 
 ```bash
 # Run all Sequelize integration tests
@@ -212,74 +173,81 @@ npm test -- --grep "Sequelize Integration"
 npm test -- --grep "Service Layer Integration"
 ```
 
-### Manual Testing
-
-1. Set `USE_SEQUELIZE=true` in your environment
-2. Start the application: `npm run dev`
-3. Test API endpoints at `/api/messages`
-4. Verify hooks are triggered by updating records
-5. Check database consistency
-
 ### Validation Checklist
 
 - [ ] Database connection establishes successfully
 - [ ] All CRUD operations work on all models
-- [ ] Hooks are triggered on AiInteraction updates
+- [ ] Hooks are triggered on model updates
 - [ ] Service layer returns correct data formats
-- [ ] API endpoints function with both ORMs
+- [ ] API endpoints function correctly
 - [ ] Statistics and aggregation queries work
 - [ ] Error handling behaves consistently
 
-## Rollback Procedures
-
-### Emergency Rollback
-
-If issues are encountered, immediately disable Sequelize:
-
-```bash
-export USE_SEQUELIZE=false
-```
-
-This immediately reverts to the stable Drizzle implementation.
-
-### Gradual Rollback
-
-1. Monitor application metrics and error rates
-2. If Sequelize shows issues, set `USE_SEQUELIZE=false`
-3. Restart application services
-4. Verify Drizzle functionality
-5. Investigate and fix Sequelize issues offline
-
-### Database State
-
-- No database schema changes were made
-- Both ORMs work with the same database structure
-- No data migration is required for rollback
-- Existing data remains fully compatible
-
-### Code Removal (if needed)
-
-To completely remove Sequelize implementation:
-
-1. Remove Sequelize dependencies from `package.json`
-2. Delete `/src/lib/db/models/` directory
-3. Delete `/src/lib/db/sequelize-*` files
-4. Delete `/src/lib/services/messages-sequelize.ts`
-5. Remove Sequelize test files
-6. Update API endpoints to remove USE_SEQUELIZE checks
-
 ## Performance Considerations
 
-- Sequelize adds ~50ms to cold start time
-- Query performance is comparable to Drizzle
-- Hook execution adds minimal overhead (~1-2ms per update)
-- Connection pooling optimizes database usage
+- Query performance is optimized through proper indexing
+- Connection pooling reduces database connection overhead
 - Cursor pagination improves large dataset handling
+- Hooks add minimal overhead (~1-2ms per operation)
 
-## Next Steps
+## Schema Management
 
-- Monitor production performance metrics
-- Gather developer feedback on new features
-- Consider migrating additional endpoints to Sequelize
-- Evaluate removing Drizzle dependency in future releases
-- Implement additional hooks for audit trails
+### Creating New Models
+
+1. Define model in `src/lib/db/models/`
+2. Create migration for table structure
+3. Run migration to create table
+4. Add associations if needed
+
+### Modifying Existing Models
+
+1. Update model definition
+2. Create migration for changes
+3. Test migration locally
+4. Apply to production after testing
+
+## Best Practices
+
+1. **Use TypeScript** for all model definitions
+2. **Include TSDoc** documentation for all models and methods
+3. **Test migrations** thoroughly before production
+4. **Use transactions** for data integrity
+5. **Monitor performance** of complex queries
+6. **Implement proper error handling** in all database operations
+
+## Common Patterns
+
+### Pagination
+
+```typescript
+const { rows, count } = await AiInteraction.findAndCountAll({
+  limit: 20,
+  offset: 40,
+  order: [['createdAt', 'DESC']],
+});
+```
+
+### Bulk Operations
+
+```typescript
+// Bulk create
+await AiInteraction.bulkCreate(interactions);
+
+// Bulk update
+await AiInteraction.update({ status: 'processed' }, { where: { status: 'pending' } });
+```
+
+### Transactions
+
+```typescript
+const transaction = await sequelize.transaction();
+
+try {
+  await AiProvider.create(providerData, { transaction });
+  await AiInteraction.create(interactionData, { transaction });
+  await transaction.commit();
+} catch (error) {
+  await transaction.rollback();
+  throw error;
+}
+```

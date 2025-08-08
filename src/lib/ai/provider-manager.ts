@@ -1,40 +1,38 @@
-import { db } from '../db';
-import { aiProviders } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
 import { ProviderFactory } from './provider-factory';
 import { env } from '../env';
-import type { AiProvider } from '../db/schema';
 import type { AIProviderType, ProviderSettings, ModelConfig } from './types';
+
+// Simple AiProvider type definition for compatibility
+export interface AiProvider {
+  id: string;
+  name: string;
+  type: string;
+  apiKey: string;
+  baseUrl: string | null;
+  models: unknown;
+  settings: unknown;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 /**
  * Provider manager for handling AI provider selection and management
  *
  * This service manages the selection of AI providers based on:
- * 1. Database configuration
- * 2. Environment variables
- * 3. Default fallbacks
+ * 1. Environment variables
+ * 2. Default fallbacks
  */
 export class ProviderManager {
   private static providerCache: Map<string, AiProvider> = new Map();
-  // Cache functionality can be added later as needed
 
   /**
    * Get the default provider for handling requests
    */
   static async getDefaultProvider(): Promise<AiProvider | null> {
     try {
-      // Try to get from database first
-      const dbProvider = await db
-        .select()
-        .from(aiProviders)
-        .where(and(eq(aiProviders.isActive, true), eq(aiProviders.isDefault, true)))
-        .limit(1);
-
-      if (dbProvider.length > 0) {
-        return dbProvider[0];
-      }
-
-      // If no default in database, check environment variable
+      // Check environment variable for default provider
       if (env.DEFAULT_AI_PROVIDER) {
         const envProvider = await this.getProviderByType(env.DEFAULT_AI_PROVIDER);
         if (envProvider) {
@@ -42,18 +40,7 @@ export class ProviderManager {
         }
       }
 
-      // Fall back to any active provider
-      const anyProvider = await db
-        .select()
-        .from(aiProviders)
-        .where(eq(aiProviders.isActive, true))
-        .limit(1);
-
-      if (anyProvider.length > 0) {
-        return anyProvider[0];
-      }
-
-      // If no database providers, try environment variables
+      // Fall back to creating a provider from available environment variables
       return this.createFallbackProvider();
     } catch (error) {
       console.error('Failed to get default provider:', error, {
@@ -67,27 +54,16 @@ export class ProviderManager {
   }
 
   /**
-   * Get a provider by type from database or create from environment
+   * Get a provider by type from environment
    */
   static async getProviderByType(type: AIProviderType): Promise<AiProvider | null> {
     try {
-      // Check database first
-      const dbProvider = await db
-        .select()
-        .from(aiProviders)
-        .where(and(eq(aiProviders.type, type), eq(aiProviders.isActive, true)))
-        .limit(1);
-
-      if (dbProvider.length > 0) {
-        return dbProvider[0];
-      }
-
       // Create from environment if available
       return this.createProviderFromEnv(type);
     } catch (error) {
       console.error(`Failed to get provider for type ${type}:`, error, {
         attemptedType: type,
-        dbError: error instanceof Error ? error.message : 'Unknown',
+        error: error instanceof Error ? error.message : 'Unknown',
       });
       return null;
     }
@@ -152,11 +128,21 @@ export class ProviderManager {
   }
 
   /**
-   * Get all active providers from database
+   * Get all active providers from environment variables
    */
   static async getActiveProviders(): Promise<AiProvider[]> {
     try {
-      return await db.select().from(aiProviders).where(eq(aiProviders.isActive, true));
+      const providers: AiProvider[] = [];
+      const providerTypes: AIProviderType[] = ['anthropic', 'openai', 'groq'];
+
+      for (const type of providerTypes) {
+        const provider = this.createProviderFromEnv(type);
+        if (provider) {
+          providers.push(provider);
+        }
+      }
+
+      return providers;
     } catch (error) {
       console.error('Failed to get active providers:', error);
       return [];
