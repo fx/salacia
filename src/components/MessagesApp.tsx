@@ -15,17 +15,20 @@
  * @module MessagesApp
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { MessagesTable } from './MessagesTable.js';
 import { Pagination } from './Pagination.js';
 import { SearchAndFilters } from './SearchAndFilters.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
+import { RealtimeStatus } from './RealtimeStatus.js';
 import { messagesClient, MessagesApiError } from '../lib/api/messages-client.js';
+import { useRealtimeMessages } from '../hooks/useRealtimeMessages.js';
 import type {
   MessagesPaginatedResult,
   MessagesPaginationParams,
   MessagesFilterParams,
   MessageSort,
+  MessageDisplay,
 } from '../lib/types/messages.js';
 
 /**
@@ -56,6 +59,8 @@ interface MessagesAppState {
   pagination: MessagesPaginationParams;
   /** Current filter parameters */
   filters: MessagesFilterParams;
+  /** Whether there are new messages available */
+  hasNewMessages: boolean;
 }
 
 /**
@@ -78,6 +83,19 @@ export function MessagesApp({
     error: initialError,
     pagination: defaultPagination,
     filters: defaultFilters,
+    hasNewMessages: false,
+  });
+
+  // Initialize realtime messages hook
+  const {
+    messages: realtimeMessages,
+    connectionState,
+    stats,
+    clearMessages: clearRealtimeMessages,
+  } = useRealtimeMessages({
+    endpoint: '/api/sse/messages',
+    autoConnect: !initialError, // Only enable if no initial error
+    maxMessages: 100,
   });
 
   /**
@@ -155,6 +173,55 @@ export function MessagesApp({
     fetchMessages(state.pagination, state.filters);
   }, [state.pagination, state.filters, fetchMessages]);
 
+  /**
+   * Handles clearing new messages indicator.
+   */
+  const handleClearNewMessages = useCallback(() => {
+    setState(prev => ({ ...prev, hasNewMessages: false }));
+    // Optionally refresh to show the new messages
+    if (state.pagination.page === 1) {
+      fetchMessages(state.pagination, state.filters);
+    }
+  }, [state.pagination, state.filters, fetchMessages]);
+
+  /**
+   * Merge realtime messages with current data for display.
+   * Only applies to the first page to maintain pagination consistency.
+   */
+  const displayMessages = useMemo(() => {
+    if (!state.data?.messages) return [];
+    
+    // Only merge realtime messages on the first page
+    if (state.pagination.page !== 1 || realtimeMessages.length === 0) {
+      return state.data.messages;
+    }
+
+    // Create a map for deduplication
+    const messageMap = new Map<string, MessageDisplay>();
+    
+    // Add realtime messages first (newest)
+    realtimeMessages.forEach(msg => messageMap.set(msg.id, msg));
+    
+    // Add existing messages (avoid duplicates)
+    state.data.messages.forEach(msg => {
+      if (!messageMap.has(msg.id)) {
+        messageMap.set(msg.id, msg);
+      }
+    });
+
+    // Convert back to array and limit to page size
+    return Array.from(messageMap.values()).slice(0, state.data.pageSize);
+  }, [state.data, state.pagination.page, realtimeMessages]);
+
+  /**
+   * Track when new realtime messages arrive on non-first pages.
+   */
+  useEffect(() => {
+    if (realtimeMessages.length > 0 && state.pagination.page !== 1) {
+      setState(prev => ({ ...prev, hasNewMessages: true }));
+    }
+  }, [realtimeMessages.length, state.pagination.page]);
+
   // Extract available models and providers for filter dropdowns
   const availableModels = state.data?.messages
     ? Array.from(new Set(state.data.messages.map(msg => msg.model))).sort()
@@ -168,6 +235,16 @@ export function MessagesApp({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Realtime status indicator */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5ch 1ch' }}>
+        <RealtimeStatus
+          connectionState={connectionState}
+          messageCount={stats.totalReceived}
+          hasNewMessages={state.hasNewMessages}
+          onClearNewMessages={handleClearNewMessages}
+        />
+      </div>
+
       {/* Search and Filters section */}
       <ErrorBoundary context="Search and Filters">
         <SearchAndFilters
@@ -196,11 +273,37 @@ export function MessagesApp({
           </div>
         )}
 
+        {/* New messages notification for non-first pages */}
+        {state.hasNewMessages && state.pagination.page !== 1 && (
+          <div
+            style={{
+              padding: '1ch 2ch',
+              backgroundColor: 'var(--wui-color-surface)',
+              borderBottom: '1px solid var(--wui-color-border)',
+              textAlign: 'center',
+            }}
+            role="alert"
+            aria-live="polite"
+          >
+            <span style={{ color: 'var(--wui-color-green)' }}>● </span>
+            New messages available.{' '}
+            <button
+              onClick={() => handlePageChange(1)}
+              is-="button"
+              variant-="text"
+              size-="small"
+              type="button"
+            >
+              Go to first page
+            </button>
+          </div>
+        )}
+
         {/* Messages table */}
         {!state.error && (
           <ErrorBoundary context="Messages Table">
             <MessagesTable
-              messages={state.data?.messages || []}
+              messages={displayMessages}
               isLoading={state.isLoading}
               error={null} // Errors are handled at the app level
               sort={state.pagination.sort}

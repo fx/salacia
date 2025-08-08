@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { broker } from '../../../lib/realtime/broker.js';
 import type { RealtimeEvent } from '../../../lib/realtime/types.js';
+import { getSSEConfig, formatSSEMessage, createHeartbeatMessage } from '../../../lib/sse/config.js';
 
 /**
  * Server-Sent Events endpoint for real-time message notifications.
@@ -14,6 +15,9 @@ import type { RealtimeEvent } from '../../../lib/realtime/types.js';
  * @returns SSE stream with message:created events
  */
 export const GET: APIRoute = async ({ request }) => {
+  // Get SSE configuration
+  const config = getSSEConfig();
+  
   // Extract Last-Event-ID header for resuming from a specific point
   const lastEventId =
     request.headers.get('Last-Event-ID') ||
@@ -26,22 +30,32 @@ export const GET: APIRoute = async ({ request }) => {
       let isConnected = true;
       // eslint-disable-next-line prefer-const
       let heartbeatInterval: ReturnType<typeof globalThis.setInterval> | undefined;
+      let connectionTimeout: ReturnType<typeof globalThis.setTimeout> | undefined;
 
       /**
        * Send an SSE message with proper formatting.
        */
-      const sendSSE = (data: string, eventType?: string, id?: string) => {
+      const sendSSE = (data: string | object, eventType?: string, id?: string) => {
         if (!isConnected) return;
 
         try {
-          let message = '';
-          if (id) message += `id: ${id}\n`;
-          if (eventType) message += `event: ${eventType}\n`;
-          message += `data: ${data}\n\n`;
-
+          const message = formatSSEMessage(data, eventType, id);
           controller.enqueue(new TextEncoder().encode(message));
+          
+          // Reset connection timeout on activity
+          if (connectionTimeout) {
+            globalThis.clearTimeout(connectionTimeout);
+            connectionTimeout = globalThis.setTimeout(() => {
+              if (config.debugMode) {
+                console.error('SSE connection timeout, closing connection');
+              }
+              cleanup();
+            }, config.connectionTimeout);
+          }
         } catch (error) {
-          console.error('SSE send error:', error);
+          if (config.debugMode) {
+            console.error('SSE send error:', error);
+          }
           cleanup();
         }
       };
@@ -52,6 +66,7 @@ export const GET: APIRoute = async ({ request }) => {
       const cleanup = () => {
         isConnected = false;
         if (heartbeatInterval) globalThis.clearInterval(heartbeatInterval);
+        if (connectionTimeout) globalThis.clearTimeout(connectionTimeout);
         if (unsubscribe) unsubscribe();
 
         try {
@@ -90,23 +105,32 @@ export const GET: APIRoute = async ({ request }) => {
           data: serializedData,
         };
 
-        sendSSE(JSON.stringify(eventData), event.type, event.id);
+        sendSSE(eventData, event.type, event.id);
       };
 
-      // Send initial connection confirmation
-      sendSSE(
-        JSON.stringify({
+      // Send initial connection confirmation with retry interval
+      const connectedMessage = formatSSEMessage(
+        {
           type: 'connected',
           timestamp: new Date().toISOString(),
           message: 'SSE connection established',
-        }),
-        'connected'
+        },
+        'connected',
+        undefined,
+        config.retryInterval
       );
+      controller.enqueue(new TextEncoder().encode(connectedMessage));
 
       // If client provided Last-Event-ID, replay missed events
       if (lastEventId) {
         const missedEvents = broker.getEventsSince(lastEventId);
-        for (const event of missedEvents) {
+        const eventsToReplay = missedEvents.slice(0, config.maxReplayEvents);
+        
+        if (config.debugMode && missedEvents.length > config.maxReplayEvents) {
+          console.warn(`Replaying ${config.maxReplayEvents} of ${missedEvents.length} missed events`);
+        }
+        
+        for (const event of eventsToReplay) {
           handleRealtimeEvent(event);
         }
       }
@@ -114,18 +138,21 @@ export const GET: APIRoute = async ({ request }) => {
       // Subscribe to future realtime events
       const unsubscribe = broker.subscribe('message:created', handleRealtimeEvent);
 
-      // Set up heartbeat to detect stale connections (every 30 seconds)
+      // Set up heartbeat to detect stale connections
       heartbeatInterval = globalThis.setInterval(() => {
         if (!isConnected) return;
 
-        sendSSE(
-          JSON.stringify({
-            type: 'heartbeat',
-            timestamp: new Date().toISOString(),
-          }),
-          'heartbeat'
-        );
-      }, 30000);
+        const heartbeat = createHeartbeatMessage();
+        controller.enqueue(new TextEncoder().encode(heartbeat));
+      }, config.heartbeatInterval);
+      
+      // Set up connection timeout
+      connectionTimeout = globalThis.setTimeout(() => {
+        if (config.debugMode) {
+          console.error('SSE initial connection timeout, closing connection');
+        }
+        cleanup();
+      }, config.connectionTimeout);
 
       // Handle client disconnect
       const abortController = new AbortController();

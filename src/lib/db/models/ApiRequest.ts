@@ -1,5 +1,6 @@
-import { DataTypes, Model, type InferAttributes, type InferCreationAttributes } from 'sequelize';
+import { DataTypes, Model, type InferAttributes, type InferCreationAttributes, type CreateOptions } from 'sequelize';
 import { sequelize } from '../sequelize-connection';
+import { broker } from '../../realtime/broker';
 
 /**
  * Sequelize model for the api_requests table.
@@ -204,5 +205,35 @@ ApiRequest.init(
       },
     ],
     comment: 'API requests table for logging all incoming API requests',
+    hooks: {
+      /**
+       * Hook that runs after creating a new API request record.
+       * Emits a realtime event to notify connected clients about the new request.
+       * Uses transaction afterCommit to ensure event is only emitted after successful commit.
+       * 
+       * @param instance - The newly created ApiRequest instance
+       * @param options - Sequelize options including transaction context
+       */
+      afterCreate: async (instance: ApiRequest, options: CreateOptions<InferAttributes<ApiRequest>>) => {
+        // Emit realtime event for new API request
+        const emitEvent = () => {
+          broker.emitMessageCreated({
+            id: instance.id,
+            createdAt: instance.createdAt,
+            model: `${instance.method} ${instance.path}`,
+            statusCode: instance.statusCode ?? 0,
+            error: instance.statusCode && instance.statusCode >= 400 ? `HTTP ${instance.statusCode}` : undefined,
+          });
+        };
+
+        // If there's a transaction, wait for it to commit before emitting
+        if (options.transaction) {
+          options.transaction.afterCommit(() => emitEvent());
+        } else {
+          // No transaction, emit immediately
+          emitEvent();
+        }
+      },
+    },
   }
 );
