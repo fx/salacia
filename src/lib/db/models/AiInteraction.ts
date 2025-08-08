@@ -1,5 +1,6 @@
 import { DataTypes, Model, type InferAttributes, type InferCreationAttributes } from 'sequelize';
 import { sequelize } from '../sequelize-connection';
+import { broker } from '../../realtime/broker';
 
 /**
  * Sequelize model for the ai_interactions table.
@@ -219,15 +220,34 @@ AiInteraction.init(
     comment: 'API interactions table for logging AI API requests and responses',
     hooks: {
       /**
+       * Hook executed after creating an AiInteraction record.
+       * Emits a realtime event after the transaction commits (if present).
+       */
+      afterCreate: async (instance: AiInteraction, options: Record<string, unknown>) => {
+        const emit = () =>
+          broker.emitMessageCreated({
+            id: instance.id,
+            createdAt: instance.createdAt,
+            model: instance.model,
+            statusCode: instance.statusCode ?? undefined,
+            error: instance.error ?? undefined,
+          });
+
+        const tx = options?.transaction as { afterCommit?: (_fn: () => void) => void } | undefined;
+        if (tx?.afterCommit) {
+          tx.afterCommit(() => emit());
+        } else {
+          emit();
+        }
+      },
+
+      /**
        * Hook executed before updating an AiInteraction record.
        * Captures the original state before changes are applied.
        */
       beforeUpdate: async (instance: AiInteraction) => {
-        console.log(
-          '[Hook] Before update: AI interaction record with id',
-          instance.id,
-          'being updated'
-        );
+        // Debug: console.log('[Hook] Before update: AI interaction record with id', instance.id, 'being updated');
+        void instance; // Prevent unused parameter warning
       },
 
       /**
@@ -235,7 +255,8 @@ AiInteraction.init(
        * Logs the new state after changes have been applied.
        */
       afterUpdate: async (instance: AiInteraction) => {
-        console.log('[Hook] After update: AI interaction record with id', instance.id, 'updated');
+        // Debug: console.log('[Hook] After update: AI interaction record with id', instance.id, 'updated');
+        void instance; // Prevent unused parameter warning
       },
     },
   }
