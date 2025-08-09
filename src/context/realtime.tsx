@@ -8,8 +8,12 @@ import React, {
   useState,
 } from 'react';
 import { useSSE, type SSEEvent, type SSEConnectionState } from '../hooks/useSSE.js';
-import { MESSAGES_CONSTANTS, type MessageDisplay } from '../lib/types/messages.js';
+import { type MessageDisplay } from '../lib/types/messages.js';
 import type { MessageCreatedEventData } from '../lib/realtime/types.js';
+import { defaultTransformMessage } from '../hooks/useRealtimeMessages.js';
+
+/** Timeout for new message inactivity before resetting counter */
+const NEW_MESSAGE_INACTIVITY_TIMEOUT_MS = 5000;
 
 /**
  * Statistics for real-time message tracking.
@@ -41,64 +45,6 @@ export interface RealtimeContextValue {
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefined);
-
-/**
- * Converts SSE message:created event data into a MessageDisplay for UI.
- */
-function transformMessage(eventData: MessageCreatedEventData): MessageDisplay {
-  let requestPreview = 'No request data';
-  if (eventData.request) {
-    try {
-      const reqStr =
-        typeof eventData.request === 'string'
-          ? eventData.request
-          : JSON.stringify(eventData.request);
-      requestPreview =
-        reqStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${reqStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : reqStr;
-    } catch {
-      requestPreview = 'Invalid request data';
-    }
-  }
-
-  let responsePreview: string | undefined;
-  if (eventData.response) {
-    try {
-      const resStr =
-        typeof eventData.response === 'string'
-          ? eventData.response
-          : JSON.stringify(eventData.response);
-      responsePreview =
-        resStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${resStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : resStr;
-    } catch {
-      responsePreview = 'Invalid response data';
-    }
-  }
-
-  const statusCode = eventData.statusCode ?? undefined;
-  const err = eventData.error ?? undefined;
-
-  return {
-    id: eventData.id,
-    model: eventData.model ?? 'unknown',
-    provider: undefined,
-    createdAt: new Date(eventData.createdAt),
-    responseTime: eventData.responseTimeMs ?? undefined,
-    totalTokens: eventData.totalTokens ?? undefined,
-    promptTokens: eventData.promptTokens ?? undefined,
-    completionTokens: eventData.completionTokens ?? undefined,
-    statusCode,
-    error: err,
-    requestPreview,
-    responsePreview,
-    isSuccess: !err && statusCode === 200,
-    request: eventData.request ?? null,
-    response: eventData.response,
-  };
-}
 
 /**
  * React provider that exposes a single global SSE connection and recent message buffer.
@@ -136,7 +82,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     (event: SSEEvent) => {
       try {
         const eventData = event.data as MessageCreatedEventData;
-        const newMessage = transformMessage(eventData);
+        const newMessage = defaultTransformMessage(eventData);
 
         setMessages(prev => {
           const existingIndex = prev.findIndex(m => m.id === newMessage.id);
@@ -169,7 +115,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         inactivityTimerRef.current = setTimeout(() => {
           setHasNewMessages(false);
           setNewMessagesCount(0);
-        }, 5000);
+        }, NEW_MESSAGE_INACTIVITY_TIMEOUT_MS);
       } catch {
         /* noop */
       }

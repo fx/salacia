@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRealtime } from '../context/realtime.js';
 
+/** Flash duration for +N badge animation */
+const PLUS_FLASH_DURATION_MS = 280;
+/** Flash duration for connection state badge animation */
+const VARIANT_FLASH_DURATION_MS = 300;
+
 /**
  * Terminal-style navigation component designed to mimic Claude Code's interface.
  * Features a monospace terminal aesthetic with integrated navigation links
@@ -22,28 +27,32 @@ export function Navigation() {
   const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
   const prevCountRef = React.useRef(0);
 
-  // Flash logic for +N only: on increment
+  // Combined flash logic to avoid race condition with prevCountRef.current
   useEffect(() => {
+    let plusTimeout: ReturnType<typeof setTimeout> | null = null;
+    let variantTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // +N flash logic: on increment
     if (newMessagesCount > prevCountRef.current) {
       setPlusFlash(true);
-      const t = setTimeout(() => setPlusFlash(false), 280); // super brief
-      return () => clearTimeout(t);
+      plusTimeout = setTimeout(() => setPlusFlash(false), PLUS_FLASH_DURATION_MS);
     }
-    prevCountRef.current = newMessagesCount;
-  }, [newMessagesCount]);
 
-  // Variant flash logic only for connection transitions or clearing
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
+    // Variant flash logic: on connection transitions or clearing
     const shouldFlash = isConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
     if (shouldFlash) {
       setIsFlashing(true);
-      timeout = setTimeout(() => setIsFlashing(false), 300);
+      variantTimeout = setTimeout(() => setIsFlashing(false), VARIANT_FLASH_DURATION_MS);
     }
+
+    // Update prevCountRef after logic
+    prevCountRef.current = newMessagesCount;
+
     return () => {
-      if (timeout) clearTimeout(timeout);
+      if (plusTimeout) clearTimeout(plusTimeout);
+      if (variantTimeout) clearTimeout(variantTimeout);
     };
-  }, [isConnecting, newMessagesCount]);
+  }, [newMessagesCount, isConnecting]);
 
   const status = useMemo(() => connectionState, [connectionState]);
 
