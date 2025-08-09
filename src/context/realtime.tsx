@@ -34,6 +34,8 @@ export interface RealtimeContextValue {
   messages: MessageDisplay[];
   stats: RealtimeStats;
   hasNewMessages: boolean;
+  /** Count of new messages received within the current burst window */
+  newMessagesCount: number;
   clearNewMessages: () => void;
   addEventListener: (eventType: string, handler: (_event: SSEEvent) => void) => () => void;
 }
@@ -102,6 +104,11 @@ function transformMessage(eventData: MessageCreatedEventData): MessageDisplay {
  * React provider that exposes a single global SSE connection and recent message buffer.
  * Uses /api/sse/messages and listens to connected, heartbeat, message:created events.
  */
+/**
+ * Provides realtime SSE data and maintains a burst window counter of new messages.
+ * newMessagesCount increments for each message:created event and resets to 0 after
+ * 3s of inactivity (no new messages). Clearing manually also resets the count.
+ */
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<MessageDisplay[]>([]);
   const [stats, setStats] = useState<RealtimeStats>({
@@ -111,6 +118,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     connectionUptime: 0,
   });
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [connectionStartTime, setConnectionStartTime] = useState<Date | null>(null);
 
   const maxMessages = 100;
@@ -153,6 +162,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         }));
 
         setHasNewMessages(true);
+        setNewMessagesCount(c => c + 1);
+        if (inactivityTimerRef.current) {
+          clearTimeout(inactivityTimerRef.current);
+        }
+        inactivityTimerRef.current = setTimeout(() => {
+          setHasNewMessages(false);
+          setNewMessagesCount(0);
+        }, 5000);
       } catch {
         /* noop */
       }
@@ -200,7 +217,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [messages.length]);
 
-  const clearNewMessages = useCallback(() => setHasNewMessages(false), []);
+  const clearNewMessages = useCallback(() => {
+    setHasNewMessages(false);
+    setNewMessagesCount(0);
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  }, []);
 
   const value: RealtimeContextValue = useMemo(
     () => ({
@@ -212,6 +236,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       messages,
       stats,
       hasNewMessages,
+      newMessagesCount,
       clearNewMessages,
       addEventListener,
     }),
@@ -224,6 +249,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       messages,
       stats,
       hasNewMessages,
+      newMessagesCount,
       clearNewMessages,
       addEventListener,
     ]

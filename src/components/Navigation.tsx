@@ -10,17 +10,40 @@ import { useRealtime } from '../context/realtime.js';
  * @returns The terminal-style navigation bar with integrated header and navigation
  */
 export function Navigation() {
-  const { connectionState, isConnected, isConnecting, hasNewMessages, clearNewMessages } =
-    useRealtime();
-  const [isFlashing, setIsFlashing] = useState(false);
+  const {
+    connectionState,
+    isConnected,
+    isConnecting,
+    hasNewMessages,
+    newMessagesCount,
+    clearNewMessages,
+  } = useRealtime();
+  const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
+  const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
+  const prevCountRef = React.useRef(0);
 
+  // Flash logic for +N only: on increment
   useEffect(() => {
-    if (hasNewMessages || isConnecting) {
-      setIsFlashing(true);
-      const t = setTimeout(() => setIsFlashing(false), 800);
+    if (newMessagesCount > prevCountRef.current) {
+      setPlusFlash(true);
+      const t = setTimeout(() => setPlusFlash(false), 280); // super brief
       return () => clearTimeout(t);
     }
-  }, [hasNewMessages, isConnecting, connectionState]);
+    prevCountRef.current = newMessagesCount;
+  }, [newMessagesCount]);
+
+  // Variant flash logic only for connection transitions or clearing
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const shouldFlash = isConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
+    if (shouldFlash) {
+      setIsFlashing(true);
+      timeout = setTimeout(() => setIsFlashing(false), 300);
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [isConnecting, newMessagesCount]);
 
   const status = useMemo(() => connectionState, [connectionState]);
 
@@ -86,16 +109,14 @@ export function Navigation() {
         <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
           {getStatusText()}
         </span>
-        {isConnected && hasNewMessages && (
-          <button
-            type="button"
-            onClick={clearNewMessages}
+        {isConnected && hasNewMessages && newMessagesCount > 0 && (
+          <span
             is-="badge"
-            variant-="teal"
+            variant-={plusFlash ? 'foreground0' : 'foreground1'}
             title="New realtime messages"
           >
-            NEW
-          </button>
+            +{newMessagesCount}
+          </span>
         )}
         <span is-="badge" variant-="yellow">
           SALACIA
