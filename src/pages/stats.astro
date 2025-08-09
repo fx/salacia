@@ -104,49 +104,60 @@ const modelLabels = topModels.map(m =>
               <div box-="square">
                 <h2># STATS OVERVIEW</h2>
                 {overall ? (
-                  <div>
-                    <p>
-                      <span is-="badge" variant-="green">
-                        TOTAL {overall.totalMessages}
-                      </span>
-                      <span is-="badge" variant-="teal">
-                        SUCCESS {overall.successfulMessages}
-                      </span>
-                      <span is-="badge" variant-="maroon">
-                        FAILED {overall.failedMessages}
-                      </span>
-                      <span is-="badge" variant-="yellow">
-                        SUCCESS RATE {overall.successRate}%
-                      </span>
-                    </p>
-                    <label>
-                      Success Rate
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={overall.successRate}
-                        disabled
-                        bar-="thick"
-                      />
-                    </label>
-                    <p>
-                      <span is-="badge" variant-="blue">
-                        AVG RT {overall.averageResponseTime}ms
-                      </span>
-                      <span is-="badge" variant-="peach">
-                        TOKENS {overall.totalTokens}
-                      </span>
-                      {overall.mostUsedModel && (
-                        <span is-="badge" variant-="foreground1">
-                          TOP MODEL {overall.mostUsedModel}
+                  <p>
+                    <span is-="badge" variant-="surface0">
+                      TOTAL
+                    </span>
+                    <span is-="badge" variant-="green">
+                      {overall.totalMessages}
+                    </span>
+                    <span is-="badge" variant-="surface0">
+                      SUCCESS
+                    </span>
+                    <span is-="badge" variant-="teal">
+                      {overall.successfulMessages}
+                    </span>
+                    <span is-="badge" variant-="surface0">
+                      FAILED
+                    </span>
+                    <span is-="badge" variant-="maroon">
+                      {overall.failedMessages}
+                    </span>
+                    <span is-="badge" variant-="surface0">
+                      RATE
+                    </span>
+                    <span is-="badge" variant-="yellow">
+                      {overall.successRate}%
+                    </span>
+                    <span is-="badge" variant-="surface0">
+                      AVG RT
+                    </span>
+                    <span is-="badge" variant-="blue">
+                      {overall.averageResponseTime}ms
+                    </span>
+                    <span is-="badge" variant-="surface0">
+                      TOKENS
+                    </span>
+                    <span is-="badge" variant-="peach">
+                      {overall.totalTokens}
+                    </span>
+                    {overall.mostUsedModel && (
+                      <>
+                        <span is-="badge" variant-="surface0">
+                          TOP MODEL
                         </span>
-                      )}
-                      <span is-="badge" variant-="foreground0">
-                        UNIQUE MODELS {overall.uniqueModels}
-                      </span>
-                    </p>
-                  </div>
+                        <span is-="badge" variant-="foreground0">
+                          {overall.mostUsedModel}
+                        </span>
+                      </>
+                    )}
+                    <span is-="badge" variant-="surface0">
+                      MODELS
+                    </span>
+                    <span is-="badge" variant-="foreground1">
+                      {overall.uniqueModels}
+                    </span>
+                  </p>
                 ) : (
                   <p>Loading…</p>
                 )}
