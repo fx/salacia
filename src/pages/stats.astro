@@ -1,4 +1,5 @@
 ---
+import { Layout } from '../components/Layout';
 import '../styles/global.css';
 import { sequelize } from '../lib/db/sequelize-connection.js';
 import { MessagesService } from '../lib/services/messages.js';
@@ -12,7 +13,8 @@ let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null
 let errorMsg: string | null = null;
 
 // Time-series (last 14 days) and top models
-let series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>= [];
+let series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }> =
+  [];
 let topModels: Array<{ model: string; count: number }> = [];
 
 try {
@@ -58,25 +60,27 @@ const dayAvgRt = series.map(r => r.avg_rt);
 // Prepare x-axis labels (short day format)
 const dayLabels = series.map(r => {
   const date = new Date(r.day);
-  return (date.getMonth() + 1) + '/' + date.getDate();
+  return date.getMonth() + 1 + '/' + date.getDate();
 });
 
 // Prepare horizontal chart data for daily stats
 const dailyBars = series.map(r => ({
   label: r.day.substring(5), // MM-DD format
   value: r.total,
-  failed: r.failed
+  failed: r.failed,
 }));
 
 // Prepare horizontal chart data for models
 const modelBars = topModels.map(m => ({
   label: m.model.length > 20 ? m.model.substring(0, 20) + '...' : m.model,
-  value: m.count
+  value: m.count,
 }));
 
 // Prepare model chart data for vertical chart
 const modelCounts = topModels.map(m => m.count);
-const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0, 10) + '...' : m.model);
+const modelLabels = topModels.map(m =>
+  m.model.length > 10 ? m.model.substring(0, 10) + '...' : m.model
+);
 ---
 
 <html lang="en" data-webtui-theme="catppuccin">
@@ -88,150 +92,179 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
     <meta name="description" content="Usage analytics and performance statistics" />
   </head>
   <body>
-    {errorMsg ? (
-      <div box-="square" variant-="red" role="alert">
-        <strong>Error:</strong> {errorMsg}
-      </div>
-    ) : (
-      <>
-        <div box-="square">
-          <h2># STATS OVERVIEW</h2>
-          {overall ? (
-            <div>
-              <p>
-                <span is-="badge" variant-="green">TOTAL {overall.totalMessages}</span>
-                <span is-="badge" variant-="teal">SUCCESS {overall.successfulMessages}</span>
-                <span is-="badge" variant-="maroon">FAILED {overall.failedMessages}</span>
-                <span is-="badge" variant-="yellow">SUCCESS RATE {overall.successRate}%</span>
-              </p>
-              <label>
-                Success Rate
-                <input type="range" min="0" max="100" value={overall.successRate} disabled bar-="thick" />
-              </label>
-              <p>
-                <span is-="badge" variant-="blue">AVG RT {overall.averageResponseTime}ms</span>
-                <span is-="badge" variant-="peach">TOKENS {overall.totalTokens}</span>
-                {overall.mostUsedModel && (
-                  <span is-="badge" variant-="foreground1">TOP MODEL {overall.mostUsedModel}</span>
-                )}
-                <span is-="badge" variant-="foreground0">UNIQUE MODELS {overall.uniqueModels}</span>
-              </p>
+    <Layout client:idle>
+      <div>
+        {
+          errorMsg ? (
+            <div box-="square" variant-="red" role="alert">
+              <strong>Error:</strong> {errorMsg}
             </div>
           ) : (
-            <p>Loading…</p>
-          )}
-        </div>
+            <>
+              <div box-="square">
+                <h2># STATS OVERVIEW</h2>
+                {overall ? (
+                  <div>
+                    <p>
+                      <span is-="badge" variant-="green">
+                        TOTAL {overall.totalMessages}
+                      </span>
+                      <span is-="badge" variant-="teal">
+                        SUCCESS {overall.successfulMessages}
+                      </span>
+                      <span is-="badge" variant-="maroon">
+                        FAILED {overall.failedMessages}
+                      </span>
+                      <span is-="badge" variant-="yellow">
+                        SUCCESS RATE {overall.successRate}%
+                      </span>
+                    </p>
+                    <label>
+                      Success Rate
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={overall.successRate}
+                        disabled
+                        bar-="thick"
+                      />
+                    </label>
+                    <p>
+                      <span is-="badge" variant-="blue">
+                        AVG RT {overall.averageResponseTime}ms
+                      </span>
+                      <span is-="badge" variant-="peach">
+                        TOKENS {overall.totalTokens}
+                      </span>
+                      {overall.mostUsedModel && (
+                        <span is-="badge" variant-="foreground1">
+                          TOP MODEL {overall.mostUsedModel}
+                        </span>
+                      )}
+                      <span is-="badge" variant-="foreground0">
+                        UNIQUE MODELS {overall.uniqueModels}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <p>Loading…</p>
+                )}
+              </div>
 
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td>
-                {dailyBars.length === 0 ? (
-                  <div box-="square">
-                    <h3>LAST 14 DAYS</h3>
-                    <p>No data available.</p>
-                  </div>
-                ) : (
-                  <HorizontalBarChart 
-                    client:load
-                    data={dailyBars}
-                    width={30}
-                    title="LAST 14 DAYS"
-                  />
-                )}
-              </td>
-              <td>
-                {dailyBars.length === 0 ? (
-                  <div box-="square">
-                    <h3>SUCCESS VS FAILED (STACKED)</h3>
-                    <p>No data available.</p>
-                  </div>
-                ) : (
-                  <HorizontalBarChart 
-                    client:load
-                    data={dailyBars}
-                    width={30}
-                    title="SUCCESS VS FAILED (STACKED)"
-                    showFailedStack={true}
-                  />
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td>
-                {dayTotals.length === 0 ? (
-                  <div box-="square">
-                    <h3>DAILY TOTALS</h3>
-                    <p>No data available.</p>
-                  </div>
-                ) : (
-                  <VerticalBarChart 
-                    client:load
-                    data={dayTotals}
-                    height={10}
-                    xAxisLabels={dayLabels}
-                    title="DAILY TOTALS"
-                  />
-                )}
-              </td>
-              <td>
-                {dayAvgRt.length === 0 ? (
-                  <div box-="square">
-                    <h3>AVG RESPONSE TIME</h3>
-                    <p>No data available.</p>
-                  </div>
-                ) : (
-                  <VerticalBarChart 
-                    client:load
-                    data={dayAvgRt}
-                    height={10}
-                    xAxisLabels={dayLabels}
-                    yAxisLabels={[
-                      Math.max(...dayAvgRt) + 'ms',
-                      Math.round(Math.max(...dayAvgRt) / 2) + 'ms',
-                      '0ms'
-                    ]}
-                    title="AVG RESPONSE TIME"
-                  />
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td>
-                {modelCounts.length === 0 ? (
-                  <div box-="square">
-                    <h3>TOP MODELS</h3>
-                    <p>No model data.</p>
-                  </div>
-                ) : (
-                  <VerticalBarChart 
-                    client:load
-                    data={modelCounts}
-                    height={8}
-                    xAxisLabels={modelLabels}
-                    title="TOP MODELS"
-                  />
-                )}
-              </td>
-              <td>
-                {modelBars.length === 0 ? (
-                  <div box-="square">
-                    <h3>MODEL USAGE (HORIZONTAL)</h3>
-                    <p>No model data.</p>
-                  </div>
-                ) : (
-                  <HorizontalBarChart 
-                    client:load
-                    data={modelBars}
-                    width={25}
-                    title="MODEL USAGE (HORIZONTAL)"
-                  />
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </>
-    )}
+              <table width="100%">
+                <tbody>
+                  <tr>
+                    <td>
+                      {dailyBars.length === 0 ? (
+                        <div box-="square">
+                          <h3>LAST 14 DAYS</h3>
+                          <p>No data available.</p>
+                        </div>
+                      ) : (
+                        <HorizontalBarChart
+                          client:load
+                          data={dailyBars}
+                          width={30}
+                          title="LAST 14 DAYS"
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {dailyBars.length === 0 ? (
+                        <div box-="square">
+                          <h3>SUCCESS VS FAILED (STACKED)</h3>
+                          <p>No data available.</p>
+                        </div>
+                      ) : (
+                        <HorizontalBarChart
+                          client:load
+                          data={dailyBars}
+                          width={30}
+                          title="SUCCESS VS FAILED (STACKED)"
+                          showFailedStack={true}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {dayTotals.length === 0 ? (
+                        <div box-="square">
+                          <h3>DAILY TOTALS</h3>
+                          <p>No data available.</p>
+                        </div>
+                      ) : (
+                        <VerticalBarChart
+                          client:load
+                          data={dayTotals}
+                          height={10}
+                          xAxisLabels={dayLabels}
+                          title="DAILY TOTALS"
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {dayAvgRt.length === 0 ? (
+                        <div box-="square">
+                          <h3>AVG RESPONSE TIME</h3>
+                          <p>No data available.</p>
+                        </div>
+                      ) : (
+                        <VerticalBarChart
+                          client:load
+                          data={dayAvgRt}
+                          height={10}
+                          xAxisLabels={dayLabels}
+                          yAxisLabels={[
+                            Math.max(...dayAvgRt) + 'ms',
+                            Math.round(Math.max(...dayAvgRt) / 2) + 'ms',
+                            '0ms',
+                          ]}
+                          title="AVG RESPONSE TIME"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {modelCounts.length === 0 ? (
+                        <div box-="square">
+                          <h3>TOP MODELS</h3>
+                          <p>No model data.</p>
+                        </div>
+                      ) : (
+                        <VerticalBarChart
+                          client:load
+                          data={modelCounts}
+                          height={8}
+                          xAxisLabels={modelLabels}
+                          title="TOP MODELS"
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {modelBars.length === 0 ? (
+                        <div box-="square">
+                          <h3>MODEL USAGE (HORIZONTAL)</h3>
+                          <p>No model data.</p>
+                        </div>
+                      ) : (
+                        <HorizontalBarChart
+                          client:load
+                          data={modelBars}
+                          width={25}
+                          title="MODEL USAGE (HORIZONTAL)"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          )
+        }
+      </div>
+    </Layout>
   </body>
 </html>
