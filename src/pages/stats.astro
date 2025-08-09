@@ -3,23 +3,9 @@ import '../styles/global.css';
 import { sequelize } from '../lib/db/sequelize-connection.js';
 import { MessagesService } from '../lib/services/messages.js';
 import { VerticalBarChart } from '../components/VerticalBarChart';
+import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
-// Helpers
-function makeBar(value: number, max: number, width = 30): string {
-  if (max <= 0) return ''.padEnd(width, ' ');
-  const ratio = Math.max(0, Math.min(1, value / max));
-  const filled = Math.round(ratio * width);
-  return '█'.repeat(filled).padEnd(width, ' ');
-}
-
-function makeStackBar(total: number, failed: number, max: number, width = 30): string {
-  if (max <= 0 || total <= 0) return ''.padEnd(width, ' ');
-  const ratio = Math.max(0, Math.min(1, total / max));
-  const totalCols = Math.max(1, Math.round(ratio * width));
-  const failedCols = Math.min(totalCols, Math.round((failed / total) * totalCols));
-  const successCols = Math.max(0, totalCols - failedCols);
-  return '█'.repeat(successCols) + '░'.repeat(failedCols) + ' '.repeat(width - totalCols);
-}
+// No helper functions needed - using components instead
 
 // Load overall stats using service
 let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null = null;
@@ -65,10 +51,6 @@ try {
   errorMsg = err instanceof Error ? err.message : 'Failed to load stats';
 }
 
-// Compute max for bar scaling
-const maxDayTotal = series.reduce((m, r) => Math.max(m, r.total), 0);
-const maxModel = topModels.reduce((m, r) => Math.max(m, r.count), 0);
-
 // Prepare vertical charts data (last 14 days totals and avg response time)
 const dayTotals = series.map(r => r.total);
 const dayAvgRt = series.map(r => r.avg_rt);
@@ -79,7 +61,20 @@ const dayLabels = series.map(r => {
   return (date.getMonth() + 1) + '/' + date.getDate();
 });
 
-// Prepare model chart data
+// Prepare horizontal chart data for daily stats
+const dailyBars = series.map(r => ({
+  label: r.day.substring(5), // MM-DD format
+  value: r.total,
+  failed: r.failed
+}));
+
+// Prepare horizontal chart data for models
+const modelBars = topModels.map(m => ({
+  label: m.model.length > 20 ? m.model.substring(0, 20) + '...' : m.model,
+  value: m.count
+}));
+
+// Prepare model chart data for vertical chart
 const modelCounts = topModels.map(m => m.count);
 const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0, 10) + '...' : m.model);
 ---
@@ -131,29 +126,35 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
           <tbody>
             <tr>
               <td>
-                <div box-="square">
-                  <h3>## LAST 14 DAYS</h3>
-                  {series.length === 0 ? (
+                {dailyBars.length === 0 ? (
+                  <div box-="square">
+                    <h3>## LAST 14 DAYS</h3>
                     <p>No data available.</p>
-                  ) : (
-                    <pre>
-{series.map(r => `${r.day} | ${makeBar(r.total, maxDayTotal)} ${r.total} (${r.failed} failed)`).join('\n')}
-                    </pre>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <HorizontalBarChart 
+                    client:load
+                    data={dailyBars}
+                    width={30}
+                    title="## LAST 14 DAYS"
+                  />
+                )}
               </td>
               <td>
-                <div box-="square">
-                  <h3>## SUCCESS VS FAILED (STACKED)</h3>
-                  {series.length === 0 ? (
+                {dailyBars.length === 0 ? (
+                  <div box-="square">
+                    <h3>## SUCCESS VS FAILED (STACKED)</h3>
                     <p>No data available.</p>
-                  ) : (
-                    <pre>
-{series.map(r => `${r.day} | ${makeStackBar(r.total, r.failed, maxDayTotal)} ${r.total - r.failed}✔ ${r.failed}✖`).join('\n')}
-                    </pre>
-                  )}
-                  <small>Legend: █ success, ░ failed</small>
-                </div>
+                  </div>
+                ) : (
+                  <HorizontalBarChart 
+                    client:load
+                    data={dailyBars}
+                    width={30}
+                    title="## SUCCESS VS FAILED (STACKED)"
+                    showFailedStack={true}
+                  />
+                )}
               </td>
             </tr>
             <tr>
@@ -213,16 +214,19 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                 )}
               </td>
               <td>
-                <div box-="square">
-                  <h3>## MODEL USAGE (HORIZONTAL)</h3>
-                  {topModels.length === 0 ? (
+                {modelBars.length === 0 ? (
+                  <div box-="square">
+                    <h3>## MODEL USAGE (HORIZONTAL)</h3>
                     <p>No model data.</p>
-                  ) : (
-                    <pre>
-{topModels.map(m => `${m.model.padEnd(24, ' ')} | ${makeBar(m.count, maxModel)} ${m.count}`).join('\n')}
-                    </pre>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <HorizontalBarChart 
+                    client:load
+                    data={modelBars}
+                    width={25}
+                    title="## MODEL USAGE (HORIZONTAL)"
+                  />
+                )}
               </td>
             </tr>
           </tbody>

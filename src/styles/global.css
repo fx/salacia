@@ -113,4 +113,78 @@
   .chart-row[data-gap="1"] {
     gap: 0.5rem;
   }
+
+  /* Horizontal bar chart styles */
+  .horizontal-chart .chart-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .horizontal-chart .y-axis-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    font-family: monospace;
+    white-space: pre;
+  }
+
+  .horizontal-chart .label-row {
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+  }
+
+  .horizontal-chart .chart-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .horizontal-chart .bars-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 0.5rem;
+  }
+
+  .horizontal-chart .bar-row {
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+  }
+
+  .horizontal-chart .bar {
+    margin: 0;
+    font-family: monospace;
+    line-height: 1;
+  }
+
+  .horizontal-chart .x-axis {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .horizontal-chart .x-axis-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .horizontal-chart .value-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding-left: 0.5rem;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  .horizontal-chart .value-row {
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+    font-size: 0.875rem;
+  }
 }
