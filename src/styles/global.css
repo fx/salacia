@@ -114,4 +114,33 @@
     gap: 0.5rem;
   }
 
+  /* Minimal layout for horizontal bar chart */
+  .horizontal-bar-chart {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .horizontal-bar-chart .chart-labels,
+  .horizontal-bar-chart .chart-values {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .horizontal-bar-chart .bars-box {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .horizontal-bar-chart pre {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .chart-scale pre {
+    margin: 0;
+  }
 }

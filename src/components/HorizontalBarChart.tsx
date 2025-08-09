@@ -18,46 +18,66 @@ export function HorizontalBarChart({
   // Find longest label for padding
   const maxLabelLength = Math.max(...data.map(d => d.label.length));
   
-  // Generate bars with labels
-  const lines = data.map(item => {
-    if (max <= 0 || item.value <= 0) {
-      return `${item.label.padEnd(maxLabelLength)} │ ${' '.repeat(width)} │ ${item.value}`;
-    }
-    
-    const ratio = Math.max(0, Math.min(1, item.value / max));
-    const totalCols = Math.max(1, Math.round(ratio * width));
-    
-    let bar: string;
-    let suffix: string;
-    
-    if (showFailedStack && item.failed !== undefined) {
-      const failedCols = Math.min(totalCols, Math.round((item.failed / item.value) * totalCols));
-      const successCols = Math.max(0, totalCols - failedCols);
-      const emptyCols = width - totalCols;
-      bar = '█'.repeat(successCols) + '░'.repeat(failedCols) + ' '.repeat(emptyCols);
-      suffix = `${item.value - item.failed}✔ ${item.failed}✖`;
-    } else {
-      bar = '█'.repeat(totalCols) + ' '.repeat(width - totalCols);
-      suffix = item.value.toString();
-    }
-    
-    return `${item.label.padEnd(maxLabelLength)} │ ${bar} │ ${suffix}`;
-  });
-  
-  // Create axis line
-  const axisLine = `${' '.repeat(maxLabelLength)} └${'─'.repeat(width + 2)}┘`;
-  const scaleLabels = `${' '.repeat(maxLabelLength)}   0${' '.repeat(Math.floor(width/2) - 1)}${Math.round(max/2)}${' '.repeat(Math.floor(width/2) - 1)}${max}`;
-  
   return (
     <div data-box="square">
       {title && <h3>{title}</h3>}
-      <div data-box="square">
-        <pre>{lines.join('\n')}</pre>
+      
+      {/* Labels column | Bars box | Values column */}
+      <div className="horizontal-bar-chart">
+        {/* Y-axis labels */}
+        <div className="chart-labels">
+          {data.map((item, i) => (
+            <div key={i}>
+              <pre>{item.label.padEnd(maxLabelLength)}</pre>
+            </div>
+          ))}
+        </div>
+        
+        {/* Bars container with box */}
+        <div data-box="square" className="bars-box">
+          {data.map((item, i) => {
+            const ratio = item.value > 0 ? Math.max(0, Math.min(1, item.value / max)) : 0;
+            const barWidth = Math.round(ratio * width);
+            
+            let barDisplay: string;
+            if (showFailedStack && item.failed !== undefined) {
+              const failedWidth = Math.round((item.failed / item.value) * barWidth);
+              const successWidth = barWidth - failedWidth;
+              // Use input range for visual bar representation
+              barDisplay = `[${'='.repeat(successWidth)}${'-'.repeat(failedWidth)}${' '.repeat(width - barWidth)}]`;
+            } else {
+              barDisplay = `[${'='.repeat(barWidth)}${' '.repeat(width - barWidth)}]`;
+            }
+            
+            return (
+              <div key={i}>
+                <pre>{barDisplay}</pre>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Values column */}
+        <div className="chart-values">
+          {data.map((item, i) => (
+            <div key={i}>
+              <pre>
+                {showFailedStack && item.failed !== undefined 
+                  ? `${item.value - item.failed} ok, ${item.failed} fail`
+                  : item.value.toString()}
+              </pre>
+            </div>
+          ))}
+        </div>
       </div>
-      <pre>{axisLine}</pre>
-      <small>{scaleLabels}</small>
+      
+      {/* X-axis scale */}
+      <div className="chart-scale">
+        <pre>{' '.repeat(maxLabelLength)} 0{' '.repeat(Math.floor(width/2) - 1)}{Math.round(max/2).toString().padStart(3)}{' '.repeat(Math.floor(width/2) - 2)}{max.toString().padStart(3)}</pre>
+      </div>
+      
       {showFailedStack && (
-        <small>Legend: █ success, ░ failed</small>
+        <small>Legend: = success, - failed</small>
       )}
     </div>
   );

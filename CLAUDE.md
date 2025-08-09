@@ -1,5 +1,7 @@
 # Salacia Development Guidelines
 
+**IMPORTANT: DO NOT USE ASCII BOX DRAWING CHARACTERS! WebTUI simulates the terminal look through CSS. Never use characters like └, ─, │, ░, █, etc. Use WebTUI's box attributes and CSS classes instead.**
+
 ## Technology Stack
 
 This project uses the following core technologies:
