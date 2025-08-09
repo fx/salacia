@@ -18,6 +18,8 @@
 @import '@webtui/css/components/separator.css';
 @import '@webtui/css/components/table.css';
 @import '@webtui/css/components/dialog.css';
+@import '@webtui/css/components/pre.css';
+@import '@webtui/css/components/range.css';
 
 /* Import themes and plugins */
 @import '@webtui/theme-catppuccin';
@@ -47,11 +49,68 @@
     white-space: nowrap;
     border: 0;
   }
-  
+
   /* Navigation specific flex layout */
   nav {
     display: flex;
     justify-content: space-between;
   }
 
+  /* Vertical bar chart styles */
+  .chart-widget {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .chart-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-row.bars {
+    align-items: flex-end;
+    gap: 0.25rem;
+  }
+
+  .widget .line {
+    background: var(--foreground1);
+    width: 1ch;
+    min-width: 1ch;
+    display: block;
+  }
+
+  /* Dynamic height for bars using data attributes */
+  .widget .line[data-height="0"] { height: 0; }
+  .widget .line[data-height="1"] { height: 0.5rem; }
+  .widget .line[data-height="2"] { height: 1rem; }
+  .widget .line[data-height="3"] { height: 1.5rem; }
+  .widget .line[data-height="4"] { height: 2rem; }
+  .widget .line[data-height="5"] { height: 2.5rem; }
+  .widget .line[data-height="6"] { height: 3rem; }
+  .widget .line[data-height="7"] { height: 3.5rem; }
+  .widget .line[data-height="8"] { height: 4rem; }
+  .widget .line[data-height="9"] { height: 4.5rem; }
+  .widget .line[data-height="10"] { height: 5rem; }
+
+  /* Chart layout helpers */
+  .chart-column[data-self="grow"] {
+    flex-grow: 1;
+  }
+
+  .chart-row[data-self="grow"] {
+    flex-grow: 1;
+  }
+
+  .chart-column[data-gap="1"] {
+    gap: 0.5rem;
+  }
+
+  .chart-row[data-gap="1"] {
+    gap: 0.5rem;
+  }
 }

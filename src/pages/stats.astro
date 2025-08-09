@@ -1,0 +1,233 @@
+---
+import '../styles/global.css';
+import { sequelize } from '../lib/db/sequelize-connection.js';
+import { MessagesService } from '../lib/services/messages.js';
+import { VerticalBarChart } from '../components/VerticalBarChart';
+
+// Helpers
+function makeBar(value: number, max: number, width = 30): string {
+  if (max <= 0) return ''.padEnd(width, ' ');
+  const ratio = Math.max(0, Math.min(1, value / max));
+  const filled = Math.round(ratio * width);
+  return '█'.repeat(filled).padEnd(width, ' ');
+}
+
+function makeStackBar(total: number, failed: number, max: number, width = 30): string {
+  if (max <= 0 || total <= 0) return ''.padEnd(width, ' ');
+  const ratio = Math.max(0, Math.min(1, total / max));
+  const totalCols = Math.max(1, Math.round(ratio * width));
+  const failedCols = Math.min(totalCols, Math.round((failed / total) * totalCols));
+  const successCols = Math.max(0, totalCols - failedCols);
+  return '█'.repeat(successCols) + '░'.repeat(failedCols) + ' '.repeat(width - totalCols);
+}
+
+// Load overall stats using service
+let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null = null;
+let errorMsg: string | null = null;
+
+// Time-series (last 14 days) and top models
+let series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>= [];
+let topModels: Array<{ model: string; count: number }> = [];
+
+try {
+  overall = await MessagesService.getFilteredStats({});
+
+  // Time series (Postgres)
+  const [rows] = await sequelize.query(
+    `
+    SELECT 
+      to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day,
+      COUNT(*)::int as total,
+      COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
+      COALESCE(AVG(response_time_ms),0)::int as avg_rt,
+      COALESCE(SUM(total_tokens),0)::int as tokens
+    FROM ai_interactions
+    WHERE created_at >= NOW() - interval '14 days'
+    GROUP BY 1
+    ORDER BY 1
+    `
+  );
+  series = rows as typeof series;
+
+  // Top models
+  const [models] = await sequelize.query(
+    `
+    SELECT model, COUNT(*)::int as count
+    FROM ai_interactions
+    GROUP BY model
+    ORDER BY count DESC
+    LIMIT 5
+    `
+  );
+  topModels = models as typeof topModels;
+} catch (err) {
+  console.error('Failed to load stats', err);
+  errorMsg = err instanceof Error ? err.message : 'Failed to load stats';
+}
+
+// Compute max for bar scaling
+const maxDayTotal = series.reduce((m, r) => Math.max(m, r.total), 0);
+const maxModel = topModels.reduce((m, r) => Math.max(m, r.count), 0);
+
+// Prepare vertical charts data (last 14 days totals and avg response time)
+const dayTotals = series.map(r => r.total);
+const dayAvgRt = series.map(r => r.avg_rt);
+
+// Prepare x-axis labels (short day format)
+const dayLabels = series.map(r => {
+  const date = new Date(r.day);
+  return (date.getMonth() + 1) + '/' + date.getDate();
+});
+
+// Prepare model chart data
+const modelCounts = topModels.map(m => m.count);
+const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0, 10) + '...' : m.model);
+---
+
+<html lang="en" data-webtui-theme="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salacia - Stats</title>
+    <meta name="description" content="Usage analytics and performance statistics" />
+  </head>
+  <body>
+    {errorMsg ? (
+      <div box-="square" variant-="red" role="alert">
+        <strong>Error:</strong> {errorMsg}
+      </div>
+    ) : (
+      <>
+        <div box-="square">
+          <h2># STATS OVERVIEW</h2>
+          {overall ? (
+            <div>
+              <p>
+                <span is-="badge" variant-="green">TOTAL {overall.totalMessages}</span>
+                <span is-="badge" variant-="teal">SUCCESS {overall.successfulMessages}</span>
+                <span is-="badge" variant-="maroon">FAILED {overall.failedMessages}</span>
+                <span is-="badge" variant-="yellow">SUCCESS RATE {overall.successRate}%</span>
+              </p>
+              <label>
+                Success Rate
+                <input type="range" min="0" max="100" value={overall.successRate} disabled bar-="thick" />
+              </label>
+              <p>
+                <span is-="badge" variant-="blue">AVG RT {overall.averageResponseTime}ms</span>
+                <span is-="badge" variant-="peach">TOKENS {overall.totalTokens}</span>
+                {overall.mostUsedModel && (
+                  <span is-="badge" variant-="foreground1">TOP MODEL {overall.mostUsedModel}</span>
+                )}
+                <span is-="badge" variant-="foreground0">UNIQUE MODELS {overall.uniqueModels}</span>
+              </p>
+            </div>
+          ) : (
+            <p>Loading…</p>
+          )}
+        </div>
+
+        <table width="100%">
+          <tbody>
+            <tr>
+              <td>
+                <div box-="square">
+                  <h3>## LAST 14 DAYS</h3>
+                  {series.length === 0 ? (
+                    <p>No data available.</p>
+                  ) : (
+                    <pre>
+{series.map(r => `${r.day} | ${makeBar(r.total, maxDayTotal)} ${r.total} (${r.failed} failed)`).join('\n')}
+                    </pre>
+                  )}
+                </div>
+              </td>
+              <td>
+                <div box-="square">
+                  <h3>## SUCCESS VS FAILED (STACKED)</h3>
+                  {series.length === 0 ? (
+                    <p>No data available.</p>
+                  ) : (
+                    <pre>
+{series.map(r => `${r.day} | ${makeStackBar(r.total, r.failed, maxDayTotal)} ${r.total - r.failed}✔ ${r.failed}✖`).join('\n')}
+                    </pre>
+                  )}
+                  <small>Legend: █ success, ░ failed</small>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                {dayTotals.length === 0 ? (
+                  <div box-="square">
+                    <h3>## DAILY TOTALS</h3>
+                    <p>No data available.</p>
+                  </div>
+                ) : (
+                  <VerticalBarChart 
+                    client:load
+                    data={dayTotals}
+                    height={10}
+                    xAxisLabels={dayLabels}
+                    title="## DAILY TOTALS"
+                  />
+                )}
+              </td>
+              <td>
+                {dayAvgRt.length === 0 ? (
+                  <div box-="square">
+                    <h3>## AVG RESPONSE TIME</h3>
+                    <p>No data available.</p>
+                  </div>
+                ) : (
+                  <VerticalBarChart 
+                    client:load
+                    data={dayAvgRt}
+                    height={10}
+                    xAxisLabels={dayLabels}
+                    yAxisLabels={[
+                      Math.max(...dayAvgRt) + 'ms',
+                      Math.round(Math.max(...dayAvgRt) / 2) + 'ms',
+                      '0ms'
+                    ]}
+                    title="## AVG RESPONSE TIME"
+                  />
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                {modelCounts.length === 0 ? (
+                  <div box-="square">
+                    <h3>## TOP MODELS</h3>
+                    <p>No model data.</p>
+                  </div>
+                ) : (
+                  <VerticalBarChart 
+                    client:load
+                    data={modelCounts}
+                    height={8}
+                    xAxisLabels={modelLabels}
+                    title="## TOP MODELS"
+                  />
+                )}
+              </td>
+              <td>
+                <div box-="square">
+                  <h3>## MODEL USAGE (HORIZONTAL)</h3>
+                  {topModels.length === 0 ? (
+                    <p>No model data.</p>
+                  ) : (
+                    <pre>
+{topModels.map(m => `${m.model.padEnd(24, ' ')} | ${makeBar(m.count, maxModel)} ${m.count}`).join('\n')}
+                    </pre>
+                  )}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </>
+    )}
+  </body>
+</html>

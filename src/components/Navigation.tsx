@@ -113,6 +113,9 @@ export function Navigation() {
         <a href="/messages">
           <span is-="badge">MESSAGES</span>
         </a>
+        <a href="/stats">
+          <span is-="badge">STATS</span>
+        </a>
       </span>
       <span>
         <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
