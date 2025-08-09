@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useRealtime } from '../context/realtime.js';
+import { useStatsSSE } from '../hooks/useStatsSSE.js';
 import { VerticalBarChart } from './VerticalBarChart.js';
 import { HorizontalBarChart } from './HorizontalBarChart.js';
 import type { MessageStats } from '../lib/types/messages.js';
@@ -53,80 +53,39 @@ export function StatsDisplay({
   initialTopModels,
   initialError,
 }: StatsDisplayProps) {
-  // Local state for stats data
+  // Stats SSE connection
+  const {
+    connectionState,
+    isConnected,
+    statsData,
+    lastUpdate,
+    isInitialDataReceived,
+    error: sseError,
+  } = useStatsSSE();
+
+  // Local state for stats data - use SSE data when available, fallback to initial data
   const [overall, setOverall] = useState<MessageStats | null>(initialOverall);
   const [series, setSeries] = useState<TimeSeriesData[]>(initialSeries);
   const [topModels, setTopModels] = useState<ModelStats[]>(initialTopModels);
   const [error, setError] = useState<string | null>(initialError);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
-  // Realtime state with safe defaults
-  const [realtimeStats, setRealtimeStats] = useState({
-    totalReceived: 0,
-    successCount: 0,
-    errorCount: 0,
-    connectionUptime: 0,
-  });
-  const [hasNewMessages, setHasNewMessages] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-
+  // Update local state when SSE data is received
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Try to connect to realtime context when client-side
-  useEffect(() => {
-    if (!isClient) return;
-
-    try {
-      // This will be handled by a separate component that has access to the context
-      // For now, we'll handle this via a custom event system or by moving this logic
-      console.log('Client-side realtime setup would go here');
-    } catch (error) {
-      console.warn('RealtimeProvider not available, realtime features disabled:', error);
-    }
-  }, [isClient]);
-
-  /**
-   * Refresh stats data from the server when new messages arrive.
-   */
-  const refreshStats = async () => {
-    if (isRefreshing) return;
-
-    setIsRefreshing(true);
-    try {
-      // Refresh overall stats via API call
-      const response = await fetch('/api/messages?pageSize=1&page=1');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.stats) {
-        setOverall(data.stats);
-      }
-
-      // Note: For a complete implementation, we'd also refresh time series and model data
-      // This would require additional API endpoints or enhanced existing ones
-
+    if (statsData && statsData.overall) {
+      setOverall(statsData.overall);
+      setSeries(statsData.series);
+      setTopModels(statsData.topModels);
       setError(null);
-    } catch (err) {
-      console.error('Failed to refresh stats:', err);
-      setError(err instanceof Error ? err.message : 'Failed to refresh stats');
-    } finally {
-      setIsRefreshing(false);
     }
-  };
+  }, [statsData]);
 
-  /**
-   * Effect to refresh stats when new messages arrive via SSE.
-   */
+  // Handle SSE errors
   useEffect(() => {
-    if (isClient && hasNewMessages && isConnected) {
-      refreshStats();
+    if (sseError) {
+      console.error('Stats SSE error:', sseError);
+      setError(sseError instanceof Error ? sseError.message : 'SSE connection error');
     }
-  }, [isClient, hasNewMessages, isConnected]);
+  }, [sseError]);
 
   // Prepare chart data
   const dayTotals = series.map(r => r.total);
@@ -153,17 +112,19 @@ export function StatsDisplay({
     m.model.length > 10 ? `${m.model.substring(0, 10)}...` : m.model
   );
 
-  // Enhanced overall stats that includes realtime data
+  // Enhanced overall stats that includes SSE connection status
   const enhancedOverall = useMemo(() => {
     if (!overall) return null;
 
-    // Add realtime connection status to display
+    // Add SSE connection status and last update time to display
     return {
       ...overall,
-      realtimeConnected: isConnected,
-      realtimeStats: realtimeStats,
+      sseConnected: isConnected,
+      sseConnectionState: connectionState,
+      lastUpdate: lastUpdate?.toISOString(),
+      isInitialDataReceived,
     };
-  }, [overall, isConnected, realtimeStats]);
+  }, [overall, isConnected, connectionState, lastUpdate, isInitialDataReceived]);
 
   if (error) {
     return (
@@ -177,10 +138,17 @@ export function StatsDisplay({
     <div>
       <div box-="square">
         <h2>STATS OVERVIEW</h2>
-        {isRefreshing && (
+        {connectionState === 'connecting' && (
           <p>
             <span is-="badge" variant-="yellow">
-              REFRESHING...
+              CONNECTING TO REALTIME...
+            </span>
+          </p>
+        )}
+        {connectionState === 'reconnecting' && (
+          <p>
+            <span is-="badge" variant-="yellow">
+              RECONNECTING...
             </span>
           </p>
         )}
@@ -242,15 +210,15 @@ export function StatsDisplay({
               SSE
             </span>
             <span is-="badge" variant-={isConnected ? 'green' : 'red'}>
-              {isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+              {isConnected ? 'CONNECTED' : connectionState.toUpperCase()}
             </span>
-            {realtimeStats.totalReceived > 0 && (
+            {lastUpdate && (
               <>
                 <span is-="badge" variant-="surface0">
-                  RT RX
+                  LAST UPDATE
                 </span>
                 <span is-="badge" variant-="teal">
-                  {realtimeStats.totalReceived}
+                  {new Date(lastUpdate).toLocaleTimeString()}
                 </span>
               </>
             )}
