@@ -261,7 +261,7 @@ export function useSSE(url: string, options: SSEOptions = {}) {
     };
 
     // Handle specific event types (like 'connected', 'heartbeat', etc.)
-    const eventTypes = ['connected', 'heartbeat', 'message:created'];
+    const eventTypes = ['connected', 'heartbeat', 'message:created', 'stats:updated'];
     eventTypes.forEach(eventType => {
       eventSource.addEventListener(eventType, (event: globalThis.Event) => {
         const messageEvent = event as globalThis.MessageEvent;
