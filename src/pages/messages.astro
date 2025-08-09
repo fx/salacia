@@ -14,8 +14,7 @@
  * - Accessibility support
  */
 
-import { Layout } from '../components/Layout';
-import { MessagesLoadMore } from '../components/MessagesLoadMore';
+import { MessagesPage } from '../components/MessagesPage';
 import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
@@ -74,26 +73,19 @@ try {
     />
   </head>
   <body>
-    <Layout client:idle>
-      <div>
-        <!-- Messages interface component with Load More pattern -->
-        <div>
-          {
-            initialError ? (
-              <div box-="square" variant-="red" role="alert">
-                <strong>Error:</strong> {initialError}
-              </div>
-            ) : (
-              <MessagesLoadMore
-                client:load
-                initialMessages={initialMessages}
-                initialFilters={defaultFilters}
-                initialSort={defaultSort}
-              />
-            )
-          }
+    {
+      initialError ? (
+        <div box-="square" variant-="red" role="alert">
+          <strong>Error:</strong> {initialError}
         </div>
-      </div>
-    </Layout>
+      ) : (
+        <MessagesPage
+          client:idle
+          initialMessages={initialMessages}
+          initialFilters={defaultFilters}
+          initialSort={defaultSort}
+        />
+      )
+    }
   </body>
 </html>

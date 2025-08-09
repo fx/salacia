@@ -1,4 +1,10 @@
-import { useConnectivityStatus } from '../hooks/useConnectivityStatus.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useRealtime } from '../context/realtime.js';
+
+/** Flash duration for +N badge animation */
+const PLUS_FLASH_DURATION_MS = 280;
+/** Flash duration for connection state badge animation */
+const VARIANT_FLASH_DURATION_MS = 300;
 
 /**
  * Terminal-style navigation component designed to mimic Claude Code's interface.
@@ -9,41 +15,70 @@ import { useConnectivityStatus } from '../hooks/useConnectivityStatus.js';
  * @returns The terminal-style navigation bar with integrated header and navigation
  */
 export function Navigation() {
-  const { status, isFlashing } = useConnectivityStatus({
-    sseUrl: '/api/messages/stream',
-    autoReconnect: true,
-    flashDuration: 800,
-  });
+  const {
+    connectionState,
+    isConnected,
+    isConnecting,
+    hasNewMessages,
+    newMessagesCount,
+    clearNewMessages,
+  } = useRealtime();
+  const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
+  const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
+  const prevCountRef = React.useRef(0);
 
-  /**
-   * Gets the appropriate badge variant for the connection status.
-   * Uses bright variants during flash for visual feedback.
-   */
+  // Combined flash logic to avoid race condition with prevCountRef.current
+  useEffect(() => {
+    let plusTimeout: ReturnType<typeof setTimeout> | null = null;
+    let variantTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // +N flash logic: on increment
+    if (newMessagesCount > prevCountRef.current) {
+      setPlusFlash(true);
+      plusTimeout = setTimeout(() => setPlusFlash(false), PLUS_FLASH_DURATION_MS);
+    }
+
+    // Variant flash logic: on connection transitions or clearing
+    const shouldFlash = isConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
+    if (shouldFlash) {
+      setIsFlashing(true);
+      variantTimeout = setTimeout(() => setIsFlashing(false), VARIANT_FLASH_DURATION_MS);
+    }
+
+    // Update prevCountRef after logic
+    prevCountRef.current = newMessagesCount;
+
+    return () => {
+      if (plusTimeout) clearTimeout(plusTimeout);
+      if (variantTimeout) clearTimeout(variantTimeout);
+    };
+  }, [newMessagesCount, isConnecting]);
+
+  const status = useMemo(() => connectionState, [connectionState]);
+
   const getStatusVariant = () => {
-    const baseVariant = () => {
+    const base = () => {
       switch (status) {
         case 'connected':
           return 'green';
         case 'connecting':
+        case 'reconnecting':
           return 'yellow';
-        case 'disconnected':
-          return 'surface0';
         case 'error':
           return 'red';
+        case 'disconnected':
         default:
           return 'surface0';
       }
     };
 
-    // Use bright color variants during flash for visual feedback
     if (isFlashing) {
       switch (status) {
         case 'connected':
           return 'teal';
         case 'connecting':
+        case 'reconnecting':
           return 'peach';
-        case 'disconnected':
-          return 'overlay1';
         case 'error':
           return 'maroon';
         default:
@@ -51,22 +86,19 @@ export function Navigation() {
       }
     }
 
-    return baseVariant();
+    return base();
   };
 
-  /**
-   * Gets the display text for the connection status.
-   */
   const getStatusText = () => {
     switch (status) {
       case 'connected':
         return 'LIVE';
       case 'connecting':
+      case 'reconnecting':
         return 'SYNC';
-      case 'disconnected':
-        return 'OFF';
       case 'error':
         return 'ERR';
+      case 'disconnected':
       default:
         return 'OFF';
     }
@@ -86,6 +118,15 @@ export function Navigation() {
         <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
           {getStatusText()}
         </span>
+        {isConnected && hasNewMessages && newMessagesCount > 0 && (
+          <span
+            is-="badge"
+            variant-={plusFlash ? 'foreground0' : 'foreground1'}
+            title="New realtime messages"
+          >
+            +{newMessagesCount}
+          </span>
+        )}
         <span is-="badge" variant-="yellow">
           SALACIA
         </span>

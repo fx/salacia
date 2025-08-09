@@ -3,9 +3,8 @@ import type { MessagesCursorPaginationParams } from '../lib/types/cursor';
 import type { MessagesFilterParams, MessageDisplay, MessageSort } from '../lib/types/messages';
 import { MessagesTable } from './MessagesTable';
 import { SearchAndFilters } from './SearchAndFilters';
-import { RealtimeStatus } from './RealtimeStatus';
 import { MessagesClient, type SimplifiedCursorResponse } from '../lib/api/messages';
-import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
+import { useRealtime } from '../context/realtime.js';
 
 interface MessagesLoadMoreProps {
   initialMessages: SimplifiedCursorResponse;
@@ -29,20 +28,10 @@ export function MessagesLoadMore({
   const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | undefined>(initialMessages.nextCursor);
   const [hasMore, setHasMore] = useState(initialMessages.hasMore);
-  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   const client = new MessagesClient();
 
-  // Initialize realtime messages hook
-  const {
-    messages: realtimeMessages,
-    connectionState,
-    stats,
-  } = useRealtimeMessages({
-    endpoint: '/api/sse/messages',
-    autoConnect: true,
-    maxMessages: 100,
-  });
+  const { messages: realtimeMessages } = useRealtime();
 
   /**
    * Loads the next page of messages and appends them to the existing list.
@@ -126,48 +115,22 @@ export function MessagesLoadMore({
       return messages;
     }
 
-    // Create a map for deduplication
     const messageMap = new Map<string, MessageDisplay>();
-
-    // Add realtime messages first (newest)
     realtimeMessages.forEach(msg => messageMap.set(msg.id, msg));
-
-    // Add existing messages (avoid duplicates)
     messages.forEach(msg => {
       if (!messageMap.has(msg.id)) {
         messageMap.set(msg.id, msg);
       }
     });
 
-    // Convert back to array and sort by createdAt desc
     return Array.from(messageMap.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [messages, realtimeMessages]);
 
-  // Track when new realtime messages arrive
-  useEffect(() => {
-    if (realtimeMessages.length > 0) {
-      setHasNewMessages(true);
-      // Auto-clear the indicator after 3 seconds
-      const timer = setTimeout(() => setHasNewMessages(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [realtimeMessages.length]);
-
   return (
     <div>
       <SearchAndFilters filters={filters} onFiltersChange={handleFiltersChange} />
-      
-      {/* Realtime status in a subtle location */}
-      <div style={{ marginBottom: '0.5rem', textAlign: 'right' }}>
-        <RealtimeStatus
-          connectionState={connectionState}
-          messageCount={stats.totalReceived}
-          hasNewMessages={hasNewMessages}
-          onClearNewMessages={() => setHasNewMessages(false)}
-        />
-      </div>
 
       {error && (
         <div box-="square" variant-="red" role="alert">

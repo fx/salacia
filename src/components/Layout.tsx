@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigation } from './Navigation';
+import { RealtimeProvider } from '../context/realtime.js';
 
 /**
  * Props for the Layout component
@@ -23,9 +24,11 @@ interface LayoutProps {
  */
 export function Layout({ children }: Omit<LayoutProps, 'title'>) {
   return (
-    <div box-="square" shear-="top">
-      <Navigation />
-      <main>{children}</main>
-    </div>
+    <RealtimeProvider>
+      <div box-="square" shear-="top">
+        <Navigation />
+        <main>{children}</main>
+      </div>
+    </RealtimeProvider>
   );
 }

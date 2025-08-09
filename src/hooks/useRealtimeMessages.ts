@@ -85,7 +85,7 @@ const DEFAULT_OPTIONS: Required<Omit<RealtimeMessagesOptions, 'transformMessage'
  * Default message transformation function.
  * Converts SSE event data to MessageDisplay format.
  */
-const defaultTransformMessage = (eventData: MessageCreatedEventData): MessageDisplay => {
+export const defaultTransformMessage = (eventData: MessageCreatedEventData): MessageDisplay => {
   // Build a MessageDisplay consistent with DB transformation
   // Reuse preview extraction rules similar to transformAiInteractionToDisplay
   let requestPreview = 'No request data';

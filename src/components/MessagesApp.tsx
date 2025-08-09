@@ -20,9 +20,8 @@ import { MessagesTable } from './MessagesTable.js';
 import { Pagination } from './Pagination.js';
 import { SearchAndFilters } from './SearchAndFilters.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
-import { RealtimeStatus } from './RealtimeStatus.js';
 import { messagesClient, MessagesApiError } from '../lib/api/messages-client.js';
-import { useRealtimeMessages } from '../hooks/useRealtimeMessages.js';
+import { useRealtime } from '../context/realtime.js';
 import type {
   MessagesPaginatedResult,
   MessagesPaginationParams,
@@ -86,17 +85,7 @@ export function MessagesApp({
     hasNewMessages: false,
   });
 
-  // Initialize realtime messages hook
-  const {
-    messages: realtimeMessages,
-    connectionState,
-    stats,
-    clearMessages: clearRealtimeMessages,
-  } = useRealtimeMessages({
-    endpoint: '/api/sse/messages',
-    autoConnect: !initialError, // Only enable if no initial error
-    maxMessages: 100,
-  });
+  const { messages: realtimeMessages } = useRealtime();
 
   /**
    * Fetches messages with current pagination and filter parameters.
@@ -190,7 +179,7 @@ export function MessagesApp({
    */
   const displayMessages = useMemo(() => {
     if (!state.data?.messages) return [];
-    
+
     // Only merge realtime messages on the first page
     if (state.pagination.page !== 1 || realtimeMessages.length === 0) {
       return state.data.messages;
@@ -198,10 +187,10 @@ export function MessagesApp({
 
     // Create a map for deduplication
     const messageMap = new Map<string, MessageDisplay>();
-    
+
     // Add realtime messages first (newest)
     realtimeMessages.forEach(msg => messageMap.set(msg.id, msg));
-    
+
     // Add existing messages (avoid duplicates)
     state.data.messages.forEach(msg => {
       if (!messageMap.has(msg.id)) {
@@ -235,16 +224,6 @@ export function MessagesApp({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Realtime status indicator */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5ch 1ch' }}>
-        <RealtimeStatus
-          connectionState={connectionState}
-          messageCount={stats.totalReceived}
-          hasNewMessages={state.hasNewMessages}
-          onClearNewMessages={handleClearNewMessages}
-        />
-      </div>
-
       {/* Search and Filters section */}
       <ErrorBoundary context="Search and Filters">
         <SearchAndFilters
