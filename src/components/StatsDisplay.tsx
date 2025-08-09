@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStatsSSE } from '../hooks/useStatsSSE.js';
 import { VerticalBarChart } from './VerticalBarChart.js';
 import { HorizontalBarChart } from './HorizontalBarChart.js';
@@ -54,14 +54,7 @@ export function StatsDisplay({
   initialError,
 }: StatsDisplayProps) {
   // Stats SSE connection
-  const {
-    connectionState,
-    isConnected,
-    statsData,
-    lastUpdate,
-    isInitialDataReceived,
-    error: sseError,
-  } = useStatsSSE();
+  const { statsData, error: sseError } = useStatsSSE();
 
   // Local state for stats data - use SSE data when available, fallback to initial data
   const [overall, setOverall] = useState<MessageStats | null>(initialOverall);
@@ -112,20 +105,6 @@ export function StatsDisplay({
     m.model.length > 10 ? `${m.model.substring(0, 10)}...` : m.model
   );
 
-  // Enhanced overall stats that includes SSE connection status
-  const enhancedOverall = useMemo(() => {
-    if (!overall) return null;
-
-    // Add SSE connection status and last update time to display
-    return {
-      ...overall,
-      sseConnected: isConnected,
-      sseConnectionState: connectionState,
-      lastUpdate: lastUpdate?.toISOString(),
-      isInitialDataReceived,
-    };
-  }, [overall, isConnected, connectionState, lastUpdate, isInitialDataReceived]);
-
   if (error) {
     return (
       <div box-="square" variant-="red" role="alert">
@@ -138,65 +117,51 @@ export function StatsDisplay({
     <div>
       <div box-="square">
         <h2>STATS OVERVIEW</h2>
-        {connectionState === 'connecting' && (
-          <p>
-            <span is-="badge" variant-="yellow">
-              CONNECTING TO REALTIME...
-            </span>
-          </p>
-        )}
-        {connectionState === 'reconnecting' && (
-          <p>
-            <span is-="badge" variant-="yellow">
-              RECONNECTING...
-            </span>
-          </p>
-        )}
-        {enhancedOverall ? (
+        {overall ? (
           <p>
             <span is-="badge" variant-="surface0">
               TOTAL
             </span>
             <span is-="badge" variant-="green">
-              {enhancedOverall.totalMessages}
+              {overall.totalMessages}
             </span>
             <span is-="badge" variant-="surface0">
               SUCCESS
             </span>
             <span is-="badge" variant-="teal">
-              {enhancedOverall.successfulMessages}
+              {overall.successfulMessages}
             </span>
             <span is-="badge" variant-="surface0">
               FAILED
             </span>
             <span is-="badge" variant-="maroon">
-              {enhancedOverall.failedMessages}
+              {overall.failedMessages}
             </span>
             <span is-="badge" variant-="surface0">
               RATE
             </span>
             <span is-="badge" variant-="yellow">
-              {enhancedOverall.successRate}%
+              {overall.successRate}%
             </span>
             <span is-="badge" variant-="surface0">
               AVG RT
             </span>
             <span is-="badge" variant-="blue">
-              {enhancedOverall.averageResponseTime}ms
+              {overall.averageResponseTime}ms
             </span>
             <span is-="badge" variant-="surface0">
               TOKENS
             </span>
             <span is-="badge" variant-="peach">
-              {enhancedOverall.totalTokens}
+              {overall.totalTokens}
             </span>
-            {enhancedOverall.mostUsedModel && (
+            {overall.mostUsedModel && (
               <>
                 <span is-="badge" variant-="surface0">
                   TOP MODEL
                 </span>
                 <span is-="badge" variant-="foreground0">
-                  {enhancedOverall.mostUsedModel}
+                  {overall.mostUsedModel}
                 </span>
               </>
             )}
@@ -204,24 +169,8 @@ export function StatsDisplay({
               MODELS
             </span>
             <span is-="badge" variant-="foreground1">
-              {enhancedOverall.uniqueModels}
+              {overall.uniqueModels}
             </span>
-            <span is-="badge" variant-="surface0">
-              SSE
-            </span>
-            <span is-="badge" variant-={isConnected ? 'green' : 'red'}>
-              {isConnected ? 'CONNECTED' : connectionState.toUpperCase()}
-            </span>
-            {lastUpdate && (
-              <>
-                <span is-="badge" variant-="surface0">
-                  LAST UPDATE
-                </span>
-                <span is-="badge" variant-="teal">
-                  {new Date(lastUpdate).toLocaleTimeString()}
-                </span>
-              </>
-            )}
           </p>
         ) : (
           <p>Loading…</p>

@@ -21,10 +21,16 @@ export function Navigation() {
     isConnecting,
     hasNewMessages,
     newMessagesCount,
-    clearNewMessages,
+    statsConnectionState,
+    statsIsConnected,
+    statsIsConnecting,
+    statsData,
+    statsLastUpdate,
+    stats,
   } = useRealtime();
   const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
   const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
+  const [currentTime, setCurrentTime] = useState(new Date()); // for relative time calculation
   const prevCountRef = React.useRef(0);
 
   // Combined flash logic to avoid race condition with prevCountRef.current
@@ -39,7 +45,8 @@ export function Navigation() {
     }
 
     // Variant flash logic: on connection transitions or clearing
-    const shouldFlash = isConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
+    const shouldFlash =
+      combinedIsConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
     if (shouldFlash) {
       setIsFlashing(true);
       variantTimeout = setTimeout(() => setIsFlashing(false), VARIANT_FLASH_DURATION_MS);
@@ -52,9 +59,39 @@ export function Navigation() {
       if (plusTimeout) clearTimeout(plusTimeout);
       if (variantTimeout) clearTimeout(variantTimeout);
     };
-  }, [newMessagesCount, isConnecting]);
+  }, [newMessagesCount, isConnecting, statsIsConnecting]);
 
-  const status = useMemo(() => connectionState, [connectionState]);
+  // Update current time every second for relative time display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Combined connection state for flashing logic
+  const combinedIsConnecting = isConnecting || statsIsConnecting;
+  const combinedIsConnected = isConnected && statsIsConnected;
+
+  // Calculate combined status from both message and stats SSE connections
+  const status = useMemo(() => {
+    // Priority order: error > connecting > connected > disconnected
+    if (connectionState === 'error' || statsConnectionState === 'error') {
+      return 'error';
+    }
+    if (
+      connectionState === 'connecting' ||
+      connectionState === 'reconnecting' ||
+      statsConnectionState === 'connecting' ||
+      statsConnectionState === 'reconnecting'
+    ) {
+      return 'connecting';
+    }
+    if (connectionState === 'connected' && statsConnectionState === 'connected') {
+      return 'connected';
+    }
+    return 'disconnected';
+  }, [connectionState, statsConnectionState]);
 
   const getStatusVariant = () => {
     const base = () => {
@@ -62,7 +99,6 @@ export function Navigation() {
         case 'connected':
           return 'green';
         case 'connecting':
-        case 'reconnecting':
           return 'yellow';
         case 'error':
           return 'red';
@@ -77,7 +113,6 @@ export function Navigation() {
         case 'connected':
           return 'teal';
         case 'connecting':
-        case 'reconnecting':
           return 'peach';
         case 'error':
           return 'maroon';
@@ -94,7 +129,6 @@ export function Navigation() {
       case 'connected':
         return 'LIVE';
       case 'connecting':
-      case 'reconnecting':
         return 'SYNC';
       case 'error':
         return 'ERR';
@@ -102,6 +136,59 @@ export function Navigation() {
       default:
         return 'OFF';
     }
+  };
+
+  /**
+   * Format stats summary for 5-minute window display
+   */
+  const formatStatsDisplay = () => {
+    if (!statsData.overall) {
+      return 'No data';
+    }
+
+    const { totalMessages, averageResponseTime, totalTokens } = statsData.overall;
+
+    // Format response time
+    const rtDisplay = averageResponseTime > 0 ? `${Math.round(averageResponseTime)}ms` : '0ms';
+
+    // Format token count (e.g., 1.2k, 15k, etc.)
+    const tokenDisplay =
+      totalTokens >= 1000 ? `${(totalTokens / 1000).toFixed(1)}k` : totalTokens.toString();
+
+    return `5m: ${totalMessages} total, ${rtDisplay} avg, ${tokenDisplay} tokens`;
+  };
+
+  /**
+   * Format relative time display (e.g., "1m 3s ago", "0s ago")
+   */
+  const formatRelativeTime = () => {
+    // Get the most recent update time from either messages or stats
+    const messageLastTime = stats.lastEventTime;
+    const statsTime = statsLastUpdate;
+
+    let mostRecentTime: Date | null = null;
+    if (messageLastTime && statsTime) {
+      mostRecentTime = messageLastTime > statsTime ? messageLastTime : statsTime;
+    } else if (messageLastTime) {
+      mostRecentTime = messageLastTime;
+    } else if (statsTime) {
+      mostRecentTime = statsTime;
+    }
+
+    if (!mostRecentTime) {
+      return 'No updates';
+    }
+
+    const diffMs = currentTime.getTime() - mostRecentTime.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    if (diffSeconds < 60) {
+      return `${diffSeconds}s ago`;
+    }
+
+    const minutes = Math.floor(diffSeconds / 60);
+    const seconds = diffSeconds % 60;
+    return `${minutes}m ${seconds}s ago`;
   };
 
   return (
@@ -118,10 +205,24 @@ export function Navigation() {
         </a>
       </span>
       <span>
-        <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
+        <span
+          is-="badge"
+          variant-={getStatusVariant()}
+          title={`Connection status: ${status} (Messages: ${connectionState}, Stats: ${statsConnectionState})`}
+        >
           {getStatusText()}
         </span>
-        {isConnected && hasNewMessages && newMessagesCount > 0 && (
+        {combinedIsConnected && (
+          <>
+            <span is-="badge" variant-="blue" title="Statistics for last 5 minutes">
+              {formatStatsDisplay()}
+            </span>
+            <span is-="badge" variant-="surface1" title="Time since last update">
+              {formatRelativeTime()}
+            </span>
+          </>
+        )}
+        {combinedIsConnected && hasNewMessages && newMessagesCount > 0 && (
           <span
             is-="badge"
             variant-={plusFlash ? 'foreground0' : 'foreground1'}

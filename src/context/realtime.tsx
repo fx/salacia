@@ -8,9 +8,10 @@ import React, {
   useState,
 } from 'react';
 import { useSSE, type SSEEvent, type SSEConnectionState } from '../hooks/useSSE.js';
-import { type MessageDisplay } from '../lib/types/messages.js';
+import { type MessageDisplay, type MessageStats } from '../lib/types/messages.js';
 import type { MessageCreatedEventData } from '../lib/realtime/types.js';
 import { defaultTransformMessage } from '../hooks/useRealtimeMessages.js';
+import { useStatsSSE } from '../hooks/useStatsSSE.js';
 
 /** Timeout for new message inactivity before resetting counter */
 const NEW_MESSAGE_INACTIVITY_TIMEOUT_MS = 5000;
@@ -42,6 +43,23 @@ export interface RealtimeContextValue {
   newMessagesCount: number;
   clearNewMessages: () => void;
   addEventListener: (eventType: string, handler: (_event: SSEEvent) => void) => () => void;
+  /** Stats SSE connection state */
+  statsConnectionState: SSEConnectionState;
+  /** Whether stats SSE is connected */
+  statsIsConnected: boolean;
+  /** Whether stats SSE is connecting */
+  statsIsConnecting: boolean;
+  /** Stats SSE error if any */
+  statsError: Error | null;
+  /** Stats data from SSE updates */
+  statsData: {
+    overall: MessageStats | null;
+    series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
+    topModels: Array<{ model: string; count: number }>;
+    timestamp: string;
+  };
+  /** Last stats update timestamp */
+  statsLastUpdate: Date | null;
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefined);
@@ -70,11 +88,22 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
   const maxMessages = 100;
 
+  // Messages SSE connection
   const { connectionState, lastEventId, error, addEventListener, isConnected, isConnecting } =
     useSSE('/api/sse/messages', {
       autoConnect: true,
       reconnect: true,
     });
+
+  // Stats SSE connection
+  const {
+    connectionState: statsConnectionState,
+    isConnected: statsIsConnected,
+    isConnecting: statsIsConnecting,
+    error: statsError,
+    statsData,
+    lastUpdate: statsLastUpdate,
+  } = useStatsSSE({ autoConnect: true });
 
   const lastMessageCountRef = useRef(0);
 
@@ -185,6 +214,12 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       newMessagesCount,
       clearNewMessages,
       addEventListener,
+      statsConnectionState,
+      statsIsConnected,
+      statsIsConnecting,
+      statsError,
+      statsData,
+      statsLastUpdate,
     }),
     [
       connectionState,
@@ -198,6 +233,12 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       newMessagesCount,
       clearNewMessages,
       addEventListener,
+      statsConnectionState,
+      statsIsConnected,
+      statsIsConnecting,
+      statsError,
+      statsData,
+      statsLastUpdate,
     ]
   );
 
