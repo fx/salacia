@@ -31,7 +31,7 @@ export function VerticalBarChart({
 
   return (
     <div data-box="square" data-align="stretch end" className="widget chart-widget" data-pad="2 1">
-      {title && <h4>{title}</h4>}
+      {title && <h3>{title}</h3>}
       <div className="chart-row">
         <div className="chart-row">
           <div className="chart-column" data-gap="1">

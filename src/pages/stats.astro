@@ -128,7 +128,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
               <td>
                 {dailyBars.length === 0 ? (
                   <div box-="square">
-                    <h3>## LAST 14 DAYS</h3>
+                    <h3>LAST 14 DAYS</h3>
                     <p>No data available.</p>
                   </div>
                 ) : (
@@ -136,14 +136,14 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                     client:load
                     data={dailyBars}
                     width={30}
-                    title="## LAST 14 DAYS"
+                    title="LAST 14 DAYS"
                   />
                 )}
               </td>
               <td>
                 {dailyBars.length === 0 ? (
                   <div box-="square">
-                    <h3>## SUCCESS VS FAILED (STACKED)</h3>
+                    <h3>SUCCESS VS FAILED (STACKED)</h3>
                     <p>No data available.</p>
                   </div>
                 ) : (
@@ -151,7 +151,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                     client:load
                     data={dailyBars}
                     width={30}
-                    title="## SUCCESS VS FAILED (STACKED)"
+                    title="SUCCESS VS FAILED (STACKED)"
                     showFailedStack={true}
                   />
                 )}
@@ -161,7 +161,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
               <td>
                 {dayTotals.length === 0 ? (
                   <div box-="square">
-                    <h3>## DAILY TOTALS</h3>
+                    <h3>DAILY TOTALS</h3>
                     <p>No data available.</p>
                   </div>
                 ) : (
@@ -170,14 +170,14 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                     data={dayTotals}
                     height={10}
                     xAxisLabels={dayLabels}
-                    title="## DAILY TOTALS"
+                    title="DAILY TOTALS"
                   />
                 )}
               </td>
               <td>
                 {dayAvgRt.length === 0 ? (
                   <div box-="square">
-                    <h3>## AVG RESPONSE TIME</h3>
+                    <h3>AVG RESPONSE TIME</h3>
                     <p>No data available.</p>
                   </div>
                 ) : (
@@ -191,7 +191,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                       Math.round(Math.max(...dayAvgRt) / 2) + 'ms',
                       '0ms'
                     ]}
-                    title="## AVG RESPONSE TIME"
+                    title="AVG RESPONSE TIME"
                   />
                 )}
               </td>
@@ -200,7 +200,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
               <td>
                 {modelCounts.length === 0 ? (
                   <div box-="square">
-                    <h3>## TOP MODELS</h3>
+                    <h3>TOP MODELS</h3>
                     <p>No model data.</p>
                   </div>
                 ) : (
@@ -209,14 +209,14 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                     data={modelCounts}
                     height={8}
                     xAxisLabels={modelLabels}
-                    title="## TOP MODELS"
+                    title="TOP MODELS"
                   />
                 )}
               </td>
               <td>
                 {modelBars.length === 0 ? (
                   <div box-="square">
-                    <h3>## MODEL USAGE (HORIZONTAL)</h3>
+                    <h3>MODEL USAGE (HORIZONTAL)</h3>
                     <p>No model data.</p>
                   </div>
                 ) : (
@@ -224,7 +224,7 @@ const modelLabels = topModels.map(m => m.model.length > 10 ? m.model.substring(0
                     client:load
                     data={modelBars}
                     width={25}
-                    title="## MODEL USAGE (HORIZONTAL)"
+                    title="MODEL USAGE (HORIZONTAL)"
                   />
                 )}
               </td>

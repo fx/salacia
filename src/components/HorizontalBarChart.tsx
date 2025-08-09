@@ -37,23 +37,21 @@ export function HorizontalBarChart({
   ];
   
   return (
-    <div data-box="square" className="widget horizontal-chart" data-pad="2 1">
-      {title && <h4>{title}</h4>}
+    <div data-box="square" className="widget horizontal-chart">
+      {title && <h3>{title}</h3>}
+      
       <div className="chart-row">
-        {/* Y-axis labels */}
-        <div className="chart-column" data-gap="1">
+        {/* Y-axis labels column (outside the box) */}
+        <div className="chart-column y-labels">
           {data.map((item, i) => (
             <span key={i}>{item.label}</span>
           ))}
         </div>
         
-        {/* Vertical separator */}
-        <div data-is="separator" data-direction="vertical" data-cap="default edge" />
-        
-        {/* Chart area */}
+        {/* Main chart area */}
         <div className="chart-column" data-self="grow">
-          {/* Bars container with box */}
-          <div data-box="square" className="bars-container">
+          {/* Box containing ONLY the bars */}
+          <div data-box="square" className="bars-box">
             {bars.map((bar, i) => (
               <div key={i} className="bar-row">
                 {bar.success > 0 && (
@@ -72,19 +70,16 @@ export function HorizontalBarChart({
             ))}
           </div>
           
-          {/* X-axis */}
-          <div className="chart-row">
-            <div data-is="separator" data-self="grow" data-cap="bisect default" />
-          </div>
-          <div className="chart-row x-labels" data-gap="1">
-            {xLabels.map((label, i) => (
-              <small key={i}>{label}</small>
-            ))}
+          {/* X-axis scale (outside the box) */}
+          <div className="x-axis-scale">
+            <small>{xLabels[0]}</small>
+            <small>{xLabels[1]}</small>
+            <small>{xLabels[2]}</small>
           </div>
         </div>
         
-        {/* Values column */}
-        <div className="chart-column value-labels" data-gap="1">
+        {/* Values column (outside the box) */}
+        <div className="chart-column value-labels">
           {data.map((item, i) => (
             <small key={i}>
               {showFailedStack && item.failed !== undefined 
@@ -94,6 +89,7 @@ export function HorizontalBarChart({
           ))}
         </div>
       </div>
+      
       {showFailedStack && (
         <small>Darker = success, lighter = failed</small>
       )}
