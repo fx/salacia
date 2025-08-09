@@ -9,75 +9,93 @@ interface HorizontalBarChartProps {
 
 export function HorizontalBarChart({ 
   data, 
-  width = 30,
+  width = 20,
   title,
   showFailedStack = false
 }: HorizontalBarChartProps) {
   const max = Math.max(...data.map(d => d.value), 1);
   
-  // Find longest label for padding
-  const maxLabelLength = Math.max(...data.map(d => d.label.length));
+  // Calculate bar widths (0 to width scale)
+  const bars = data.map(item => {
+    const ratio = item.value > 0 ? Math.max(0, Math.min(1, item.value / max)) : 0;
+    const barWidth = Math.round(ratio * width);
+    
+    if (showFailedStack && item.failed !== undefined) {
+      const failedWidth = Math.round((item.failed / item.value) * barWidth);
+      const successWidth = barWidth - failedWidth;
+      return { success: successWidth, failed: failedWidth, total: barWidth };
+    }
+    
+    return { success: barWidth, failed: 0, total: barWidth };
+  });
+  
+  // Generate X-axis labels
+  const xLabels = [
+    '0',
+    Math.round(max / 2).toString(),
+    Math.round(max).toString()
+  ];
   
   return (
-    <div data-box="square">
-      {title && <h3>{title}</h3>}
-      
-      {/* Labels column | Bars box | Values column */}
-      <div className="horizontal-bar-chart">
+    <div data-box="square" className="widget horizontal-chart" data-pad="2 1">
+      {title && <h4>{title}</h4>}
+      <div className="chart-row">
         {/* Y-axis labels */}
-        <div className="chart-labels">
+        <div className="chart-column" data-gap="1">
           {data.map((item, i) => (
-            <div key={i}>
-              <pre>{item.label.padEnd(maxLabelLength)}</pre>
-            </div>
+            <span key={i}>{item.label}</span>
           ))}
         </div>
         
-        {/* Bars container with box */}
-        <div data-box="square" className="bars-box">
-          {data.map((item, i) => {
-            const ratio = item.value > 0 ? Math.max(0, Math.min(1, item.value / max)) : 0;
-            const barWidth = Math.round(ratio * width);
-            
-            let barDisplay: string;
-            if (showFailedStack && item.failed !== undefined) {
-              const failedWidth = Math.round((item.failed / item.value) * barWidth);
-              const successWidth = barWidth - failedWidth;
-              // Use input range for visual bar representation
-              barDisplay = `[${'='.repeat(successWidth)}${'-'.repeat(failedWidth)}${' '.repeat(width - barWidth)}]`;
-            } else {
-              barDisplay = `[${'='.repeat(barWidth)}${' '.repeat(width - barWidth)}]`;
-            }
-            
-            return (
-              <div key={i}>
-                <pre>{barDisplay}</pre>
+        {/* Vertical separator */}
+        <div data-is="separator" data-direction="vertical" data-cap="default edge" />
+        
+        {/* Chart area */}
+        <div className="chart-column" data-self="grow">
+          {/* Bars container with box */}
+          <div data-box="square" className="bars-container">
+            {bars.map((bar, i) => (
+              <div key={i} className="bar-row">
+                {bar.success > 0 && (
+                  <span 
+                    className="bar-success" 
+                    data-width={bar.success.toString()}
+                  />
+                )}
+                {bar.failed > 0 && (
+                  <span 
+                    className="bar-failed" 
+                    data-width={bar.failed.toString()}
+                  />
+                )}
               </div>
-            );
-          })}
+            ))}
+          </div>
+          
+          {/* X-axis */}
+          <div className="chart-row">
+            <div data-is="separator" data-self="grow" data-cap="bisect default" />
+          </div>
+          <div className="chart-row x-labels" data-gap="1">
+            {xLabels.map((label, i) => (
+              <small key={i}>{label}</small>
+            ))}
+          </div>
         </div>
         
         {/* Values column */}
-        <div className="chart-values">
+        <div className="chart-column value-labels" data-gap="1">
           {data.map((item, i) => (
-            <div key={i}>
-              <pre>
-                {showFailedStack && item.failed !== undefined 
-                  ? `${item.value - item.failed} ok, ${item.failed} fail`
-                  : item.value.toString()}
-              </pre>
-            </div>
+            <small key={i}>
+              {showFailedStack && item.failed !== undefined 
+                ? `${item.value - item.failed}✓ ${item.failed}✗`
+                : item.value}
+            </small>
           ))}
         </div>
       </div>
-      
-      {/* X-axis scale */}
-      <div className="chart-scale">
-        <pre>{' '.repeat(maxLabelLength)} 0{' '.repeat(Math.floor(width/2) - 1)}{Math.round(max/2).toString().padStart(3)}{' '.repeat(Math.floor(width/2) - 2)}{max.toString().padStart(3)}</pre>
-      </div>
-      
       {showFailedStack && (
-        <small>Legend: = success, - failed</small>
+        <small>Darker = success, lighter = failed</small>
       )}
     </div>
   );

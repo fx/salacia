@@ -114,33 +114,83 @@
     gap: 0.5rem;
   }
 
-  /* Minimal layout for horizontal bar chart */
-  .horizontal-bar-chart {
-    display: flex;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .horizontal-bar-chart .chart-labels,
-  .horizontal-bar-chart .chart-values {
+  /* Horizontal bar chart - matching vertical chart approach */
+  .horizontal-chart .bars-container {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+    min-height: 8rem;
   }
 
-  .horizontal-bar-chart .bars-box {
-    flex-grow: 1;
+  .horizontal-chart .bar-row {
     display: flex;
-    flex-direction: column;
-    justify-content: space-around;
+    height: 1rem;
+    margin: 0.25rem 0;
   }
 
-  .horizontal-bar-chart pre {
-    margin: 0;
-    line-height: 1.5;
+  .horizontal-chart .bar-success,
+  .horizontal-chart .bar-failed {
+    display: inline-block;
+    height: 100%;
   }
 
-  .chart-scale pre {
-    margin: 0;
+  .horizontal-chart .bar-success {
+    background: var(--foreground1);
+  }
+
+  .horizontal-chart .bar-failed {
+    background: var(--background2);
+  }
+
+  /* Dynamic width for horizontal bars using data attributes */
+  .horizontal-chart .bar-success[data-width="0"],
+  .horizontal-chart .bar-failed[data-width="0"] { width: 0; }
+  .horizontal-chart .bar-success[data-width="1"],
+  .horizontal-chart .bar-failed[data-width="1"] { width: 5%; }
+  .horizontal-chart .bar-success[data-width="2"],
+  .horizontal-chart .bar-failed[data-width="2"] { width: 10%; }
+  .horizontal-chart .bar-success[data-width="3"],
+  .horizontal-chart .bar-failed[data-width="3"] { width: 15%; }
+  .horizontal-chart .bar-success[data-width="4"],
+  .horizontal-chart .bar-failed[data-width="4"] { width: 20%; }
+  .horizontal-chart .bar-success[data-width="5"],
+  .horizontal-chart .bar-failed[data-width="5"] { width: 25%; }
+  .horizontal-chart .bar-success[data-width="6"],
+  .horizontal-chart .bar-failed[data-width="6"] { width: 30%; }
+  .horizontal-chart .bar-success[data-width="7"],
+  .horizontal-chart .bar-failed[data-width="7"] { width: 35%; }
+  .horizontal-chart .bar-success[data-width="8"],
+  .horizontal-chart .bar-failed[data-width="8"] { width: 40%; }
+  .horizontal-chart .bar-success[data-width="9"],
+  .horizontal-chart .bar-failed[data-width="9"] { width: 45%; }
+  .horizontal-chart .bar-success[data-width="10"],
+  .horizontal-chart .bar-failed[data-width="10"] { width: 50%; }
+  .horizontal-chart .bar-success[data-width="11"],
+  .horizontal-chart .bar-failed[data-width="11"] { width: 55%; }
+  .horizontal-chart .bar-success[data-width="12"],
+  .horizontal-chart .bar-failed[data-width="12"] { width: 60%; }
+  .horizontal-chart .bar-success[data-width="13"],
+  .horizontal-chart .bar-failed[data-width="13"] { width: 65%; }
+  .horizontal-chart .bar-success[data-width="14"],
+  .horizontal-chart .bar-failed[data-width="14"] { width: 70%; }
+  .horizontal-chart .bar-success[data-width="15"],
+  .horizontal-chart .bar-failed[data-width="15"] { width: 75%; }
+  .horizontal-chart .bar-success[data-width="16"],
+  .horizontal-chart .bar-failed[data-width="16"] { width: 80%; }
+  .horizontal-chart .bar-success[data-width="17"],
+  .horizontal-chart .bar-failed[data-width="17"] { width: 85%; }
+  .horizontal-chart .bar-success[data-width="18"],
+  .horizontal-chart .bar-failed[data-width="18"] { width: 90%; }
+  .horizontal-chart .bar-success[data-width="19"],
+  .horizontal-chart .bar-failed[data-width="19"] { width: 95%; }
+  .horizontal-chart .bar-success[data-width="20"],
+  .horizontal-chart .bar-failed[data-width="20"] { width: 100%; }
+
+  .horizontal-chart .x-labels {
+    justify-content: space-between;
+  }
+
+  .horizontal-chart .value-labels {
+    padding-left: 0.5rem;
   }
 }
