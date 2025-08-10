@@ -9,8 +9,8 @@ import { StatsDisplay } from '../components/StatsDisplay';
 let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null = null;
 let errorMsg: string | null = null;
 
-// Time-series (last 14 days) and top models
-let series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }> =
+// Time-series (last 24 hours, hourly resolution) and top models
+let series: Array<{ hour: string; total: number; failed: number; avg_rt: number; tokens: number }> =
   [];
 let topModels: Array<{ model: string; count: number }> = [];
 
@@ -21,17 +21,17 @@ try {
     startDate: twentyFourHoursAgo
   });
 
-  // Time series (Postgres)
+  // Time series - hourly for last 24 hours (Postgres)
   const [rows] = await sequelize.query(
     `
     SELECT 
-      to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day,
+      to_char(date_trunc('hour', created_at), 'HH24:MI') as hour,
       COUNT(*)::int as total,
       COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
       COALESCE(AVG(response_time_ms),0)::int as avg_rt,
       COALESCE(SUM(total_tokens),0)::int as tokens
     FROM ai_interactions
-    WHERE created_at >= NOW() - interval '14 days'
+    WHERE created_at >= NOW() - interval '24 hours'
     GROUP BY 1
     ORDER BY 1
     `

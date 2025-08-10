@@ -8,7 +8,7 @@ import type { MessageStats } from '../lib/types/messages.js';
  * Statistics for time series data display.
  */
 interface TimeSeriesData {
-  day: string;
+  hour: string;
   total: number;
   failed: number;
   avg_rt: number;
@@ -29,7 +29,7 @@ interface ModelStats {
 interface StatsDisplayProps {
   /** Initial overall statistics data */
   initialOverall: MessageStats | null;
-  /** Initial time series data for the last 14 days */
+  /** Initial time series data for the last 24 hours (hourly) */
   initialSeries: TimeSeriesData[];
   /** Initial top models data */
   initialTopModels: ModelStats[];
@@ -82,16 +82,13 @@ export function StatsDisplay({
   }, [sseError]);
 
   // Prepare chart data
-  const dayTotals = series.map(r => r.total);
-  const dayAvgRt = series.map(r => r.avg_rt);
+  const hourlyTotals = series.map(r => r.total);
+  const hourlyAvgRt = series.map(r => r.avg_rt);
 
-  const dayLabels = series.map(r => {
-    const date = new Date(r.day);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  });
+  const hourLabels = series.map(r => r.hour); // Already in HH:MI format
 
-  const dailyBars = series.map(r => ({
-    label: r.day.substring(5), // MM-DD format
+  const hourlyBars = series.map(r => ({
+    label: r.hour, // HH:MI format
     value: r.total,
     failed: r.failed,
   }));
@@ -182,24 +179,24 @@ export function StatsDisplay({
         <tbody>
           <tr>
             <td>
-              {dailyBars.length === 0 ? (
+              {hourlyBars.length === 0 ? (
                 <div box-="square">
-                  <h3>LAST 14 DAYS</h3>
+                  <h3>LAST 24 HOURS (HOURLY)</h3>
                   <p>No data available.</p>
                 </div>
               ) : (
-                <HorizontalBarChart data={dailyBars} width={30} title="LAST 14 DAYS" />
+                <HorizontalBarChart data={hourlyBars} width={30} title="LAST 24 HOURS (HOURLY)" />
               )}
             </td>
             <td>
-              {dailyBars.length === 0 ? (
+              {hourlyBars.length === 0 ? (
                 <div box-="square">
                   <h3>SUCCESS VS FAILED (STACKED)</h3>
                   <p>No data available.</p>
                 </div>
               ) : (
                 <HorizontalBarChart
-                  data={dailyBars}
+                  data={hourlyBars}
                   width={30}
                   title="SUCCESS VS FAILED (STACKED)"
                   showFailedStack={true}
@@ -209,34 +206,34 @@ export function StatsDisplay({
           </tr>
           <tr>
             <td>
-              {dayTotals.length === 0 ? (
+              {hourlyTotals.length === 0 ? (
                 <div box-="square">
-                  <h3>DAILY TOTALS</h3>
+                  <h3>HOURLY TOTALS</h3>
                   <p>No data available.</p>
                 </div>
               ) : (
                 <VerticalBarChart
-                  data={dayTotals}
+                  data={hourlyTotals}
                   height={10}
-                  xAxisLabels={dayLabels}
-                  title="DAILY TOTALS"
+                  xAxisLabels={hourLabels}
+                  title="HOURLY TOTALS"
                 />
               )}
             </td>
             <td>
-              {dayAvgRt.length === 0 ? (
+              {hourlyAvgRt.length === 0 ? (
                 <div box-="square">
                   <h3>AVG RESPONSE TIME</h3>
                   <p>No data available.</p>
                 </div>
               ) : (
                 <VerticalBarChart
-                  data={dayAvgRt}
+                  data={hourlyAvgRt}
                   height={10}
-                  xAxisLabels={dayLabels}
+                  xAxisLabels={hourLabels}
                   yAxisLabels={[
-                    `${Math.max(...dayAvgRt)}ms`,
-                    `${Math.round(Math.max(...dayAvgRt) / 2)}ms`,
+                    `${Math.max(...hourlyAvgRt)}ms`,
+                    `${Math.round(Math.max(...hourlyAvgRt) / 2)}ms`,
                     '0ms',
                   ]}
                   title="AVG RESPONSE TIME"

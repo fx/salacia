@@ -15,7 +15,7 @@ interface StatsData {
   twentyFourHour: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null;
   // Overall stats (all time)
   overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null;
-  series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
+  series: Array<{ hour: string; total: number; failed: number; avg_rt: number; tokens: number }>;
   topModels: Array<{ model: string; count: number }>;
   timestamp: string;
 }
@@ -63,17 +63,17 @@ export const GET: APIRoute = async ({ request }) => {
         MessagesService.getFilteredStats({})
       ]);
 
-      // Time series (last 14 days)
+      // Time series - hourly for last 24 hours
       const [rows] = await sequelize.query(
         `
         SELECT 
-          to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day,
+          to_char(date_trunc('hour', created_at), 'HH24:MI') as hour,
           COUNT(*)::int as total,
           COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
           COALESCE(AVG(response_time_ms),0)::int as avg_rt,
           COALESCE(SUM(total_tokens),0)::int as tokens
         FROM ai_interactions
-        WHERE created_at >= NOW() - interval '14 days'
+        WHERE created_at >= NOW() - interval '24 hours'
         GROUP BY 1
         ORDER BY 1
         `

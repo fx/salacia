@@ -24,7 +24,7 @@ interface StatsData {
   fiveMinute: MessageStats | null;
   twentyFourHour: MessageStats | null;
   overall: MessageStats | null;
-  series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
+  series: Array<{ hour: string; total: number; failed: number; avg_rt: number; tokens: number }>;
   topModels: Array<{ model: string; count: number }>;
   timestamp: string;
 }
