@@ -2,17 +2,36 @@
 
 /**
  * Database synchronization script for Sequelize.
- * This script imports the built sequelize instance and synchronizes the database schema.
+ * This script runs migrations instead of sync to handle complex dependencies.
  */
 
-import { s as sequelize } from '../dist/server/chunks/AiInteraction_CqTeHP_I.mjs';
+import { spawn } from 'child_process';
 
 try {
-  console.log('Starting database synchronization...');
-  await sequelize.sync();
-  console.log('Database synchronization completed successfully.');
-  process.exit(0);
+  console.log('Starting database migration...');
+  
+  // Run the migration command using sequelize-cli
+  const migration = spawn('npm', ['run', 'sequelize:migrate:up'], {
+    stdio: 'inherit',
+    shell: true
+  });
+
+  migration.on('close', (code) => {
+    if (code === 0) {
+      console.log('Database migration completed successfully.');
+      process.exit(0);
+    } else {
+      console.error('Database migration failed with exit code:', code);
+      process.exit(1);
+    }
+  });
+
+  migration.on('error', (error) => {
+    console.error('Failed to start migration process:', error);
+    process.exit(1);
+  });
+
 } catch (error) {
-  console.error('Database synchronization failed:', error);
+  console.error('Database migration failed:', error);
   process.exit(1);
 }
