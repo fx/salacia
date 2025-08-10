@@ -184,6 +184,7 @@
     align-items: flex-end;
     justify-content: center;
     width: 2rem; /* Fixed width instead of flex */
+    height: 100%; /* Need explicit height for percentage children to work */
   }
 
   .v-bar {
