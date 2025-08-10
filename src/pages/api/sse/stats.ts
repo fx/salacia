@@ -64,18 +64,20 @@ export const GET: APIRoute = async ({ request }) => {
       ]);
 
       // Time series - hourly for last 24 hours with all hours filled
+      // Generate hours with the most recent hour last, include ISO timestamp for client-side formatting
       const [rows] = await sequelize.query(
         `
         WITH hours AS (
-          SELECT to_char(generate_series(
-            date_trunc('hour', NOW() - interval '23 hours'),
-            date_trunc('hour', NOW()),
-            interval '1 hour'
-          ), 'HH24:MI') as hour
+          SELECT 
+            generate_series(
+              date_trunc('hour', NOW() - interval '23 hours'),
+              date_trunc('hour', NOW()),
+              interval '1 hour'
+            ) as hour_timestamp
         ),
         hourly_stats AS (
           SELECT 
-            to_char(date_trunc('hour', created_at), 'HH24:MI') as hour,
+            date_trunc('hour', created_at) as hour_timestamp,
             COUNT(*)::int as total,
             COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
             COALESCE(AVG(response_time_ms),0)::int as avg_rt,
@@ -85,14 +87,15 @@ export const GET: APIRoute = async ({ request }) => {
           GROUP BY 1
         )
         SELECT 
-          h.hour,
+          to_char(h.hour_timestamp, 'HH24:MI') as hour,
+          h.hour_timestamp::text as hour_timestamp,
           COALESCE(hs.total, 0)::int as total,
           COALESCE(hs.failed, 0)::int as failed,
           COALESCE(hs.avg_rt, 0)::int as avg_rt,
           COALESCE(hs.tokens, 0)::int as tokens
         FROM hours h
-        LEFT JOIN hourly_stats hs ON h.hour = hs.hour
-        ORDER BY h.hour
+        LEFT JOIN hourly_stats hs ON h.hour_timestamp = hs.hour_timestamp
+        ORDER BY h.hour_timestamp
         `
       );
       const series = rows as StatsData['series'];

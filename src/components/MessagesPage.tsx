@@ -1,5 +1,6 @@
 import React from 'react';
 import { MessagesLoadMore } from './MessagesLoadMore.js';
+import { RealtimeProvider } from '../context/realtime.js';
 import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
 import type { SimplifiedCursorResponse } from '../lib/api/messages.js';
 
@@ -15,7 +16,7 @@ export interface MessagesPageProps {
 
 export function MessagesPage({ initialMessages, initialFilters, initialSort }: MessagesPageProps) {
   return (
-    <div>
+    <RealtimeProvider>
       <div>
         <MessagesLoadMore
           initialMessages={initialMessages}
@@ -23,7 +24,7 @@ export function MessagesPage({ initialMessages, initialFilters, initialSort }: M
           initialSort={initialSort}
         />
       </div>
-    </div>
+    </RealtimeProvider>
   );
 }
 

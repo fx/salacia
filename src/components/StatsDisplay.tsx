@@ -10,6 +10,7 @@ import type { MessageStats } from '../lib/types/messages.js';
  */
 interface TimeSeriesData {
   hour: string;
+  hour_timestamp?: string;
   total: number;
   failed: number;
   avg_rt: number;
@@ -84,7 +85,20 @@ export function StatsDisplay({
 
   // Prepare chart data
   const hourlyAvgRt = series.map(r => r.avg_rt);
-  const hourLabels = series.map(r => r.hour); // Already in HH:MI format
+  // Convert UTC timestamps to local time for display
+  const hourLabels = series.map(r => {
+    if (r.hour_timestamp) {
+      // Parse the UTC timestamp and format in local timezone
+      const date = new Date(r.hour_timestamp);
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+    }
+    // Fallback to the server-provided hour if no timestamp
+    return r.hour;
+  });
 
   // Prepare success/failed data for stacked chart
   const hourlyMessages = series.map(r => ({
@@ -217,7 +231,7 @@ export function StatsDisplay({
             <HorizontalBarChart
               data={topModels.map(m => ({
                 label: m.model.length > 15 ? `${m.model.substring(0, 15)}...` : m.model,
-                value: m.count
+                value: m.count,
               }))}
               width={20}
               title="MODEL USAGE"
