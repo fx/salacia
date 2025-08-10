@@ -10,7 +10,7 @@
     "astro": "astro",
     "sequelize:migrate:up": "sequelize-cli db:migrate",
     "sequelize:migrate:down": "sequelize-cli db:migrate:undo",
-    "sequelize:sync": "node -e \"require('./dist/lib/db/sequelize-connection.js').sequelize.sync()\"",
+    "sequelize:sync": "node scripts/sync-database.mjs",
     "sequelize:seed": "sequelize-cli db:seed:all",
     "type-check": "astro check",
     "lint": "eslint src --ext .ts,.astro",

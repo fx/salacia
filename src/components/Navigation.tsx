@@ -26,8 +26,6 @@ export function Navigation() {
     statsIsConnected,
     statsIsConnecting,
     statsData,
-    // statsLastUpdate, // Currently unused
-    // stats, // Currently unused
   } = useRealtime();
   const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
   const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash

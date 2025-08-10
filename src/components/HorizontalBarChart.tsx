@@ -2,7 +2,6 @@ import React from 'react';
 
 interface HorizontalBarChartProps {
   data: Array<{ label: string; value: number; failed?: number }>;
-  width?: number;
   title?: string;
   showFailedStack?: boolean;
   align?: 'top' | 'bottom';
@@ -10,7 +9,6 @@ interface HorizontalBarChartProps {
 
 export function HorizontalBarChart({
   data,
-  // width = 20, // Currently unused
   title,
   showFailedStack = false,
   align = 'top',

@@ -233,7 +233,6 @@ export function StatsDisplay({
                 label: m.model.length > 15 ? `${m.model.substring(0, 15)}...` : m.model,
                 value: m.count,
               }))}
-              width={20}
               title="MODEL USAGE"
             />
           )}
