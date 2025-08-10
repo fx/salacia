@@ -54,12 +54,14 @@ export function VerticalBarChart({
             <div className="v-bars-container">
               {barHeights.map((barHeight, i) => (
                 <div 
-                  key={i}
+                  key={`bar-${i}`}
                   className="v-bar-column"
+                  style={{ height: '100%' }}
                 >
                   <div 
                     className="v-bar" 
                     data-height={barHeight.toString()}
+                    aria-label={`Value: ${data[i]}`}
                   />
                 </div>
               ))}

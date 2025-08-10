@@ -21,19 +21,36 @@ try {
     startDate: twentyFourHoursAgo
   });
 
-  // Time series - hourly for last 24 hours (Postgres)
+  // Time series - hourly for last 24 hours with all hours filled (Postgres)
   const [rows] = await sequelize.query(
     `
+    WITH hours AS (
+      SELECT to_char(generate_series(
+        date_trunc('hour', NOW() - interval '23 hours'),
+        date_trunc('hour', NOW()),
+        interval '1 hour'
+      ), 'HH24:MI') as hour
+    ),
+    hourly_stats AS (
+      SELECT 
+        to_char(date_trunc('hour', created_at), 'HH24:MI') as hour,
+        COUNT(*)::int as total,
+        COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
+        COALESCE(AVG(response_time_ms),0)::int as avg_rt,
+        COALESCE(SUM(total_tokens),0)::int as tokens
+      FROM ai_interactions
+      WHERE created_at >= NOW() - interval '24 hours'
+      GROUP BY 1
+    )
     SELECT 
-      to_char(date_trunc('hour', created_at), 'HH24:MI') as hour,
-      COUNT(*)::int as total,
-      COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
-      COALESCE(AVG(response_time_ms),0)::int as avg_rt,
-      COALESCE(SUM(total_tokens),0)::int as tokens
-    FROM ai_interactions
-    WHERE created_at >= NOW() - interval '24 hours'
-    GROUP BY 1
-    ORDER BY 1
+      h.hour,
+      COALESCE(hs.total, 0)::int as total,
+      COALESCE(hs.failed, 0)::int as failed,
+      COALESCE(hs.avg_rt, 0)::int as avg_rt,
+      COALESCE(hs.tokens, 0)::int as tokens
+    FROM hours h
+    LEFT JOIN hourly_stats hs ON h.hour = hs.hour
+    ORDER BY h.hour
     `
   );
   series = rows as typeof series;
