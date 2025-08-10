@@ -117,7 +117,6 @@
   /* Terminal-style vertical bar chart */
   .terminal-v-chart {
     display: flex;
-    font-family: monospace;
   }
 
   .v-y-axis-column {
@@ -141,7 +140,6 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    min-width: 4rem;
   }
 
   .v-y-axis-bottom-spacer {
@@ -259,7 +257,6 @@
   .v-x-label {
     flex: 1; /* Match bar stretching */
     text-align: center;
-    font-size: 0.75rem; /* Smaller font for 24 labels */
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -267,7 +264,6 @@
   /* Terminal-style horizontal bar chart */
   .terminal-h-chart {
     display: flex;
-    font-family: monospace;
   }
 
   /* Critical: Use grid for perfect alignment */
@@ -340,7 +336,6 @@
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 1ch;
-    font-size: 0.875rem;
   }
 
   .h-value-column {
@@ -355,7 +350,6 @@
     display: flex;
     align-items: center;
     height: 2rem; /* Exact same as labels and bars */
-    font-size: 0.875rem;
   }
 
   /* Dynamic width for horizontal bars */
