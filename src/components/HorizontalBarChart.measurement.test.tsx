@@ -68,9 +68,7 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
       { label: 'claude-opus-4-1-2025...', value: 3 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const chart = container.querySelector('.terminal-h-chart');
     const firstLabel = container.querySelector('.h-y-label');
@@ -83,31 +81,31 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
     expect(box).toBeTruthy();
 
     // Mock getBoundingClientRect to simulate real browser measurements
-    Object.defineProperty(chart, 'getBoundingClientRect', {
-      value: () => ({ top: 0, left: 0, bottom: 200, right: 600 })
+    Object.defineProperty(chart!, 'getBoundingClientRect', {
+      value: () => ({ top: 0, left: 0, bottom: 200, right: 600 }),
     });
 
-    Object.defineProperty(firstLabel, 'getBoundingClientRect', {
-      value: () => ({ top: 0, left: 0, bottom: 32, right: 100 })
+    Object.defineProperty(firstLabel!, 'getBoundingClientRect', {
+      value: () => ({ top: 0, left: 0, bottom: 32, right: 100 }),
     });
 
-    Object.defineProperty(box, 'getBoundingClientRect', {
-      value: () => ({ top: 0, left: 100, bottom: 200, right: 400 })
+    Object.defineProperty(box!, 'getBoundingClientRect', {
+      value: () => ({ top: 0, left: 100, bottom: 200, right: 400 }),
     });
 
     // The bar is INSIDE the box, so it has box padding offset
-    Object.defineProperty(firstBar, 'getBoundingClientRect', {
-      value: () => ({ 
+    Object.defineProperty(firstBar!, 'getBoundingClientRect', {
+      value: () => ({
         top: 22.8, // 20.8px padding + 2px border
         left: 108, // 100 + 8px padding
         bottom: 54.8, // top + 32px height
-        right: 392 
-      })
+        right: 392,
+      }),
     });
 
-    const chartRect = chart.getBoundingClientRect();
-    const labelRect = firstLabel.getBoundingClientRect();
-    const barRect = firstBar.getBoundingClientRect();
+    const chartRect = chart!.getBoundingClientRect();
+    const labelRect = firstLabel!.getBoundingClientRect();
+    const barRect = firstBar!.getBoundingClientRect();
 
     // Measure distance from top of chart
     const labelDistanceFromTop = labelRect.top - chartRect.top;
@@ -120,7 +118,7 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
     // The bar should be ~22.8px lower than the label due to box padding
     expect(labelDistanceFromTop).toBe(0);
     expect(barDistanceFromTop).toBeCloseTo(22.8, 1);
-    
+
     // This is the PROBLEM - they should be equal but aren't!
     expect(barDistanceFromTop - labelDistanceFromTop).toBeCloseTo(22.8, 1);
   });
@@ -132,40 +130,42 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
       { label: 'Third Bar', value: 90 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const chart = container.querySelector('.terminal-h-chart');
     const labels = container.querySelectorAll('.h-y-label');
     const bars = container.querySelectorAll('.h-bar-row');
 
+    expect(chart).toBeTruthy();
+    expect(labels).toHaveLength(3);
+    expect(bars).toHaveLength(3);
+
     // Mock measurements
-    Object.defineProperty(chart, 'getBoundingClientRect', {
-      value: () => ({ top: 100, left: 0 }) // Chart starts at 100px from page top
+    Object.defineProperty(chart!, 'getBoundingClientRect', {
+      value: () => ({ top: 100, left: 0 }), // Chart starts at 100px from page top
     });
 
     // Labels start at top of chart
     Array.from(labels).forEach((label, i) => {
       Object.defineProperty(label, 'getBoundingClientRect', {
-        value: () => ({ 
-          top: 100 + (i * 32), // Each row is 32px (2rem)
-          left: 0 
-        })
+        value: () => ({
+          top: 100 + i * 32, // Each row is 32px (2rem)
+          left: 0,
+        }),
       });
     });
 
     // Bars are inside box with padding, so offset by ~22.8px
     Array.from(bars).forEach((bar, i) => {
       Object.defineProperty(bar, 'getBoundingClientRect', {
-        value: () => ({ 
-          top: 100 + 22.8 + (i * 32), // Chart top + box padding + row offset
-          left: 108 
-        })
+        value: () => ({
+          top: 100 + 22.8 + i * 32, // Chart top + box padding + row offset
+          left: 108,
+        }),
       });
     });
 
-    const chartRect = chart.getBoundingClientRect();
+    const chartRect = chart!.getBoundingClientRect();
 
     // Check each row
     for (let i = 0; i < 3; i++) {
@@ -179,9 +179,9 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
 
       // Labels should be at 0, 32, 64 pixels from chart top
       expect(labelDistance).toBe(i * 32);
-      
+
       // Bars should be at 22.8, 54.8, 86.8 pixels from chart top (with padding)
-      expect(barDistance).toBeCloseTo(22.8 + (i * 32), 1);
+      expect(barDistance).toBeCloseTo(22.8 + i * 32, 1);
 
       // This shows the misalignment!
       const misalignment = barDistance - labelDistance;
@@ -194,14 +194,10 @@ describe('HorizontalBarChart Distance From Top Measurement', () => {
     // 1. Add padding-top to the labels column to match the box padding
     // 2. Remove the box padding from the bars
     // 3. Put labels inside their own box with matching padding
-    
-    const data = [
-      { label: 'Test', value: 50 }
-    ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const data = [{ label: 'Test', value: 50 }];
+
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     // What we need: label and bar should have same distance from chart top
     // Current: bar is ~22.8px lower due to box padding

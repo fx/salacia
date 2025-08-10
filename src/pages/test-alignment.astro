@@ -1,15 +1,16 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import { Layout } from '../components/Layout';
+import '../styles/global.css';
 import { HorizontalBarChart } from '../components/HorizontalBarChart';
 ---
 
-<Layout title="Alignment Test">
+<Layout client:load>
   <div style="padding: 2rem;">
     <h1>Horizontal Bar Chart Alignment Test</h1>
-    
+
     <h2>Test 1: Three Bars (Top Alignment)</h2>
     <div style="background: rgba(255,0,0,0.1); padding: 1rem;">
-      <HorizontalBarChart 
+      <HorizontalBarChart
         data={[
           { label: 'First Bar', value: 30 },
           { label: 'Second Bar', value: 60 },
@@ -23,7 +24,7 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
     <h2>Test 2: Two Bars (Top Alignment)</h2>
     <div style="background: rgba(0,255,0,0.1); padding: 1rem;">
-      <HorizontalBarChart 
+      <HorizontalBarChart
         data={[
           { label: 'Bar One', value: 50 },
           { label: 'Bar Two', value: 100 },
@@ -36,7 +37,7 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
     <h2>Test 3: Four Bars (Top Alignment)</h2>
     <div style="background: rgba(0,0,255,0.1); padding: 1rem;">
-      <HorizontalBarChart 
+      <HorizontalBarChart
         data={[
           { label: 'Item A', value: 25 },
           { label: 'Item B', value: 50 },
@@ -51,7 +52,7 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
     <h2>Test 4: Three Bars (Bottom Alignment)</h2>
     <div style="background: rgba(255,255,0,0.1); padding: 1rem;">
-      <HorizontalBarChart 
+      <HorizontalBarChart
         data={[
           { label: 'Alpha', value: 40 },
           { label: 'Beta', value: 70 },
@@ -64,8 +65,11 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
     </div>
 
     <h2>Visual Alignment Guide</h2>
-    <p>Each colored background helps visualize the container. The labels on the left should be perfectly aligned with the bars in the middle and values on the right.</p>
-    
+    <p>
+      Each colored background helps visualize the container. The labels on the left should be
+      perfectly aligned with the bars in the middle and values on the right.
+    </p>
+
     <h2>Debug Info</h2>
     <div id="debug-info"></div>
   </div>
@@ -77,28 +81,28 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
         const charts = document.querySelectorAll('.terminal-h-chart');
         const debugInfo = document.getElementById('debug-info');
         let html = '<h3>Actual Measurements:</h3>';
-        
+
         charts.forEach((chart, chartIndex) => {
           html += `<h4>Chart ${chartIndex + 1}:</h4><ul>`;
-          
+
           const labels = chart.querySelectorAll('.h-y-label');
           const bars = chart.querySelectorAll('.h-bar-row');
           const values = chart.querySelectorAll('.h-value-label');
-          
+
           for (let i = 0; i < labels.length; i++) {
             const labelRect = labels[i].getBoundingClientRect();
             const barRect = bars[i].getBoundingClientRect();
             const valueRect = values[i] ? values[i].getBoundingClientRect() : null;
-            
-            const aligned = labelRect.top === barRect.top && 
-                          (!valueRect || barRect.top === valueRect.top);
-            
+
+            const aligned =
+              labelRect.top === barRect.top && (!valueRect || barRect.top === valueRect.top);
+
             html += `<li>Row ${i + 1}: Label top=${labelRect.top.toFixed(1)}, Bar top=${barRect.top.toFixed(1)}, Value top=${valueRect ? valueRect.top.toFixed(1) : 'N/A'} - <strong>${aligned ? '✅ ALIGNED' : '❌ MISALIGNED'}</strong></li>`;
           }
-          
+
           html += '</ul>';
         });
-        
+
         if (debugInfo) {
           debugInfo.innerHTML = html;
         }

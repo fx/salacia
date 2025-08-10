@@ -295,7 +295,7 @@ module.exports = {
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     // Drop tables in reverse order of creation to handle foreign key constraints
     await queryInterface.dropTable('ai_interactions');
     await queryInterface.dropTable('ai_providers');

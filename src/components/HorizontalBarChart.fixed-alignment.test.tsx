@@ -76,39 +76,42 @@ describe('HorizontalBarChart FIXED Alignment', () => {
       { label: 'claude-opus-4-1-2025...', value: 3 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const chart = container.querySelector('.terminal-h-chart');
     const firstLabel = container.querySelector('.h-y-label');
     const firstBar = container.querySelector('.h-bar-row');
     const firstValue = container.querySelector('.h-value-label');
 
+    expect(chart).toBeTruthy();
+    expect(firstLabel).toBeTruthy();
+    expect(firstBar).toBeTruthy();
+    expect(firstValue).toBeTruthy();
+
     // Mock measurements with the fix applied
-    Object.defineProperty(chart, 'getBoundingClientRect', {
-      value: () => ({ top: 0, left: 0 })
+    Object.defineProperty(chart!, 'getBoundingClientRect', {
+      value: () => ({ top: 0, left: 0 }),
     });
 
     // Label now has padding-top matching box padding
-    Object.defineProperty(firstLabel, 'getBoundingClientRect', {
-      value: () => ({ top: 22.8, left: 0 }) // NOW at same level as bar!
+    Object.defineProperty(firstLabel!, 'getBoundingClientRect', {
+      value: () => ({ top: 22.8, left: 0 }), // NOW at same level as bar!
     });
 
     // Bar is inside box with padding
-    Object.defineProperty(firstBar, 'getBoundingClientRect', {
-      value: () => ({ top: 22.8, left: 108 })
+    Object.defineProperty(firstBar!, 'getBoundingClientRect', {
+      value: () => ({ top: 22.8, left: 108 }),
     });
 
     // Value also has padding-top
-    Object.defineProperty(firstValue, 'getBoundingClientRect', {
-      value: () => ({ top: 22.8, left: 400 })
+    Object.defineProperty(firstValue!, 'getBoundingClientRect', {
+      value: () => ({ top: 22.8, left: 400 }),
     });
 
-    const chartRect = chart.getBoundingClientRect();
-    const labelRect = firstLabel.getBoundingClientRect();
-    const barRect = firstBar.getBoundingClientRect();
-    const valueRect = firstValue.getBoundingClientRect();
+    const chartRect = chart!.getBoundingClientRect();
+    const labelRect = firstLabel!.getBoundingClientRect();
+    const barRect = firstBar!.getBoundingClientRect();
+    const valueRect = firstValue!.getBoundingClientRect();
 
     const labelDistance = labelRect.top - chartRect.top;
     const barDistance = barRect.top - chartRect.top;
@@ -135,9 +138,7 @@ describe('HorizontalBarChart FIXED Alignment', () => {
       { label: 'Third Bar', value: 90 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const chart = container.querySelector('.terminal-h-chart');
     const labels = container.querySelectorAll('.h-y-label');
@@ -145,32 +146,34 @@ describe('HorizontalBarChart FIXED Alignment', () => {
     const values = container.querySelectorAll('.h-value-label');
 
     Object.defineProperty(chart, 'getBoundingClientRect', {
-      value: () => ({ top: 0 })
+      value: () => ({ top: 0 }),
     });
 
     // All elements now start at same offset due to padding
     const baseOffset = 22.8;
-    
+
     for (let i = 0; i < 3; i++) {
-      const rowOffset = baseOffset + (i * 32); // 32px per row
+      const rowOffset = baseOffset + i * 32; // 32px per row
 
       Object.defineProperty(labels[i], 'getBoundingClientRect', {
-        value: () => ({ top: rowOffset })
+        value: () => ({ top: rowOffset }),
       });
 
       Object.defineProperty(bars[i], 'getBoundingClientRect', {
-        value: () => ({ top: rowOffset })
+        value: () => ({ top: rowOffset }),
       });
 
       Object.defineProperty(values[i], 'getBoundingClientRect', {
-        value: () => ({ top: rowOffset })
+        value: () => ({ top: rowOffset }),
       });
 
       const labelTop = labels[i].getBoundingClientRect().top;
       const barTop = bars[i].getBoundingClientRect().top;
       const valueTop = values[i].getBoundingClientRect().top;
 
-      console.log(`Row ${i}: All at ${rowOffset}px - Label=${labelTop}, Bar=${barTop}, Value=${valueTop}`);
+      console.log(
+        `Row ${i}: All at ${rowOffset}px - Label=${labelTop}, Bar=${barTop}, Value=${valueTop}`
+      );
 
       // Perfect alignment for each row!
       expect(labelTop).toBe(barTop);
@@ -180,33 +183,33 @@ describe('HorizontalBarChart FIXED Alignment', () => {
   });
 
   it('verifies no discrepancy remains', () => {
-    const data = [
-      { label: 'Test', value: 50 }
-    ];
+    const data = [{ label: 'Test', value: 50 }];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const chart = container.querySelector('.terminal-h-chart');
     const label = container.querySelector('.h-y-label');
     const bar = container.querySelector('.h-bar-row');
 
-    Object.defineProperty(chart, 'getBoundingClientRect', {
-      value: () => ({ top: 100 }) // Chart at 100px from page
+    expect(chart).toBeTruthy();
+    expect(label).toBeTruthy();
+    expect(bar).toBeTruthy();
+
+    Object.defineProperty(chart!, 'getBoundingClientRect', {
+      value: () => ({ top: 100 }), // Chart at 100px from page
     });
 
-    Object.defineProperty(label, 'getBoundingClientRect', {
-      value: () => ({ top: 122.8 }) // 100 + 22.8px padding
+    Object.defineProperty(label!, 'getBoundingClientRect', {
+      value: () => ({ top: 122.8 }), // 100 + 22.8px padding
     });
 
-    Object.defineProperty(bar, 'getBoundingClientRect', {
-      value: () => ({ top: 122.8 }) // 100 + 22.8px (box padding)
+    Object.defineProperty(bar!, 'getBoundingClientRect', {
+      value: () => ({ top: 122.8 }), // 100 + 22.8px (box padding)
     });
 
-    const chartTop = chart.getBoundingClientRect().top;
-    const labelTop = label.getBoundingClientRect().top;
-    const barTop = bar.getBoundingClientRect().top;
+    const chartTop = chart!.getBoundingClientRect().top;
+    const labelTop = label!.getBoundingClientRect().top;
+    const barTop = bar!.getBoundingClientRect().top;
 
     const discrepancy = Math.abs(labelTop - barTop);
 

@@ -1,15 +1,16 @@
 ---
 import { Layout } from '../components/Layout';
+import '../styles/global.css';
 import { VerticalBarChart } from '../components/VerticalBarChart';
 ---
 
-<Layout title="Bar Height Test">
+<Layout client:load>
   <div style="padding: 2rem;">
     <h1>Vertical Bar Chart Height Test</h1>
-    
+
     <h2>Test 1: Single Value (150ms) - Should show full height bar</h2>
     <div style="background: rgba(255,0,0,0.1); padding: 1rem;">
-      <VerticalBarChart 
+      <VerticalBarChart
         data={[150]}
         yAxisLabels={['150ms', '75ms', '0ms']}
         xAxisLabels={['8/9']}
@@ -21,7 +22,7 @@ import { VerticalBarChart } from '../components/VerticalBarChart';
 
     <h2>Test 2: Multiple Values with Different Heights</h2>
     <div style="background: rgba(0,255,0,0.1); padding: 1rem;">
-      <VerticalBarChart 
+      <VerticalBarChart
         data={[30, 60, 90, 120, 150]}
         yAxisLabels={['150', '75', '0']}
         xAxisLabels={['A', 'B', 'C', 'D', 'E']}
@@ -33,7 +34,7 @@ import { VerticalBarChart } from '../components/VerticalBarChart';
 
     <h2>Test 3: Mixed Values</h2>
     <div style="background: rgba(0,0,255,0.1); padding: 1rem;">
-      <VerticalBarChart 
+      <VerticalBarChart
         data={[100, 50, 75, 25, 100]}
         yAxisLabels={['100%', '50%', '0%']}
         xAxisLabels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri']}

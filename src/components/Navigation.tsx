@@ -26,8 +26,8 @@ export function Navigation() {
     statsIsConnected,
     statsIsConnecting,
     statsData,
-    statsLastUpdate,
-    stats,
+    // statsLastUpdate, // Currently unused
+    // stats, // Currently unused
   } = useRealtime();
   const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
   const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
@@ -165,7 +165,7 @@ export function Navigation() {
   const formatRelativeTime = () => {
     // Get the timestamp of the most recent AI message
     const lastMessage = messages[0]; // Messages are sorted newest first
-    
+
     if (!lastMessage || !lastMessage.createdAt) {
       return 'No messages';
     }

@@ -81,9 +81,7 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
       { label: 'Third Bar', value: 90 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     // Get all elements
     const labels = Array.from(container.querySelectorAll('.h-y-label'));
@@ -120,36 +118,40 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
       const barParent = bar.parentElement;
       const valueParent = value.parentElement;
 
-      const labelOffset = label.offsetTop;
-      const barOffset = bar.offsetTop;
-      const valueOffset = value.offsetTop;
+      const labelOffset = (label as HTMLElement).offsetTop;
+      const barOffset = (bar as HTMLElement).offsetTop;
+      const valueOffset = (value as HTMLElement).offsetTop;
 
       // Critical test: all three must have EXACT same offset from their parent
       expect(labelOffset).toBe(barOffset);
       expect(barOffset).toBe(valueOffset);
 
-      console.log(`Row ${i}: Label offset=${labelOffset}, Bar offset=${barOffset}, Value offset=${valueOffset}`);
+      console.log(
+        `Row ${i}: Label offset=${labelOffset}, Bar offset=${barOffset}, Value offset=${valueOffset}`
+      );
     }
 
     // Additional check: verify spacing between rows is consistent
     for (let i = 1; i < 3; i++) {
-      const prevLabelOffset = labels[i - 1].offsetTop;
-      const currLabelOffset = labels[i].offsetTop;
+      const prevLabelOffset = (labels[i - 1] as HTMLElement).offsetTop;
+      const currLabelOffset = (labels[i] as HTMLElement).offsetTop;
       const labelSpacing = currLabelOffset - prevLabelOffset;
 
-      const prevBarOffset = bars[i - 1].offsetTop;
-      const currBarOffset = bars[i].offsetTop;
+      const prevBarOffset = (bars[i - 1] as HTMLElement).offsetTop;
+      const currBarOffset = (bars[i] as HTMLElement).offsetTop;
       const barSpacing = currBarOffset - prevBarOffset;
 
-      const prevValueOffset = values[i - 1].offsetTop;
-      const currValueOffset = values[i].offsetTop;
+      const prevValueOffset = (values[i - 1] as HTMLElement).offsetTop;
+      const currValueOffset = (values[i] as HTMLElement).offsetTop;
       const valueSpacing = currValueOffset - prevValueOffset;
 
       // Spacing must be identical
       expect(labelSpacing).toBe(barSpacing);
       expect(barSpacing).toBe(valueSpacing);
 
-      console.log(`Spacing ${i-1} to ${i}: Label=${labelSpacing}, Bar=${barSpacing}, Value=${valueSpacing}`);
+      console.log(
+        `Spacing ${i - 1} to ${i}: Label=${labelSpacing}, Bar=${barSpacing}, Value=${valueSpacing}`
+      );
     }
   });
 
@@ -159,9 +161,7 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
       { label: 'Second', value: 100 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const labels = Array.from(container.querySelectorAll('.h-y-label'));
     const bars = Array.from(container.querySelectorAll('.h-bar-row'));
@@ -169,9 +169,9 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
 
     // Check both rows
     for (let i = 0; i < 2; i++) {
-      const labelOffset = labels[i].offsetTop;
-      const barOffset = bars[i].offsetTop;
-      const valueOffset = values[i].offsetTop;
+      const labelOffset = (labels[i] as HTMLElement).offsetTop;
+      const barOffset = (bars[i] as HTMLElement).offsetTop;
+      const valueOffset = (values[i] as HTMLElement).offsetTop;
 
       expect(labelOffset).toBe(barOffset);
       expect(barOffset).toBe(valueOffset);
@@ -181,17 +181,15 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
   it('MUST maintain alignment with 1 bar', () => {
     const data = [{ label: 'Single', value: 100 }];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const label = container.querySelector('.h-y-label');
     const bar = container.querySelector('.h-bar-row');
     const value = container.querySelector('.h-value-label');
 
-    const labelOffset = label?.offsetTop || 0;
-    const barOffset = bar?.offsetTop || 0;
-    const valueOffset = value?.offsetTop || 0;
+    const labelOffset = (label as HTMLElement)?.offsetTop || 0;
+    const barOffset = (bar as HTMLElement)?.offsetTop || 0;
+    const valueOffset = (value as HTMLElement)?.offsetTop || 0;
 
     expect(labelOffset).toBe(barOffset);
     expect(barOffset).toBe(valueOffset);
@@ -205,9 +203,7 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
       { label: 'Four', value: 100 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="top" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="top" />);
 
     const labels = Array.from(container.querySelectorAll('.h-y-label'));
     const bars = Array.from(container.querySelectorAll('.h-bar-row'));
@@ -215,9 +211,9 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
 
     // Check all 4 rows
     for (let i = 0; i < 4; i++) {
-      const labelOffset = labels[i].offsetTop;
-      const barOffset = bars[i].offsetTop;
-      const valueOffset = values[i].offsetTop;
+      const labelOffset = (labels[i] as HTMLElement).offsetTop;
+      const barOffset = (bars[i] as HTMLElement).offsetTop;
+      const valueOffset = (values[i] as HTMLElement).offsetTop;
 
       expect(labelOffset).toBe(barOffset);
       expect(barOffset).toBe(valueOffset);
@@ -231,9 +227,7 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
       { label: 'Third', value: 90 },
     ];
 
-    const { container } = render(
-      <HorizontalBarChart data={data} align="bottom" />
-    );
+    const { container } = render(<HorizontalBarChart data={data} align="bottom" />);
 
     const labels = Array.from(container.querySelectorAll('.h-y-label'));
     const bars = Array.from(container.querySelectorAll('.h-bar-row'));
@@ -241,9 +235,9 @@ describe('HorizontalBarChart STRICT Alignment Test', () => {
 
     // Even with bottom alignment, rows must still align with each other
     for (let i = 0; i < 3; i++) {
-      const labelOffset = labels[i].offsetTop;
-      const barOffset = bars[i].offsetTop;
-      const valueOffset = values[i].offsetTop;
+      const labelOffset = (labels[i] as HTMLElement).offsetTop;
+      const barOffset = (bars[i] as HTMLElement).offsetTop;
+      const valueOffset = (values[i] as HTMLElement).offsetTop;
 
       expect(labelOffset).toBe(barOffset);
       expect(barOffset).toBe(valueOffset);

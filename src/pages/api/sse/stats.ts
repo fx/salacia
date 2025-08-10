@@ -49,18 +49,18 @@ export const GET: APIRoute = async ({ request }) => {
       // Load stats for different time windows
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      
+
       const [fiveMinute, twentyFourHour, overall] = await Promise.all([
         // Navigation stats (5 minutes)
         MessagesService.getFilteredStats({
-          startDate: fiveMinutesAgo
+          startDate: fiveMinutesAgo,
         }),
         // Stats page default (24 hours)
         MessagesService.getFilteredStats({
-          startDate: twentyFourHoursAgo
+          startDate: twentyFourHoursAgo,
         }),
         // Overall stats (all time)
-        MessagesService.getFilteredStats({})
+        MessagesService.getFilteredStats({}),
       ]);
 
       // Time series - hourly for last 24 hours with all hours filled

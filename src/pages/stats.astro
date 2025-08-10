@@ -18,7 +18,7 @@ try {
   // Default to 24-hour stats for the stats page
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   overall = await MessagesService.getFilteredStats({
-    startDate: twentyFourHoursAgo
+    startDate: twentyFourHoursAgo,
   });
 
   // Time series - hourly for last 24 hours with all hours filled (Postgres)

@@ -1,18 +1,47 @@
 ---
 import { Layout } from '../components/Layout';
+import '../styles/global.css';
 import { VerticalBarChart } from '../components/VerticalBarChart';
 import { HorizontalBarChart } from '../components/HorizontalBarChart';
 ---
 
-<Layout title="Hourly Charts Test">
+<Layout client:load>
   <div style="padding: 2rem;">
     <h1>Hourly Resolution Chart Test</h1>
-    
+
     <h2>Test 1: Last 24 Hours - Hourly Totals</h2>
     <div style="background: rgba(255,0,0,0.1); padding: 1rem;">
-      <VerticalBarChart 
-        data={[12, 15, 8, 20, 25, 30, 18, 22, 28, 35, 40, 45, 38, 42, 48, 52, 55, 60, 50, 45, 40, 35, 30, 25]}
-        xAxisLabels={['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']}
+      <VerticalBarChart
+        data={[
+          12, 15, 8, 20, 25, 30, 18, 22, 28, 35, 40, 45, 38, 42, 48, 52, 55, 60, 50, 45, 40, 35, 30,
+          25,
+        ]}
+        xAxisLabels={[
+          '00:00',
+          '01:00',
+          '02:00',
+          '03:00',
+          '04:00',
+          '05:00',
+          '06:00',
+          '07:00',
+          '08:00',
+          '09:00',
+          '10:00',
+          '11:00',
+          '12:00',
+          '13:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '17:00',
+          '18:00',
+          '19:00',
+          '20:00',
+          '21:00',
+          '22:00',
+          '23:00',
+        ]}
         height={10}
         title="24-HOUR ACTIVITY (HOURLY)"
         client:load
@@ -21,9 +50,37 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
     <h2>Test 2: Hourly Response Times</h2>
     <div style="background: rgba(0,255,0,0.1); padding: 1rem;">
-      <VerticalBarChart 
-        data={[150, 120, 100, 80, 90, 110, 130, 140, 160, 180, 200, 190, 170, 150, 140, 130, 120, 110, 100, 95, 90, 85, 80, 75]}
-        xAxisLabels={['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']}
+      <VerticalBarChart
+        data={[
+          150, 120, 100, 80, 90, 110, 130, 140, 160, 180, 200, 190, 170, 150, 140, 130, 120, 110,
+          100, 95, 90, 85, 80, 75,
+        ]}
+        xAxisLabels={[
+          '00:00',
+          '01:00',
+          '02:00',
+          '03:00',
+          '04:00',
+          '05:00',
+          '06:00',
+          '07:00',
+          '08:00',
+          '09:00',
+          '10:00',
+          '11:00',
+          '12:00',
+          '13:00',
+          '14:00',
+          '15:00',
+          '16:00',
+          '17:00',
+          '18:00',
+          '19:00',
+          '20:00',
+          '21:00',
+          '22:00',
+          '23:00',
+        ]}
         yAxisLabels={['200ms', '100ms', '0ms']}
         height={10}
         title="HOURLY RESPONSE TIME"
@@ -33,7 +90,7 @@ import { HorizontalBarChart } from '../components/HorizontalBarChart';
 
     <h2>Test 3: Horizontal Hourly Chart</h2>
     <div style="background: rgba(0,0,255,0.1); padding: 1rem;">
-      <HorizontalBarChart 
+      <HorizontalBarChart
         data={[
           { label: '00:00', value: 50, failed: 2 },
           { label: '01:00', value: 45, failed: 1 },
