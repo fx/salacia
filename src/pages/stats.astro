@@ -5,7 +5,7 @@ import { sequelize } from '../lib/db/sequelize-connection.js';
 import { MessagesService } from '../lib/services/messages.js';
 import { StatsDisplay } from '../components/StatsDisplay';
 
-// Load overall stats using service
+// Load 24-hour stats for the stats page (default view)
 let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null = null;
 let errorMsg: string | null = null;
 
@@ -15,7 +15,11 @@ let series: Array<{ day: string; total: number; failed: number; avg_rt: number; 
 let topModels: Array<{ model: string; count: number }> = [];
 
 try {
-  overall = await MessagesService.getFilteredStats({});
+  // Default to 24-hour stats for the stats page
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  overall = await MessagesService.getFilteredStats({
+    startDate: twentyFourHoursAgo
+  });
 
   // Time series (Postgres)
   const [rows] = await sequelize.query(
@@ -34,11 +38,12 @@ try {
   );
   series = rows as typeof series;
 
-  // Top models
+  // Top models (last 24 hours)
   const [models] = await sequelize.query(
     `
     SELECT model, COUNT(*)::int as count
     FROM ai_interactions
+    WHERE created_at >= NOW() - interval '24 hours'
     GROUP BY model
     ORDER BY count DESC
     LIMIT 5

@@ -53,6 +53,8 @@ export interface RealtimeContextValue {
   statsError: Error | null;
   /** Stats data from SSE updates */
   statsData: {
+    fiveMinute: MessageStats | null;
+    twentyFourHour: MessageStats | null;
     overall: MessageStats | null;
     series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
     topModels: Array<{ model: string; count: number }>;

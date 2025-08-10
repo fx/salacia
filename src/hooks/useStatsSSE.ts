@@ -21,6 +21,8 @@ import type { MessageStats } from '../lib/types/messages.js';
  * Statistics data structure from SSE updates.
  */
 interface StatsData {
+  fiveMinute: MessageStats | null;
+  twentyFourHour: MessageStats | null;
   overall: MessageStats | null;
   series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
   topModels: Array<{ model: string; count: number }>;
@@ -160,6 +162,8 @@ export function useStatsSSE(options: { autoConnect?: boolean } = {}) {
   const getStatsData = useCallback((): StatsData => {
     return (
       statsData || {
+        fiveMinute: null,
+        twentyFourHour: null,
         overall: null,
         series: [],
         topModels: [],

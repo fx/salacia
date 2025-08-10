@@ -16,6 +16,7 @@ const VARIANT_FLASH_DURATION_MS = 300;
  */
 export function Navigation() {
   const {
+    messages,
     connectionState,
     isConnected,
     isConnecting,
@@ -142,11 +143,11 @@ export function Navigation() {
    * Format stats summary for 5-minute window display
    */
   const formatStatsDisplay = () => {
-    if (!statsData.overall) {
+    if (!statsData.fiveMinute) {
       return 'No data';
     }
 
-    const { totalMessages, averageResponseTime, totalTokens } = statsData.overall;
+    const { totalMessages, averageResponseTime, totalTokens } = statsData.fiveMinute;
 
     // Format response time
     const rtDisplay = averageResponseTime > 0 ? `${Math.round(averageResponseTime)}ms` : '0ms';
@@ -162,25 +163,16 @@ export function Navigation() {
    * Format relative time display (e.g., "1m 3s ago", "0s ago")
    */
   const formatRelativeTime = () => {
-    // Get the most recent update time from either messages or stats
-    const messageLastTime = stats.lastEventTime;
-    const statsTime = statsLastUpdate;
-
-    let mostRecentTime: Date | null = null;
-    if (messageLastTime && statsTime) {
-      mostRecentTime = messageLastTime > statsTime ? messageLastTime : statsTime;
-    } else if (messageLastTime) {
-      mostRecentTime = messageLastTime;
-    } else if (statsTime) {
-      mostRecentTime = statsTime;
+    // Get the timestamp of the most recent AI message
+    const lastMessage = messages[0]; // Messages are sorted newest first
+    
+    if (!lastMessage || !lastMessage.createdAt) {
+      return 'No messages';
     }
 
-    if (!mostRecentTime) {
-      return 'No updates';
-    }
-
-    const diffMs = currentTime.getTime() - mostRecentTime.getTime();
-    const diffSeconds = Math.floor(diffMs / 1000);
+    const lastMessageTime = new Date(lastMessage.createdAt);
+    const diffMs = currentTime.getTime() - lastMessageTime.getTime();
+    const diffSeconds = Math.max(0, Math.floor(diffMs / 1000)); // Ensure never negative
 
     if (diffSeconds < 60) {
       return `${diffSeconds}s ago`;
@@ -205,6 +197,16 @@ export function Navigation() {
         </a>
       </span>
       <span>
+        {combinedIsConnected && (
+          <>
+            <span is-="badge" variant-="surface1" title="Time since last AI interaction">
+              {formatRelativeTime()}
+            </span>
+            <span is-="badge" variant-="blue" title="Statistics for last 5 minutes">
+              {formatStatsDisplay()}
+            </span>
+          </>
+        )}
         <span
           is-="badge"
           variant-={getStatusVariant()}
@@ -212,16 +214,6 @@ export function Navigation() {
         >
           {getStatusText()}
         </span>
-        {combinedIsConnected && (
-          <>
-            <span is-="badge" variant-="blue" title="Statistics for last 5 minutes">
-              {formatStatsDisplay()}
-            </span>
-            <span is-="badge" variant-="surface1" title="Time since last update">
-              {formatRelativeTime()}
-            </span>
-          </>
-        )}
         {combinedIsConnected && hasNewMessages && newMessagesCount > 0 && (
           <span
             is-="badge"

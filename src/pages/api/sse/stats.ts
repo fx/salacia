@@ -9,6 +9,11 @@ import { MessagesService } from '../../../lib/services/messages.js';
  * Stats data structure for SSE updates.
  */
 interface StatsData {
+  // Stats for navigation (5 minutes)
+  fiveMinute: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null;
+  // Stats for stats page (24 hours default)
+  twentyFourHour: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null;
+  // Overall stats (all time)
   overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null;
   series: Array<{ day: string; total: number; failed: number; avg_rt: number; tokens: number }>;
   topModels: Array<{ model: string; count: number }>;
@@ -41,8 +46,22 @@ export const GET: APIRoute = async ({ request }) => {
    */
   const queryStatsData = async (): Promise<StatsData> => {
     try {
-      // Load overall stats using service
-      const overall = await MessagesService.getFilteredStats({});
+      // Load stats for different time windows
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      
+      const [fiveMinute, twentyFourHour, overall] = await Promise.all([
+        // Navigation stats (5 minutes)
+        MessagesService.getFilteredStats({
+          startDate: fiveMinutesAgo
+        }),
+        // Stats page default (24 hours)
+        MessagesService.getFilteredStats({
+          startDate: twentyFourHoursAgo
+        }),
+        // Overall stats (all time)
+        MessagesService.getFilteredStats({})
+      ]);
 
       // Time series (last 14 days)
       const [rows] = await sequelize.query(
@@ -61,11 +80,12 @@ export const GET: APIRoute = async ({ request }) => {
       );
       const series = rows as StatsData['series'];
 
-      // Top models
+      // Top models (last 24 hours)
       const [models] = await sequelize.query(
         `
         SELECT model, COUNT(*)::int as count
         FROM ai_interactions
+        WHERE created_at >= NOW() - interval '24 hours'
         GROUP BY model
         ORDER BY count DESC
         LIMIT 5
@@ -74,6 +94,8 @@ export const GET: APIRoute = async ({ request }) => {
       const topModels = models as StatsData['topModels'];
 
       return {
+        fiveMinute,
+        twentyFourHour,
         overall,
         series,
         topModels,
@@ -82,6 +104,8 @@ export const GET: APIRoute = async ({ request }) => {
     } catch (error) {
       console.error('Failed to query stats data:', error);
       return {
+        fiveMinute: null,
+        twentyFourHour: null,
         overall: null,
         series: [],
         topModels: [],

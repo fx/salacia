@@ -5,13 +5,15 @@ interface HorizontalBarChartProps {
   width?: number;
   title?: string;
   showFailedStack?: boolean;
+  align?: 'top' | 'bottom' | 'center';
 }
 
 export function HorizontalBarChart({ 
   data, 
   width = 20,
   title,
-  showFailedStack = false
+  showFailedStack = false,
+  align = 'center'
 }: HorizontalBarChartProps) {
   const max = Math.max(...data.map(d => d.value), 1);
   
@@ -37,32 +39,34 @@ export function HorizontalBarChart({
   ];
   
   return (
-    <div data-box="square" className="widget horizontal-chart">
+    <div className="widget horizontal-chart">
       {title && <h3>{title}</h3>}
       
-      <div className="chart-row">
-        {/* Y-axis labels column (outside the box) */}
-        <div className="chart-column y-labels">
+      <div className="terminal-h-chart">
+        {/* Left column: Y-axis labels */}
+        <div className="h-y-axis-column">
           {data.map((item, i) => (
-            <span key={i}>{item.label}</span>
+            <div key={i} className="h-y-label">
+              {item.label}
+            </div>
           ))}
+          <div className="h-y-axis-bottom-spacer" />
         </div>
         
-        {/* Main chart area */}
-        <div className="chart-column" data-self="grow">
-          {/* Box containing ONLY the bars */}
-          <div data-box="square" className="bars-box">
+        {/* Middle column: Chart box with bars */}
+        <div className="h-chart-content">
+          <div box-="square" className="h-chart-box">
             {bars.map((bar, i) => (
-              <div key={i} className="bar-row">
+              <div key={i} className="h-bar-row">
                 {bar.success > 0 && (
-                  <span 
-                    className="bar-success" 
+                  <div 
+                    className="h-bar-success" 
                     data-width={bar.success.toString()}
                   />
                 )}
                 {bar.failed > 0 && (
-                  <span 
-                    className="bar-failed" 
+                  <div 
+                    className="h-bar-failed" 
                     data-width={bar.failed.toString()}
                   />
                 )}
@@ -70,23 +74,24 @@ export function HorizontalBarChart({
             ))}
           </div>
           
-          {/* X-axis scale (outside the box) */}
-          <div className="x-axis-scale">
-            <small>{xLabels[0]}</small>
-            <small>{xLabels[1]}</small>
-            <small>{xLabels[2]}</small>
+          {/* X-axis scale below the box */}
+          <div className="h-x-axis-scale">
+            <span>{xLabels[0]}</span>
+            <span>{xLabels[1]}</span>
+            <span>{xLabels[2]}</span>
           </div>
         </div>
         
-        {/* Values column (outside the box) */}
-        <div className="chart-column value-labels">
+        {/* Right column: Values */}
+        <div className="h-value-column">
           {data.map((item, i) => (
-            <small key={i}>
+            <div key={i} className="h-value-label">
               {showFailedStack && item.failed !== undefined 
                 ? `${item.value - item.failed}✓ ${item.failed}✗`
                 : item.value}
-            </small>
+            </div>
           ))}
+          <div className="h-value-bottom-spacer" />
         </div>
       </div>
       

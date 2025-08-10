@@ -64,8 +64,9 @@ export function StatsDisplay({
 
   // Update local state when SSE data is received
   useEffect(() => {
-    if (statsData && statsData.overall) {
-      setOverall(statsData.overall);
+    if (statsData && statsData.twentyFourHour) {
+      // Use 24-hour stats for the stats page
+      setOverall(statsData.twentyFourHour);
       setSeries(statsData.series);
       setTopModels(statsData.topModels);
       setError(null);
@@ -116,7 +117,7 @@ export function StatsDisplay({
   return (
     <div>
       <div box-="square">
-        <h2>STATS OVERVIEW</h2>
+        <h2>STATS OVERVIEW (24 HOURS)</h2>
         {overall ? (
           <p>
             <span is-="badge" variant-="surface0">
