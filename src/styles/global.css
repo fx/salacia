@@ -166,7 +166,8 @@
     width: 100%;
     height: 100%;
     align-items: flex-end;
-    gap: 0.5rem;
+    gap: 2px; /* Minimal gap for 24 bars */
+    justify-content: stretch;
   }
 
   /* Left alignment (default) - bars start from left */
@@ -183,22 +184,19 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    width: 2rem; /* Fixed width instead of flex */
+    flex: 1; /* Each bar takes equal width */
+    min-width: 0.5rem; /* Minimum width for visibility */
     height: 100%; /* Need explicit height for percentage children to work */
   }
 
   .v-bar {
     width: 100%;
     background: var(--foreground1);
-    min-width: 1rem;
-    max-width: 2rem;
   }
 
   /* Stacked vertical bar chart */
   .v-bar-stacked {
     width: 100%;
-    min-width: 1rem;
-    max-width: 2rem;
     display: flex;
     flex-direction: column-reverse; /* Stack from bottom up */
   }
@@ -246,21 +244,24 @@
   .v-x-axis-labels {
     display: flex;
     padding: 0.5rem 1ch;
-    gap: 0.5rem;
+    gap: 2px; /* Match bar gap */
+    justify-content: stretch;
   }
 
   .terminal-v-chart.align-left .v-x-axis-labels {
-    justify-content: flex-start;
+    justify-content: stretch;
   }
 
   .terminal-v-chart.align-right .v-x-axis-labels {
-    justify-content: flex-end;
+    justify-content: stretch;
   }
 
   .v-x-label {
-    width: 2rem; /* Match bar width */
+    flex: 1; /* Match bar stretching */
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem; /* Smaller font for 24 labels */
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Terminal-style horizontal bar chart */
