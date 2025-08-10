@@ -6,6 +6,7 @@ interface VerticalBarChartProps {
   yAxisLabels?: string[];
   xAxisLabels?: string[];
   title?: string;
+  align?: 'left' | 'right';
 }
 
 export function VerticalBarChart({ 
@@ -13,7 +14,8 @@ export function VerticalBarChart({
   height = 10, 
   yAxisLabels,
   xAxisLabels,
-  title 
+  title,
+  align = 'left'
 }: VerticalBarChartProps) {
   const max = Math.max(...data, 1);
   
@@ -29,32 +31,34 @@ export function VerticalBarChart({
     '0'
   ];
 
+  const alignClass = align === 'right' ? 'align-right' : 'align-left';
+  
   return (
     <div className="widget chart-widget">
       {title && <h3>{title}</h3>}
-      <div className="terminal-chart">
+      <div className={`terminal-v-chart ${alignClass}`}>
         {/* Left column: Y-axis labels aligned with grid lines */}
-        <div className="y-axis-column">
-          <div className="y-axis-labels">
+        <div className="v-y-axis-column">
+          <div className="v-y-axis-labels">
             {yLabels.map((label, i) => (
-              <div key={i} className="y-label">{label}</div>
+              <div key={i} className="v-y-label">{label}</div>
             ))}
           </div>
-          <div className="y-axis-bottom-spacer" />
+          <div className="v-y-axis-bottom-spacer" />
         </div>
         
         {/* Right column: Box with bars and X-axis below */}
-        <div className="chart-content">
+        <div className="v-chart-content">
           {/* The actual chart box with bars inside */}
-          <div box-="square" className="chart-box">
-            <div className="bars-container">
+          <div box-="square" className="v-chart-box">
+            <div className="v-bars-container">
               {barHeights.map((barHeight, i) => (
                 <div 
                   key={i}
-                  className="bar-column"
+                  className="v-bar-column"
                 >
                   <div 
-                    className="bar" 
+                    className="v-bar" 
                     data-height={barHeight.toString()}
                   />
                 </div>
@@ -64,9 +68,9 @@ export function VerticalBarChart({
           
           {/* X-axis labels below the box */}
           {xAxisLabels && (
-            <div className="x-axis-labels">
+            <div className="v-x-axis-labels">
               {xAxisLabels.map((label, i) => (
-                <div key={i} className="x-label">{label}</div>
+                <div key={i} className="v-x-label">{label}</div>
               ))}
             </div>
           )}

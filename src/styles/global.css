@@ -115,97 +115,121 @@
   }
 
   /* Terminal-style vertical bar chart */
-  .terminal-chart {
+  .terminal-v-chart {
     display: flex;
     font-family: monospace;
   }
 
-  .y-axis-column {
+  .v-y-axis-column {
     display: flex;
     flex-direction: column;
     padding-right: 0.5rem;
     text-align: right;
   }
 
-  .y-axis-labels {
+  .v-y-axis-labels {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     height: 10rem; /* Match chart box height */
+    /* Account for box padding to align with bars */
+    padding-top: calc(1lh + 2px);
+    padding-bottom: calc(1lh + 2px);
   }
 
-  .y-label {
+  .v-y-label {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     min-width: 4rem;
   }
 
-  .y-axis-bottom-spacer {
-    height: 1.5rem; /* Space for X-axis labels */
+  .v-y-axis-bottom-spacer {
+    height: 2rem; /* Space for X-axis labels */
   }
 
-  .chart-content {
+  .v-chart-content {
     flex: 1;
     display: flex;
     flex-direction: column;
   }
 
-  .chart-box {
+  .v-chart-box {
     height: 10rem;
     display: flex;
     align-items: flex-end;
-    padding: 0.5rem;
+    padding: 1lh 1ch; /* WebTUI standard padding */
   }
 
-  .bars-container {
+  .v-bars-container {
     display: flex;
     width: 100%;
     height: 100%;
     align-items: flex-end;
-    justify-content: space-evenly;
     gap: 0.5rem;
   }
 
-  .bar-column {
-    flex: 1;
+  /* Left alignment (default) - bars start from left */
+  .terminal-v-chart.align-left .v-bars-container {
+    justify-content: flex-start;
+  }
+
+  /* Right alignment - bars start from right */
+  .terminal-v-chart.align-right .v-bars-container {
+    justify-content: flex-end;
+  }
+
+  .v-bar-column {
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    width: 2rem; /* Fixed width instead of flex */
+  }
+
+  .v-bar {
+    width: 100%;
+    background: var(--foreground1);
+    min-width: 1rem;
     max-width: 2rem;
   }
 
-  .bar {
-    width: 100%;
-    background: var(--foreground1);
-    min-width: 0.5rem;
-  }
+  /* Bar heights - percentage of container */
+  .v-bar[data-height="0"] { height: 0; }
+  .v-bar[data-height="1"] { height: 10%; }
+  .v-bar[data-height="2"] { height: 20%; }
+  .v-bar[data-height="3"] { height: 30%; }
+  .v-bar[data-height="4"] { height: 40%; }
+  .v-bar[data-height="5"] { height: 50%; }
+  .v-bar[data-height="6"] { height: 60%; }
+  .v-bar[data-height="7"] { height: 70%; }
+  .v-bar[data-height="8"] { height: 80%; }
+  .v-bar[data-height="9"] { height: 90%; }
+  .v-bar[data-height="10"] { height: 100%; }
+  /* Extended scale for larger values */
+  .v-bar[data-height="11"] { height: 100%; }
+  .v-bar[data-height="12"] { height: 100%; }
+  .v-bar[data-height="13"] { height: 100%; }
+  .v-bar[data-height="14"] { height: 100%; }
+  .v-bar[data-height="15"] { height: 100%; }
 
-  /* Bar heights */
-  .bar[data-height="0"] { height: 0; }
-  .bar[data-height="1"] { height: 10%; }
-  .bar[data-height="2"] { height: 20%; }
-  .bar[data-height="3"] { height: 30%; }
-  .bar[data-height="4"] { height: 40%; }
-  .bar[data-height="5"] { height: 50%; }
-  .bar[data-height="6"] { height: 60%; }
-  .bar[data-height="7"] { height: 70%; }
-  .bar[data-height="8"] { height: 80%; }
-  .bar[data-height="9"] { height: 90%; }
-  .bar[data-height="10"] { height: 100%; }
-
-  .x-axis-labels {
+  .v-x-axis-labels {
     display: flex;
-    justify-content: space-evenly;
-    padding: 0.5rem;
+    padding: 0.5rem 1ch;
     gap: 0.5rem;
   }
 
-  .x-label {
-    flex: 1;
+  .terminal-v-chart.align-left .v-x-axis-labels {
+    justify-content: flex-start;
+  }
+
+  .terminal-v-chart.align-right .v-x-axis-labels {
+    justify-content: flex-end;
+  }
+
+  .v-x-label {
+    width: 2rem; /* Match bar width */
     text-align: center;
     font-size: 0.875rem;
-    max-width: 2rem;
   }
 
   /* Terminal-style horizontal bar chart */

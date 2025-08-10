@@ -1,0 +1,80 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { VerticalBarChart } from '../components/VerticalBarChart';
+---
+
+<Layout title="Vertical Chart Test">
+  <div style="padding: 2rem;">
+    <h1>Vertical Bar Chart Alignment Test</h1>
+    
+    <h2>Test 1: Default (Left Alignment)</h2>
+    <div style="background: rgba(255,0,0,0.1); padding: 1rem;">
+      <VerticalBarChart 
+        data={[10, 25, 15, 30, 20]}
+        xAxisLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May']}
+        yAxisLabels={['30', '15', '0']}
+        title="Left Aligned Bars (Default)"
+        align="left"
+        client:load
+      />
+    </div>
+
+    <h2>Test 2: Right Alignment</h2>
+    <div style="background: rgba(0,255,0,0.1); padding: 1rem;">
+      <VerticalBarChart 
+        data={[10, 25, 15, 30, 20]}
+        xAxisLabels={['Jan', 'Feb', 'Mar', 'Apr', 'May']}
+        yAxisLabels={['30', '15', '0']}
+        title="Right Aligned Bars"
+        align="right"
+        client:load
+      />
+    </div>
+
+    <h2>Test 3: Few Bars (Left)</h2>
+    <div style="background: rgba(0,0,255,0.1); padding: 1rem;">
+      <VerticalBarChart 
+        data={[50, 100]}
+        xAxisLabels={['A', 'B']}
+        yAxisLabels={['100', '50', '0']}
+        title="Two Bars - Left Aligned"
+        align="left"
+        client:load
+      />
+    </div>
+
+    <h2>Test 4: Few Bars (Right)</h2>
+    <div style="background: rgba(255,255,0,0.1); padding: 1rem;">
+      <VerticalBarChart 
+        data={[50, 100]}
+        xAxisLabels={['A', 'B']}
+        yAxisLabels={['100', '50', '0']}
+        title="Two Bars - Right Aligned"
+        align="right"
+        client:load
+      />
+    </div>
+
+    <h2>Test 5: Many Bars</h2>
+    <div style="background: rgba(255,0,255,0.1); padding: 1rem;">
+      <VerticalBarChart 
+        data={[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]}
+        xAxisLabels={['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']}
+        yAxisLabels={['60', '30', '0']}
+        title="Monthly Data - Left Aligned"
+        align="left"
+        height={10}
+        client:load
+      />
+    </div>
+
+    <h2>Visual Guide</h2>
+    <ul>
+      <li>Left alignment: Bars should start from the left side of the box</li>
+      <li>Right alignment: Bars should start from the right side of the box</li>
+      <li>Y-axis labels should align with the chart height</li>
+      <li>X-axis labels should align with the bars</li>
+      <li>All bars should be visible with appropriate heights</li>
+    </ul>
+  </div>
+</Layout>
