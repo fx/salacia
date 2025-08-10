@@ -16,15 +16,20 @@ const VARIANT_FLASH_DURATION_MS = 300;
  */
 export function Navigation() {
   const {
+    messages,
     connectionState,
     isConnected,
     isConnecting,
     hasNewMessages,
     newMessagesCount,
-    clearNewMessages,
+    statsConnectionState,
+    statsIsConnected,
+    statsIsConnecting,
+    statsData,
   } = useRealtime();
   const [isFlashing, setIsFlashing] = useState(false); // badge variant flash for connect states
   const [plusFlash, setPlusFlash] = useState(false); // dedicated +N flash
+  const [currentTime, setCurrentTime] = useState(new Date()); // for relative time calculation
   const prevCountRef = React.useRef(0);
 
   // Combined flash logic to avoid race condition with prevCountRef.current
@@ -39,7 +44,8 @@ export function Navigation() {
     }
 
     // Variant flash logic: on connection transitions or clearing
-    const shouldFlash = isConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
+    const shouldFlash =
+      combinedIsConnecting || (prevCountRef.current > 0 && newMessagesCount === 0);
     if (shouldFlash) {
       setIsFlashing(true);
       variantTimeout = setTimeout(() => setIsFlashing(false), VARIANT_FLASH_DURATION_MS);
@@ -52,9 +58,39 @@ export function Navigation() {
       if (plusTimeout) clearTimeout(plusTimeout);
       if (variantTimeout) clearTimeout(variantTimeout);
     };
-  }, [newMessagesCount, isConnecting]);
+  }, [newMessagesCount, isConnecting, statsIsConnecting]);
 
-  const status = useMemo(() => connectionState, [connectionState]);
+  // Update current time every second for relative time display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Combined connection state for flashing logic
+  const combinedIsConnecting = isConnecting || statsIsConnecting;
+  const combinedIsConnected = isConnected && statsIsConnected;
+
+  // Calculate combined status from both message and stats SSE connections
+  const status = useMemo(() => {
+    // Priority order: error > connecting > connected > disconnected
+    if (connectionState === 'error' || statsConnectionState === 'error') {
+      return 'error';
+    }
+    if (
+      connectionState === 'connecting' ||
+      connectionState === 'reconnecting' ||
+      statsConnectionState === 'connecting' ||
+      statsConnectionState === 'reconnecting'
+    ) {
+      return 'connecting';
+    }
+    if (connectionState === 'connected' && statsConnectionState === 'connected') {
+      return 'connected';
+    }
+    return 'disconnected';
+  }, [connectionState, statsConnectionState]);
 
   const getStatusVariant = () => {
     const base = () => {
@@ -62,7 +98,6 @@ export function Navigation() {
         case 'connected':
           return 'green';
         case 'connecting':
-        case 'reconnecting':
           return 'yellow';
         case 'error':
           return 'red';
@@ -77,7 +112,6 @@ export function Navigation() {
         case 'connected':
           return 'teal';
         case 'connecting':
-        case 'reconnecting':
           return 'peach';
         case 'error':
           return 'maroon';
@@ -94,7 +128,6 @@ export function Navigation() {
       case 'connected':
         return 'LIVE';
       case 'connecting':
-      case 'reconnecting':
         return 'SYNC';
       case 'error':
         return 'ERR';
@@ -102,6 +135,50 @@ export function Navigation() {
       default:
         return 'OFF';
     }
+  };
+
+  /**
+   * Format stats summary for 5-minute window display
+   */
+  const formatStatsDisplay = () => {
+    if (!statsData.fiveMinute) {
+      return 'No data';
+    }
+
+    const { totalMessages, averageResponseTime, totalTokens } = statsData.fiveMinute;
+
+    // Format response time
+    const rtDisplay = averageResponseTime > 0 ? `${Math.round(averageResponseTime)}ms` : '0ms';
+
+    // Format token count (e.g., 1.2k, 15k, etc.)
+    const tokenDisplay =
+      totalTokens >= 1000 ? `${(totalTokens / 1000).toFixed(1)}k` : totalTokens.toString();
+
+    return `5m: ${totalMessages} total, ${rtDisplay} avg, ${tokenDisplay} tokens`;
+  };
+
+  /**
+   * Format relative time display (e.g., "1m 3s ago", "0s ago")
+   */
+  const formatRelativeTime = () => {
+    // Get the timestamp of the most recent AI message
+    const lastMessage = messages[0]; // Messages are sorted newest first
+
+    if (!lastMessage || !lastMessage.createdAt) {
+      return 'No messages';
+    }
+
+    const lastMessageTime = new Date(lastMessage.createdAt);
+    const diffMs = currentTime.getTime() - lastMessageTime.getTime();
+    const diffSeconds = Math.max(0, Math.floor(diffMs / 1000)); // Ensure never negative
+
+    if (diffSeconds < 60) {
+      return `${diffSeconds}s ago`;
+    }
+
+    const minutes = Math.floor(diffSeconds / 60);
+    const seconds = diffSeconds % 60;
+    return `${minutes}m ${seconds}s ago`;
   };
 
   return (
@@ -113,12 +190,29 @@ export function Navigation() {
         <a href="/messages">
           <span is-="badge">MESSAGES</span>
         </a>
+        <a href="/stats">
+          <span is-="badge">STATS</span>
+        </a>
       </span>
       <span>
-        <span is-="badge" variant-={getStatusVariant()} title={`Connection status: ${status}`}>
+        {combinedIsConnected && (
+          <>
+            <span is-="badge" variant-="surface1" title="Time since last AI interaction">
+              {formatRelativeTime()}
+            </span>
+            <span is-="badge" variant-="blue" title="Statistics for last 5 minutes">
+              {formatStatsDisplay()}
+            </span>
+          </>
+        )}
+        <span
+          is-="badge"
+          variant-={getStatusVariant()}
+          title={`Connection status: ${status} (Messages: ${connectionState}, Stats: ${statsConnectionState})`}
+        >
           {getStatusText()}
         </span>
-        {isConnected && hasNewMessages && newMessagesCount > 0 && (
+        {combinedIsConnected && hasNewMessages && newMessagesCount > 0 && (
           <span
             is-="badge"
             variant-={plusFlash ? 'foreground0' : 'foreground1'}

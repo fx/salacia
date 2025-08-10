@@ -219,7 +219,8 @@ export class MessagesService {
     if (filters.endDate) {
       dateConditions[Op.lte] = filters.endDate;
     }
-    if (Object.keys(dateConditions).length > 0) {
+    // Use Object.getOwnPropertySymbols to check for Sequelize operator symbols (e.g., Op.lte, Op.gte)
+    if (Object.getOwnPropertySymbols(dateConditions).length > 0) {
       conditions.createdAt = dateConditions;
     }
 

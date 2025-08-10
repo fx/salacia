@@ -3,6 +3,8 @@
  * This configuration should match the settings in src/lib/db/sequelize-config.ts
  * Used by Sequelize CLI commands for migrations and seeders.
  */
+require('dotenv').config();
+
 const config = {
   development: {
     url: process.env.DATABASE_URL,

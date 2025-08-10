@@ -1,5 +1,47 @@
 # Salacia Development Guidelines
 
+**IMPORTANT: DO NOT USE ASCII BOX DRAWING CHARACTERS! WebTUI simulates the terminal look through CSS. Never use characters like └, ─, │, ░, █, etc. Use WebTUI's box attributes and CSS classes instead.**
+
+## Getting Started
+
+### Running the Development Environment
+
+**IMPORTANT**: Always ensure the development environment is running when working on this project:
+
+1. **Check README.md**: First read the full setup instructions in README.md for detailed requirements and configuration
+2. **Database Setup**: Start PostgreSQL via Docker Compose (if not already running):
+   ```bash
+   docker compose up -d
+   ```
+3. **Development Server**: Run the development server in the background:
+   ```bash
+   npm run dev
+   ```
+
+**For Claude Code**: When starting work on this project:
+- Always check if the database is running (`docker compose ps`)
+- If database is not running, start it with `docker compose up -d`
+- Always run `npm run dev` in the background for live development
+- The dev server runs on http://localhost:4321 by default
+- **IMPORTANT**: If the server starts on a different port (4322, 4323, etc.), it means multiple servers are running. Kill all dev servers and start fresh:
+  ```bash
+  # Kill all node processes running Astro dev servers
+  pkill -f "astro dev" || killall node
+  # Then start a single new dev server
+  npm run dev
+  ```
+
+### Managing Services
+
+- **Start database**: `docker compose up -d`
+- **Stop database**: `docker compose down`
+- **View database logs**: `docker compose logs -f postgres`
+- **Run migrations**: `npm run sequelize:migrate:up`
+- **Development server**: `npm run dev` (run in background)
+- **Type checking**: `npm run type-check`
+- **Linting**: `npm run lint`
+- **Tests**: `npm test`
+
 ## Technology Stack
 
 This project uses the following core technologies:
@@ -107,10 +149,17 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 **CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
 
-- **ABSOLUTELY NO Custom CSS**: Never create .css files or add custom styles - WebTUI provides everything needed
+- **ABSOLUTELY NO Custom CSS**: Never create custom CSS classes or styles. The ONLY acceptable CSS is:
+  - CSS that uses WebTUI's CSS variables (e.g., `var(--foreground1)`)
+  - Simple flexbox layout properties for component structure
+  - Data attribute selectors that map to dynamic values (e.g., `[data-height="1"]`)
 - **NO Tailwind**: This project does not use Tailwind CSS classes
-- **NO Inline Styles**: Do not use style attributes or custom data attributes for styling
-- **WebTUI Is Complete**: WebTUI's design system is comprehensive - if something seems to need custom CSS, you're using WebTUI incorrectly
+- **NO Inline Styles**: Do not use style attributes - use data attributes instead
+- **WebTUI Data Attributes**: Use data attributes like `data-box`, `data-is`, `data-align`, `data-gap`, etc.
+- **Reference VerticalBarChart.tsx**: This component is the PERFECT example - it uses ONLY:
+  - WebTUI data attributes (`data-box="square"`, `data-is="separator"`, etc.)
+  - Simple CSS classes for layout (`chart-row`, `chart-column`)
+  - Data attributes for dynamic values (`data-height="5"`)
 - **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
 - **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
 - **NEVER modify padding on WebTUI boxes**: Elements with `box-=` attributes have their own padding - never add custom padding

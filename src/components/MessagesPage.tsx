@@ -1,6 +1,6 @@
 import React from 'react';
-import { Layout } from './Layout.js';
 import { MessagesLoadMore } from './MessagesLoadMore.js';
+import { RealtimeProvider } from '../context/realtime.js';
 import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
 import type { SimplifiedCursorResponse } from '../lib/api/messages.js';
 
@@ -16,17 +16,15 @@ export interface MessagesPageProps {
 
 export function MessagesPage({ initialMessages, initialFilters, initialSort }: MessagesPageProps) {
   return (
-    <Layout>
+    <RealtimeProvider>
       <div>
-        <div>
-          <MessagesLoadMore
-            initialMessages={initialMessages}
-            initialFilters={initialFilters}
-            initialSort={initialSort}
-          />
-        </div>
+        <MessagesLoadMore
+          initialMessages={initialMessages}
+          initialFilters={initialFilters}
+          initialSort={initialSort}
+        />
       </div>
-    </Layout>
+    </RealtimeProvider>
   );
 }
 

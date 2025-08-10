@@ -190,6 +190,16 @@ Example response:
 - All environment variables are validated using Zod
 - Add new variables to both `src/lib/env.ts` and `.env.example`
 
+#### Using Salacia as a Proxy
+
+To use Salacia as a proxy for Claude/Anthropic API requests, set your base URL:
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:4321/api/anthropic
+```
+
+This will route all Anthropic API requests through Salacia for monitoring and logging.
+
 #### Logging Configuration
 
 Control application logging verbosity using the `LOG_LEVEL` environment variable:

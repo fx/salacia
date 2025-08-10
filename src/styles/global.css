@@ -18,6 +18,8 @@
 @import '@webtui/css/components/separator.css';
 @import '@webtui/css/components/table.css';
 @import '@webtui/css/components/dialog.css';
+@import '@webtui/css/components/pre.css';
+@import '@webtui/css/components/range.css';
 
 /* Import themes and plugins */
 @import '@webtui/theme-catppuccin';
@@ -47,11 +49,370 @@
     white-space: nowrap;
     border: 0;
   }
-  
+
   /* Navigation specific flex layout */
   nav {
     display: flex;
     justify-content: space-between;
   }
 
+  /* Vertical bar chart styles */
+  .chart-widget {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .chart-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-row.bars {
+    align-items: flex-end;
+    gap: 0.25rem;
+  }
+
+  .widget .line {
+    background: var(--foreground1);
+    width: 1ch;
+    min-width: 1ch;
+    display: block;
+  }
+
+  /* Dynamic height for bars using data attributes */
+  .widget .line[data-height="0"] { height: 0; }
+  .widget .line[data-height="1"] { height: 0.5rem; }
+  .widget .line[data-height="2"] { height: 1rem; }
+  .widget .line[data-height="3"] { height: 1.5rem; }
+  .widget .line[data-height="4"] { height: 2rem; }
+  .widget .line[data-height="5"] { height: 2.5rem; }
+  .widget .line[data-height="6"] { height: 3rem; }
+  .widget .line[data-height="7"] { height: 3.5rem; }
+  .widget .line[data-height="8"] { height: 4rem; }
+  .widget .line[data-height="9"] { height: 4.5rem; }
+  .widget .line[data-height="10"] { height: 5rem; }
+
+  /* Chart layout helpers */
+  .chart-column[data-self="grow"] {
+    flex-grow: 1;
+  }
+
+  .chart-row[data-self="grow"] {
+    flex-grow: 1;
+  }
+
+  .chart-column[data-gap="1"] {
+    gap: 0.5rem;
+  }
+
+  .chart-row[data-gap="1"] {
+    gap: 0.5rem;
+  }
+
+  /* Terminal-style vertical bar chart */
+  .terminal-v-chart {
+    display: flex;
+  }
+
+  .v-y-axis-column {
+    display: flex;
+    flex-direction: column;
+    padding-right: 0.5rem;
+    text-align: right;
+  }
+
+  .v-y-axis-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 10rem; /* Match chart box height */
+    /* Account for box padding to align with bars */
+    padding-top: calc(1lh + 2px);
+    padding-bottom: calc(1lh + 2px);
+  }
+
+  .v-y-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .v-y-axis-bottom-spacer {
+    height: 2rem; /* Space for X-axis labels */
+  }
+
+  .v-chart-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .v-chart-box {
+    height: 10rem;
+    display: flex;
+    align-items: flex-end;
+    padding: 1lh 1ch; /* WebTUI standard padding */
+  }
+
+  .v-bars-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: flex-end;
+    gap: 2px; /* Minimal gap for 24 bars */
+    justify-content: stretch;
+  }
+
+  /* Left alignment (default) - bars start from left */
+  .terminal-v-chart.align-left .v-bars-container {
+    justify-content: flex-start;
+  }
+
+  /* Right alignment - bars start from right */
+  .terminal-v-chart.align-right .v-bars-container {
+    justify-content: flex-end;
+  }
+
+  .v-bar-column {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex: 1; /* Each bar takes equal width */
+    min-width: 0.5rem; /* Minimum width for visibility */
+    height: 100%; /* Need explicit height for percentage children to work */
+  }
+
+  .v-bar {
+    width: 100%;
+    background: var(--foreground1);
+  }
+
+  /* Stacked vertical bar chart */
+  .v-bar-stacked {
+    width: 100%;
+    display: flex;
+    flex-direction: column-reverse; /* Stack from bottom up */
+  }
+
+  .v-bar-success {
+    width: 100%;
+  }
+
+  .v-bar-failed {
+    width: 100%;
+  }
+
+  /* Bar heights - percentage of container */
+  .v-bar[data-height="0"] { height: 0; }
+  .v-bar[data-height="1"] { height: 10%; }
+  .v-bar[data-height="2"] { height: 20%; }
+  .v-bar[data-height="3"] { height: 30%; }
+  .v-bar[data-height="4"] { height: 40%; }
+  .v-bar[data-height="5"] { height: 50%; }
+  .v-bar[data-height="6"] { height: 60%; }
+  .v-bar[data-height="7"] { height: 70%; }
+  .v-bar[data-height="8"] { height: 80%; }
+  .v-bar[data-height="9"] { height: 90%; }
+  .v-bar[data-height="10"] { height: 100%; }
+  
+  /* Stacked bar heights */
+  .v-bar-stacked[data-height="0"] { height: 0; }
+  .v-bar-stacked[data-height="1"] { height: 10%; }
+  .v-bar-stacked[data-height="2"] { height: 20%; }
+  .v-bar-stacked[data-height="3"] { height: 30%; }
+  .v-bar-stacked[data-height="4"] { height: 40%; }
+  .v-bar-stacked[data-height="5"] { height: 50%; }
+  .v-bar-stacked[data-height="6"] { height: 60%; }
+  .v-bar-stacked[data-height="7"] { height: 70%; }
+  .v-bar-stacked[data-height="8"] { height: 80%; }
+  .v-bar-stacked[data-height="9"] { height: 90%; }
+  .v-bar-stacked[data-height="10"] { height: 100%; }
+  /* Extended scale for larger values */
+  .v-bar[data-height="11"] { height: 100%; }
+  .v-bar[data-height="12"] { height: 100%; }
+  .v-bar[data-height="13"] { height: 100%; }
+  .v-bar[data-height="14"] { height: 100%; }
+  .v-bar[data-height="15"] { height: 100%; }
+
+  .v-x-axis-labels {
+    display: flex;
+    padding: 0.5rem 1ch;
+    gap: 2px; /* Match bar gap */
+    justify-content: stretch;
+  }
+
+  .terminal-v-chart.align-left .v-x-axis-labels {
+    justify-content: stretch;
+  }
+
+  .terminal-v-chart.align-right .v-x-axis-labels {
+    justify-content: stretch;
+  }
+
+  .v-x-label {
+    flex: 1; /* Match bar stretching */
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Terminal-style horizontal bar chart */
+  .terminal-h-chart {
+    display: flex;
+  }
+
+  /* Critical: Use grid for perfect alignment */
+  .h-y-axis-column,
+  .h-chart-box,
+  .h-value-column {
+    display: grid;
+    grid-auto-rows: minmax(2rem, auto); /* Each row exactly 2rem */
+    align-content: start; /* Always align at top */
+  }
+
+  .terminal-h-chart.align-bottom .h-y-axis-column,
+  .terminal-h-chart.align-bottom .h-chart-box,
+  .terminal-h-chart.align-bottom .h-value-column {
+    align-content: end;
+  }
+
+  .h-y-axis-column {
+    padding-right: 0.5rem;
+    min-width: 100px;
+    /* Match the box padding to align with bars inside the box */
+    padding-top: calc(1lh + 2px); /* 1lh box padding + 2px border */
+    padding-bottom: calc(1lh + 2px);
+  }
+
+  .h-y-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 2rem; /* Exact height */
+  }
+
+  .h-y-axis-bottom-spacer,
+  .h-value-bottom-spacer {
+    height: 2rem; /* Match row height */
+  }
+
+  .h-chart-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .h-chart-box {
+    padding: 1lh 1ch; /* WebTUI standard padding */
+    min-height: 10rem;
+  }
+
+  .h-bar-row {
+    display: flex;
+    align-items: center;
+    height: 2rem; /* Exact same as labels */
+  }
+
+  .h-bar-success,
+  .h-bar-failed {
+    display: inline-block;
+    height: 1rem;
+  }
+
+  .h-bar-success {
+    background: var(--foreground1);
+  }
+
+  .h-bar-failed {
+    background: var(--background2);
+  }
+
+  .h-x-axis-scale {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1ch;
+  }
+
+  .h-value-column {
+    padding-left: 0.5rem;
+    min-width: 80px;
+    /* Match the box padding to align with bars inside the box */
+    padding-top: calc(1lh + 2px); /* 1lh box padding + 2px border */
+    padding-bottom: calc(1lh + 2px);
+  }
+
+  .h-value-label {
+    display: flex;
+    align-items: center;
+    height: 2rem; /* Exact same as labels and bars */
+  }
+
+  /* Dynamic width for horizontal bars */
+  .h-bar-success[data-width="0"],
+  .h-bar-failed[data-width="0"] { width: 0; }
+  .h-bar-success[data-width="1"],
+  .h-bar-failed[data-width="1"] { width: 5%; }
+  .h-bar-success[data-width="2"],
+  .h-bar-failed[data-width="2"] { width: 10%; }
+  .h-bar-success[data-width="3"],
+  .h-bar-failed[data-width="3"] { width: 15%; }
+  .h-bar-success[data-width="4"],
+  .h-bar-failed[data-width="4"] { width: 20%; }
+  .h-bar-success[data-width="5"],
+  .h-bar-failed[data-width="5"] { width: 25%; }
+  .h-bar-success[data-width="6"],
+  .h-bar-failed[data-width="6"] { width: 30%; }
+  .h-bar-success[data-width="7"],
+  .h-bar-failed[data-width="7"] { width: 35%; }
+  .h-bar-success[data-width="8"],
+  .h-bar-failed[data-width="8"] { width: 40%; }
+  .h-bar-success[data-width="9"],
+  .h-bar-failed[data-width="9"] { width: 45%; }
+  .h-bar-success[data-width="10"],
+  .h-bar-failed[data-width="10"] { width: 50%; }
+  .h-bar-success[data-width="11"],
+  .h-bar-failed[data-width="11"] { width: 55%; }
+  .h-bar-success[data-width="12"],
+  .h-bar-failed[data-width="12"] { width: 60%; }
+  .h-bar-success[data-width="13"],
+  .h-bar-failed[data-width="13"] { width: 65%; }
+  .h-bar-success[data-width="14"],
+  .h-bar-failed[data-width="14"] { width: 70%; }
+  .h-bar-success[data-width="15"],
+  .h-bar-failed[data-width="15"] { width: 75%; }
+  .h-bar-success[data-width="16"],
+  .h-bar-failed[data-width="16"] { width: 80%; }
+  .h-bar-success[data-width="17"],
+  .h-bar-failed[data-width="17"] { width: 85%; }
+  .h-bar-success[data-width="18"],
+  .h-bar-failed[data-width="18"] { width: 90%; }
+  .h-bar-success[data-width="19"],
+  .h-bar-failed[data-width="19"] { width: 95%; }
+  .h-bar-success[data-width="20"],
+  .h-bar-failed[data-width="20"] { width: 100%; }
+  .h-bar-success[data-width="21"],
+  .h-bar-failed[data-width="21"] { width: 70%; }
+  .h-bar-success[data-width="22"],
+  .h-bar-failed[data-width="22"] { width: 75%; }
+  .h-bar-success[data-width="23"],
+  .h-bar-failed[data-width="23"] { width: 80%; }
+  .h-bar-success[data-width="24"],
+  .h-bar-failed[data-width="24"] { width: 85%; }
+  .h-bar-success[data-width="25"],
+  .h-bar-failed[data-width="25"] { width: 90%; }
+  .h-bar-success[data-width="26"],
+  .h-bar-failed[data-width="26"] { width: 95%; }
+  .h-bar-success[data-width="27"],
+  .h-bar-failed[data-width="27"] { width: 100%; }
+  .h-bar-success[data-width="28"],
+  .h-bar-failed[data-width="28"] { width: 100%; }
+  .h-bar-success[data-width="29"],
+  .h-bar-failed[data-width="29"] { width: 100%; }
+  .h-bar-success[data-width="30"],
+  .h-bar-failed[data-width="30"] { width: 100%; }
 }

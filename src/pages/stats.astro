@@ -1,0 +1,104 @@
+---
+import { Layout } from '../components/Layout';
+import '../styles/global.css';
+import { sequelize } from '../lib/db/sequelize-connection.js';
+import { MessagesService } from '../lib/services/messages.js';
+import { StatsDisplay } from '../components/StatsDisplay';
+
+// Load 24-hour stats for the stats page (default view)
+let overall: Awaited<ReturnType<typeof MessagesService.getFilteredStats>> | null = null;
+let errorMsg: string | null = null;
+
+// Time-series (last 24 hours, hourly resolution) and top models
+let series: Array<{
+  hour: string;
+  hour_timestamp: string;
+  total: number;
+  failed: number;
+  avg_rt: number;
+  tokens: number;
+}> = [];
+let topModels: Array<{ model: string; count: number }> = [];
+
+try {
+  // Default to 24-hour stats for the stats page
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  overall = await MessagesService.getFilteredStats({
+    startDate: twentyFourHoursAgo,
+  });
+
+  // Time series - hourly for last 24 hours with all hours filled (Postgres)
+  // Generate hours with the most recent hour last, include ISO timestamp for client-side formatting
+  const [rows] = await sequelize.query(
+    `
+    WITH hours AS (
+      SELECT 
+        generate_series(
+          date_trunc('hour', NOW() - interval '23 hours'),
+          date_trunc('hour', NOW()),
+          interval '1 hour'
+        ) as hour_timestamp
+    ),
+    hourly_stats AS (
+      SELECT 
+        date_trunc('hour', created_at) as hour_timestamp,
+        COUNT(*)::int as total,
+        COALESCE(SUM(CASE WHEN error IS NOT NULL THEN 1 ELSE 0 END),0)::int as failed,
+        COALESCE(AVG(response_time_ms),0)::int as avg_rt,
+        COALESCE(SUM(total_tokens),0)::int as tokens
+      FROM ai_interactions
+      WHERE created_at >= NOW() - interval '24 hours'
+      GROUP BY 1
+    )
+    SELECT 
+      to_char(h.hour_timestamp, 'HH24:MI') as hour,
+      h.hour_timestamp::text as hour_timestamp,
+      COALESCE(hs.total, 0)::int as total,
+      COALESCE(hs.failed, 0)::int as failed,
+      COALESCE(hs.avg_rt, 0)::int as avg_rt,
+      COALESCE(hs.tokens, 0)::int as tokens
+    FROM hours h
+    LEFT JOIN hourly_stats hs ON h.hour_timestamp = hs.hour_timestamp
+    ORDER BY h.hour_timestamp
+    `
+  );
+  series = rows as typeof series;
+
+  // Top models (last 24 hours)
+  const [models] = await sequelize.query(
+    `
+    SELECT model, COUNT(*)::int as count
+    FROM ai_interactions
+    WHERE created_at >= NOW() - interval '24 hours'
+    GROUP BY model
+    ORDER BY count DESC
+    LIMIT 5
+    `
+  );
+  topModels = models as typeof topModels;
+} catch (err) {
+  console.error('Failed to load stats', err);
+  errorMsg = err instanceof Error ? err.message : 'Failed to load stats';
+}
+---
+
+<html lang="en" data-webtui-theme="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salacia - Stats</title>
+    <meta name="description" content="Usage analytics and performance statistics" />
+  </head>
+  <body>
+    <Layout client:idle>
+      <StatsDisplay
+        client:load
+        initialOverall={overall}
+        initialSeries={series}
+        initialTopModels={topModels}
+        initialError={errorMsg}
+      />
+    </Layout>
+  </body>
+</html>

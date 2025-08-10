@@ -1,10 +1,10 @@
 /**
  * ErrorBoundary component for catching and handling React component errors.
- * 
+ *
  * This component provides a fallback UI when child components throw errors,
  * preventing the entire application from crashing. It includes error reporting
  * capabilities and user-friendly error messages with WebTUI styling.
- * 
+ *
  * Features:
  * - Catches JavaScript errors in component tree
  * - Displays user-friendly error messages
@@ -12,7 +12,7 @@
  * - Provides retry functionality
  * - Accessible error reporting with ARIA attributes
  * - Integration with WebTUI design system
- * 
+ *
  * @module ErrorBoundary
  */
 
@@ -51,7 +51,7 @@ export interface ErrorBoundaryState {
 /**
  * Default fallback UI component for displaying errors.
  * Provides a clean, accessible error message with retry functionality.
- * 
+ *
  * @param error - The error that occurred
  * @param errorInfo - Additional error information
  * @param retry - Function to retry rendering
@@ -67,29 +67,24 @@ function DefaultErrorFallback(
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
-    <div
-      variant-="error"
-      box-="square"
-      role="alert"
-      aria-live="assertive"
-    >
+    <div variant-="error" box-="square" role="alert" aria-live="assertive">
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1ch' }}>
         <div style={{ flexShrink: 0 }}>
           <span aria-hidden="true">⚠️</span>
         </div>
         <div style={{ flex: 1 }}>
-          <h3>
-            Something went wrong {context && `in ${context}`}
-          </h3>
+          <h3>Something went wrong {context && `in ${context}`}</h3>
           <p>
-            An unexpected error occurred while rendering this component. 
-            The error has been logged and reported.
+            An unexpected error occurred while rendering this component. The error has been logged
+            and reported.
           </p>
-          
+
           {isDevelopment && (
             <details>
               <summary style={{ cursor: 'pointer' }}>
-                <small><strong>Error Details (Development)</strong></small>
+                <small>
+                  <strong>Error Details (Development)</strong>
+                </small>
               </summary>
               <div variant-="error" box-="square">
                 <pre>
@@ -123,7 +118,7 @@ function DefaultErrorFallback(
               Reload Page
             </button>
           </div>
-          
+
           <div>
             <p id="retry-help" className="sr-only">
               <small>Try again to re-render the component</small>
@@ -141,7 +136,7 @@ function DefaultErrorFallback(
 /**
  * ErrorBoundary component that catches and handles errors in React component trees.
  * Provides fallback UI and error reporting capabilities with accessibility features.
- * 
+ *
  * Usage:
  * ```tsx
  * <ErrorBoundary context="Messages Table">
@@ -163,7 +158,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   /**
    * Static method called when an error occurs during rendering.
    * Updates state to trigger fallback UI.
-   * 
+   *
    * @param error - The error that occurred
    * @returns New state object
    */
@@ -177,7 +172,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   /**
    * Called after an error has been caught by the boundary.
    * Logs error details and calls optional error callback.
-   * 
+   *
    * @param error - The error that occurred
    * @param errorInfo - Additional error information
    */
@@ -218,34 +213,26 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render(): ReactNode {
     const { hasError, error, errorInfo } = this.state;
-    const { children, fallback, context, className = '' } = this.props;
+    const { children, fallback, context } = this.props;
 
     if (hasError && error && errorInfo) {
       // Use custom fallback if provided, otherwise use default
-      const fallbackContent = fallback 
+      const fallbackContent = fallback
         ? fallback(error, errorInfo, this.retry)
         : DefaultErrorFallback(error, errorInfo, this.retry, context);
 
-      return (
-        <div>
-          {fallbackContent}
-        </div>
-      );
+      return <div>{fallbackContent}</div>;
     }
 
     // Use key to force remount on retry
-    return (
-      <div key={this.state.retryCount}>
-        {children}
-      </div>
-    );
+    return <div key={this.state.retryCount}>{children}</div>;
   }
 }
 
 /**
  * Hook for programmatically throwing errors to test error boundaries.
  * Useful for development and testing purposes.
- * 
+ *
  * @returns Function that throws an error when called
  */
 export function useThrowError(): () => void {
@@ -257,7 +244,7 @@ export function useThrowError(): () => void {
 /**
  * Higher-order component for wrapping components with error boundary.
  * Provides a convenient way to add error handling to any component.
- * 
+ *
  * @param WrappedComponent - Component to wrap
  * @param options - Error boundary options
  * @returns Component wrapped with error boundary
@@ -267,7 +254,7 @@ export function withErrorBoundary<P extends object>(
   options: Omit<ErrorBoundaryProps, 'children'> = {}
 ): React.ComponentType<P> {
   const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
-  
+
   const WithErrorBoundaryComponent = (props: P) => (
     <ErrorBoundary {...options} context={options.context || displayName}>
       <WrappedComponent {...props} />
@@ -275,7 +262,7 @@ export function withErrorBoundary<P extends object>(
   );
 
   WithErrorBoundaryComponent.displayName = `withErrorBoundary(${displayName})`;
-  
+
   return WithErrorBoundaryComponent;
 }
 
