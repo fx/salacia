@@ -17,10 +17,11 @@ export function HorizontalBarChart({
 }: HorizontalBarChartProps) {
   const max = Math.max(...data.map(d => d.value), 1);
   
-  // Calculate bar widths (0 to width scale)
+  // Calculate bar widths (always scale to use full width, max = 20 = 100%)
   const bars = data.map(item => {
     const ratio = item.value > 0 ? Math.max(0, Math.min(1, item.value / max)) : 0;
-    const barWidth = Math.round(ratio * width);
+    // Always use 20 as the scale for full width (data-width="20" = 100% in CSS)
+    const barWidth = Math.round(ratio * 20);
     
     if (showFailedStack && item.failed !== undefined) {
       const failedWidth = Math.round((item.failed / item.value) * barWidth);
