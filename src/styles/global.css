@@ -194,6 +194,23 @@
     max-width: 2rem;
   }
 
+  /* Stacked vertical bar chart */
+  .v-bar-stacked {
+    width: 100%;
+    min-width: 1rem;
+    max-width: 2rem;
+    display: flex;
+    flex-direction: column-reverse; /* Stack from bottom up */
+  }
+
+  .v-bar-success {
+    width: 100%;
+  }
+
+  .v-bar-failed {
+    width: 100%;
+  }
+
   /* Bar heights - percentage of container */
   .v-bar[data-height="0"] { height: 0; }
   .v-bar[data-height="1"] { height: 10%; }
@@ -206,6 +223,19 @@
   .v-bar[data-height="8"] { height: 80%; }
   .v-bar[data-height="9"] { height: 90%; }
   .v-bar[data-height="10"] { height: 100%; }
+  
+  /* Stacked bar heights */
+  .v-bar-stacked[data-height="0"] { height: 0; }
+  .v-bar-stacked[data-height="1"] { height: 10%; }
+  .v-bar-stacked[data-height="2"] { height: 20%; }
+  .v-bar-stacked[data-height="3"] { height: 30%; }
+  .v-bar-stacked[data-height="4"] { height: 40%; }
+  .v-bar-stacked[data-height="5"] { height: 50%; }
+  .v-bar-stacked[data-height="6"] { height: 60%; }
+  .v-bar-stacked[data-height="7"] { height: 70%; }
+  .v-bar-stacked[data-height="8"] { height: 80%; }
+  .v-bar-stacked[data-height="9"] { height: 90%; }
+  .v-bar-stacked[data-height="10"] { height: 100%; }
   /* Extended scale for larger values */
   .v-bar[data-height="11"] { height: 100%; }
   .v-bar[data-height="12"] { height: 100%; }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStatsSSE } from '../hooks/useStatsSSE.js';
 import { VerticalBarChart } from './VerticalBarChart.js';
+import { StackedVerticalBarChart } from './StackedVerticalBarChart.js';
 import { HorizontalBarChart } from './HorizontalBarChart.js';
 import type { MessageStats } from '../lib/types/messages.js';
 
@@ -82,20 +83,13 @@ export function StatsDisplay({
   }, [sseError]);
 
   // Prepare chart data
-  const hourlyTotals = series.map(r => r.total);
   const hourlyAvgRt = series.map(r => r.avg_rt);
-
   const hourLabels = series.map(r => r.hour); // Already in HH:MI format
 
-  const hourlyBars = series.map(r => ({
-    label: r.hour, // HH:MI format
-    value: r.total,
+  // Prepare success/failed data for stacked chart
+  const hourlyMessages = series.map(r => ({
+    total: r.total,
     failed: r.failed,
-  }));
-
-  const modelBars = topModels.map(m => ({
-    label: m.model.length > 20 ? `${m.model.substring(0, 20)}...` : m.model,
-    value: m.count,
   }));
 
   const modelCounts = topModels.map(m => m.count);
@@ -175,101 +169,63 @@ export function StatsDisplay({
         )}
       </div>
 
-      <table width="100%">
-        <tbody>
-          <tr>
-            <td>
-              {hourlyBars.length === 0 ? (
-                <div box-="square">
-                  <h3>LAST 24 HOURS (HOURLY)</h3>
-                  <p>No data available.</p>
-                </div>
-              ) : (
-                <HorizontalBarChart data={hourlyBars} width={30} title="LAST 24 HOURS (HOURLY)" />
-              )}
-            </td>
-            <td>
-              {hourlyBars.length === 0 ? (
-                <div box-="square">
-                  <h3>SUCCESS VS FAILED (STACKED)</h3>
-                  <p>No data available.</p>
-                </div>
-              ) : (
-                <HorizontalBarChart
-                  data={hourlyBars}
-                  width={30}
-                  title="SUCCESS VS FAILED (STACKED)"
-                  showFailedStack={true}
-                />
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              {hourlyTotals.length === 0 ? (
-                <div box-="square">
-                  <h3>HOURLY TOTALS</h3>
-                  <p>No data available.</p>
-                </div>
-              ) : (
-                <VerticalBarChart
-                  data={hourlyTotals}
-                  height={10}
-                  xAxisLabels={hourLabels}
-                  title="HOURLY TOTALS"
-                />
-              )}
-            </td>
-            <td>
-              {hourlyAvgRt.length === 0 ? (
-                <div box-="square">
-                  <h3>AVG RESPONSE TIME</h3>
-                  <p>No data available.</p>
-                </div>
-              ) : (
-                <VerticalBarChart
-                  data={hourlyAvgRt}
-                  height={10}
-                  xAxisLabels={hourLabels}
-                  yAxisLabels={[
-                    `${Math.max(...hourlyAvgRt)}ms`,
-                    `${Math.round(Math.max(...hourlyAvgRt) / 2)}ms`,
-                    '0ms',
-                  ]}
-                  title="AVG RESPONSE TIME"
-                />
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              {modelCounts.length === 0 ? (
-                <div box-="square">
-                  <h3>TOP MODELS</h3>
-                  <p>No model data.</p>
-                </div>
-              ) : (
-                <VerticalBarChart
-                  data={modelCounts}
-                  height={8}
-                  xAxisLabels={modelLabels}
-                  title="TOP MODELS"
-                />
-              )}
-            </td>
-            <td>
-              {modelBars.length === 0 ? (
-                <div box-="square">
-                  <h3>MODEL USAGE (HORIZONTAL)</h3>
-                  <p>No model data.</p>
-                </div>
-              ) : (
-                <HorizontalBarChart data={modelBars} width={25} title="MODEL USAGE (HORIZONTAL)" />
-              )}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        {/* Messages Chart - Success vs Failed */}
+        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+          {hourlyMessages.length === 0 ? (
+            <div box-="square">
+              <h3>MESSAGES</h3>
+              <p>No data available.</p>
+            </div>
+          ) : (
+            <StackedVerticalBarChart
+              data={hourlyMessages}
+              height={10}
+              xAxisLabels={hourLabels}
+              title="MESSAGES"
+            />
+          )}
+        </div>
+
+        {/* Average Response Time Chart */}
+        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+          {hourlyAvgRt.length === 0 ? (
+            <div box-="square">
+              <h3>AVG RESPONSE TIME</h3>
+              <p>No data available.</p>
+            </div>
+          ) : (
+            <VerticalBarChart
+              data={hourlyAvgRt}
+              height={10}
+              xAxisLabels={hourLabels}
+              yAxisLabels={[
+                `${Math.max(...hourlyAvgRt)}ms`,
+                `${Math.round(Math.max(...hourlyAvgRt) / 2)}ms`,
+                '0ms',
+              ]}
+              title="AVG RESPONSE TIME"
+            />
+          )}
+        </div>
+
+        {/* Model Usage Chart */}
+        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+          {modelCounts.length === 0 ? (
+            <div box-="square">
+              <h3>MODEL USAGE</h3>
+              <p>No model data.</p>
+            </div>
+          ) : (
+            <VerticalBarChart
+              data={modelCounts}
+              height={10}
+              xAxisLabels={modelLabels}
+              title="MODEL USAGE"
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
