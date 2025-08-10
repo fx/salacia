@@ -93,9 +93,6 @@ export function StatsDisplay({
   }));
 
   const modelCounts = topModels.map(m => m.count);
-  const modelLabels = topModels.map(m =>
-    m.model.length > 10 ? `${m.model.substring(0, 10)}...` : m.model
-  );
 
   if (error) {
     return (
@@ -217,10 +214,12 @@ export function StatsDisplay({
               <p>No model data.</p>
             </div>
           ) : (
-            <VerticalBarChart
-              data={modelCounts}
-              height={10}
-              xAxisLabels={modelLabels}
+            <HorizontalBarChart
+              data={topModels.map(m => ({
+                label: m.model.length > 15 ? `${m.model.substring(0, 15)}...` : m.model,
+                value: m.count
+              }))}
+              width={20}
               title="MODEL USAGE"
             />
           )}
