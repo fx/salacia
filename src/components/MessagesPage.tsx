@@ -1,5 +1,4 @@
 import React from 'react';
-import { Layout } from './Layout.js';
 import { MessagesLoadMore } from './MessagesLoadMore.js';
 import type { MessagesFilterParams, MessageSort } from '../lib/types/messages.js';
 import type { SimplifiedCursorResponse } from '../lib/api/messages.js';
@@ -16,17 +15,15 @@ export interface MessagesPageProps {
 
 export function MessagesPage({ initialMessages, initialFilters, initialSort }: MessagesPageProps) {
   return (
-    <Layout>
+    <div>
       <div>
-        <div>
-          <MessagesLoadMore
-            initialMessages={initialMessages}
-            initialFilters={initialFilters}
-            initialSort={initialSort}
-          />
-        </div>
+        <MessagesLoadMore
+          initialMessages={initialMessages}
+          initialFilters={initialFilters}
+          initialSort={initialSort}
+        />
       </div>
-    </Layout>
+    </div>
   );
 }
 

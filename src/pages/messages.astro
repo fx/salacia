@@ -14,6 +14,7 @@
  * - Accessibility support
  */
 
+import { Layout } from '../components/Layout';
 import { MessagesPage } from '../components/MessagesPage';
 import '../styles/global.css';
 
@@ -73,19 +74,21 @@ try {
     />
   </head>
   <body>
-    {
-      initialError ? (
-        <div box-="square" variant-="red" role="alert">
-          <strong>Error:</strong> {initialError}
-        </div>
-      ) : (
-        <MessagesPage
-          client:idle
-          initialMessages={initialMessages}
-          initialFilters={defaultFilters}
-          initialSort={defaultSort}
-        />
-      )
-    }
+    <Layout client:idle>
+      {
+        initialError ? (
+          <div box-="square" variant-="red" role="alert">
+            <strong>Error:</strong> {initialError}
+          </div>
+        ) : (
+          <MessagesPage
+            client:load
+            initialMessages={initialMessages}
+            initialFilters={defaultFilters}
+            initialSort={defaultSort}
+          />
+        )
+      }
+    </Layout>
   </body>
 </html>

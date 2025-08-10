@@ -2,6 +2,39 @@
 
 **IMPORTANT: DO NOT USE ASCII BOX DRAWING CHARACTERS! WebTUI simulates the terminal look through CSS. Never use characters like └, ─, │, ░, █, etc. Use WebTUI's box attributes and CSS classes instead.**
 
+## Getting Started
+
+### Running the Development Environment
+
+**IMPORTANT**: Always ensure the development environment is running when working on this project:
+
+1. **Check README.md**: First read the full setup instructions in README.md for detailed requirements and configuration
+2. **Database Setup**: Start PostgreSQL via Docker Compose (if not already running):
+   ```bash
+   docker compose up -d
+   ```
+3. **Development Server**: Run the development server in the background:
+   ```bash
+   npm run dev
+   ```
+
+**For Claude Code**: When starting work on this project:
+- Always check if the database is running (`docker compose ps`)
+- If database is not running, start it with `docker compose up -d`
+- Always run `npm run dev` in the background for live development
+- The dev server typically runs on http://localhost:4321 (or next available port)
+
+### Managing Services
+
+- **Start database**: `docker compose up -d`
+- **Stop database**: `docker compose down`
+- **View database logs**: `docker compose logs -f postgres`
+- **Run migrations**: `npm run sequelize:migrate:up`
+- **Development server**: `npm run dev` (run in background)
+- **Type checking**: `npm run type-check`
+- **Linting**: `npm run lint`
+- **Tests**: `npm test`
+
 ## Technology Stack
 
 This project uses the following core technologies:
