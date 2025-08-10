@@ -5,7 +5,7 @@ interface HorizontalBarChartProps {
   width?: number;
   title?: string;
   showFailedStack?: boolean;
-  align?: 'top' | 'bottom' | 'center';
+  align?: 'top' | 'bottom';
 }
 
 export function HorizontalBarChart({ 
@@ -13,7 +13,7 @@ export function HorizontalBarChart({
   width = 20,
   title,
   showFailedStack = false,
-  align = 'center'
+  align = 'top'
 }: HorizontalBarChartProps) {
   const max = Math.max(...data.map(d => d.value), 1);
   
@@ -38,11 +38,13 @@ export function HorizontalBarChart({
     Math.round(max).toString()
   ];
   
+  const alignClass = align === 'bottom' ? 'align-bottom' : 'align-top';
+  
   return (
     <div className="widget horizontal-chart">
       {title && <h3>{title}</h3>}
       
-      <div className="terminal-h-chart">
+      <div className={`terminal-h-chart ${alignClass}`}>
         {/* Left column: Y-axis labels */}
         <div className="h-y-axis-column">
           {data.map((item, i) => (
