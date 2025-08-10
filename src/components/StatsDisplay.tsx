@@ -169,9 +169,9 @@ export function StatsDisplay({
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {/* Messages Chart - Success vs Failed */}
-        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+        <div style={{ width: '100%' }}>
           {hourlyMessages.length === 0 ? (
             <div box-="square">
               <h3>MESSAGES</h3>
@@ -188,7 +188,7 @@ export function StatsDisplay({
         </div>
 
         {/* Average Response Time Chart */}
-        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+        <div style={{ width: '100%' }}>
           {hourlyAvgRt.length === 0 ? (
             <div box-="square">
               <h3>AVG RESPONSE TIME</h3>
@@ -210,7 +210,7 @@ export function StatsDisplay({
         </div>
 
         {/* Model Usage Chart */}
-        <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
+        <div style={{ width: '100%' }}>
           {modelCounts.length === 0 ? (
             <div box-="square">
               <h3>MODEL USAGE</h3>
