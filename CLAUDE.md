@@ -22,7 +22,14 @@
 - Always check if the database is running (`docker compose ps`)
 - If database is not running, start it with `docker compose up -d`
 - Always run `npm run dev` in the background for live development
-- The dev server typically runs on http://localhost:4321 (or next available port)
+- The dev server runs on http://localhost:4321 by default
+- **IMPORTANT**: If the server starts on a different port (4322, 4323, etc.), it means multiple servers are running. Kill all dev servers and start fresh:
+  ```bash
+  # Kill all node processes running Astro dev servers
+  pkill -f "astro dev" || killall node
+  # Then start a single new dev server
+  npm run dev
+  ```
 
 ### Managing Services
 
