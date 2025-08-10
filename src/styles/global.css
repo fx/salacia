@@ -232,6 +232,9 @@
   .h-y-axis-column {
     padding-right: 0.5rem;
     min-width: 100px;
+    /* Match the box padding to align with bars inside the box */
+    padding-top: calc(1lh + 2px); /* 1lh box padding + 2px border */
+    padding-bottom: calc(1lh + 2px);
   }
 
   .h-y-label {
@@ -287,6 +290,9 @@
   .h-value-column {
     padding-left: 0.5rem;
     min-width: 80px;
+    /* Match the box padding to align with bars inside the box */
+    padding-top: calc(1lh + 2px); /* 1lh box padding + 2px border */
+    padding-bottom: calc(1lh + 2px);
   }
 
   .h-value-label {
