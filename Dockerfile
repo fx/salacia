@@ -24,8 +24,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install only production dependencies
-RUN npm ci --production && npm cache clean --force
+# Install all dependencies (Astro needs them for runtime)
+RUN npm ci && npm cache clean --force
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
