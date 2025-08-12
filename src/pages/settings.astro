@@ -1,25 +1,37 @@
 ---
 import { Layout } from '../components/Layout.tsx';
+import '../styles/global.css';
 ---
 
-<Layout title="Settings">
-  <main>
-    <div data-box="square" data-align="center">
-      <h1>Settings</h1>
-    </div>
+<html lang="en" data-webtui-theme="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salacia - Settings</title>
+    <meta name="description" content="Configure application settings and AI providers" />
+  </head>
+  <body>
+    <Layout client:idle>
+      <main>
+        <div data-box="square" data-align="center">
+          <h1>Settings</h1>
+        </div>
 
-    <div data-gap="2">
-      <section data-box="square">
-        <h2>Provider Management</h2>
-        <p>Configure AI providers for the application.</p>
-        <a href="/settings/providers" class="wui-button">Manage Providers</a>
-      </section>
+        <div data-gap="2">
+          <section data-box="square">
+            <h2>Provider Management</h2>
+            <p>Configure AI providers for the application.</p>
+            <a href="/settings/providers" class="wui-button">Manage Providers</a>
+          </section>
 
-      <section data-box="square">
-        <h2>System Configuration</h2>
-        <p>Additional system settings will be available here in the future.</p>
-        <small>Coming soon...</small>
-      </section>
-    </div>
-  </main>
-</Layout>
+          <section data-box="square">
+            <h2>System Configuration</h2>
+            <p>Additional system settings will be available here in the future.</p>
+            <small>Coming soon...</small>
+          </section>
+        </div>
+      </main>
+    </Layout>
+  </body>
+</html>

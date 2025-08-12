@@ -1,14 +1,26 @@
 ---
 import { Layout } from '../../components/Layout.tsx';
 import { ProviderSettings } from '../../components/ProviderSettings.tsx';
+import '../../styles/global.css';
 ---
 
-<Layout title="Provider Settings">
-  <main>
-    <div data-box="square" data-align="center">
-      <h1>Provider Settings</h1>
-    </div>
+<html lang="en" data-webtui-theme="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salacia - Provider Settings</title>
+    <meta name="description" content="Configure AI provider settings and credentials" />
+  </head>
+  <body>
+    <Layout client:idle>
+      <main>
+        <div data-box="square" data-align="center">
+          <h1>Provider Settings</h1>
+        </div>
 
-    <ProviderSettings client:load />
-  </main>
-</Layout>
+        <ProviderSettings client:load />
+      </main>
+    </Layout>
+  </body>
+</html>
