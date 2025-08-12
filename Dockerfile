@@ -13,8 +13,8 @@ COPY package*.json ./
 COPY . .
 
 # Install all dependencies and build (keeping all deps for runtime)
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --ignore-scripts && \
+RUN --mount=type=cache,target=/tmp/.npm \
+    npm ci --cache /tmp/.npm --ignore-scripts && \
     npm run build
 
 # Production stage  
