@@ -58,8 +58,8 @@ jobs:
             type=ref,event=pr
             # Tag event
             type=ref,event=tag
-            # SHA-based tag
-            type=sha,prefix={{branch}}-
+            # SHA-based tag for branch pushes only
+            type=sha,prefix={{branch}}-,enable={{is_default_branch}}
             # Latest tag for main branch
             type=raw,value=latest,enable={{is_default_branch}}
 
