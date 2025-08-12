@@ -72,18 +72,18 @@ export function ProviderList({
                 )}
               </td>
               <td>
-                <span is="badge" variant="blue">
+                <span data-is="badge" data-variant="blue">
                   {provider.type.toUpperCase()}
                 </span>
               </td>
               <td>
-                <span is="badge" variant={provider.isActive ? 'green' : 'surface0'}>
+                <span data-is="badge" data-variant={provider.isActive ? 'green' : 'surface0'}>
                   {provider.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
               </td>
               <td>
                 {provider.isDefault ? (
-                  <span is="badge" variant="yellow">
+                  <span data-is="badge" data-variant="yellow">
                     DEFAULT
                   </span>
                 ) : (

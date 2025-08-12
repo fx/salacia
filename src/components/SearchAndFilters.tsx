@@ -37,7 +37,6 @@ export interface SearchAndFiltersProps {
   disabled?: boolean;
 }
 
-
 /**
  * SearchAndFilters component providing search input and filter dialog access.
  * Manages search state locally with debouncing for better performance.
@@ -142,7 +141,13 @@ export function SearchAndFilters({
               {filters.startDate && ` • From: ${filters.startDate.toLocaleDateString()}`}
               {filters.endDate && ` • To: ${filters.endDate.toLocaleDateString()}`}
             </small>{' '}
-            <button is-="button" type="button" onClick={clearAllFilters} disabled={disabled} size-="small">
+            <button
+              is-="button"
+              type="button"
+              onClick={clearAllFilters}
+              disabled={disabled}
+              size-="small"
+            >
               Clear all
             </button>
           </div>

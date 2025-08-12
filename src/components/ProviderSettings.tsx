@@ -208,7 +208,7 @@ export function ProviderSettings() {
       </div>
 
       {error && (
-        <div data-box="square" variant="red">
+        <div data-box="square" data-variant="red">
           <strong>Error:</strong> {error}
         </div>
       )}

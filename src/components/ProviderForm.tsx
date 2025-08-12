@@ -178,7 +178,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     <form onSubmit={handleSubmit}>
       <div data-box="square" data-gap="2">
         {error && (
-          <div data-box="square" variant="red">
+          <div data-box="square" data-variant="red">
             <strong>Error:</strong> {error}
           </div>
         )}
