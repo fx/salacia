@@ -1,0 +1,14 @@
+---
+import { Layout } from '../../components/Layout.tsx';
+import { ProviderSettings } from '../../components/ProviderSettings.tsx';
+---
+
+<Layout title="Provider Settings">
+  <main>
+    <div data-box="square" data-align="center">
+      <h1>Provider Settings</h1>
+    </div>
+
+    <ProviderSettings client:load />
+  </main>
+</Layout>

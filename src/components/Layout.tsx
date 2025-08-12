@@ -20,9 +20,10 @@ interface LayoutProps {
  *
  * @param props - The layout props
  * @param props.children - The main content to be rendered
+ * @param props.title - The page title (optional)
  * @returns The terminal-style page layout with navigation and content in a single bordered container
  */
-export function Layout({ children }: Omit<LayoutProps, 'title'>) {
+export function Layout({ children, title }: LayoutProps) {
   return (
     <RealtimeProvider>
       <div box-="square" shear-="top">
