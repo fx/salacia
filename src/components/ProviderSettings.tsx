@@ -118,7 +118,7 @@ export function ProviderSettings() {
    */
   const handleSetDefault = async (id: string) => {
     try {
-      const response = await fetch(`/api/providers/${id}/set-default`, {
+      const response = await fetch(`/api/providers/${id}/default`, {
         method: 'POST',
       });
       const result = await response.json();

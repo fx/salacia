@@ -3,11 +3,11 @@ import { ProviderService } from '../../../../lib/services/provider-service';
 
 /**
  * API endpoint for setting a provider as default.
- * POST /api/providers/:id/set-default
+ * POST /api/providers/:id/default
  */
 
 /**
- * POST /api/providers/:id/set-default
+ * POST /api/providers/:id/default
  * Sets a provider as the default provider.
  */
 export const POST: APIRoute = async ({ params }) => {
