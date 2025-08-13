@@ -69,7 +69,7 @@ export class AiProvider extends Model<
    * Stored as JSON array for flexible model management.
    * Examples: ['gpt-4', 'gpt-3.5-turbo'] or ['claude-3-opus', 'claude-3-sonnet']
    */
-  declare models?: Record<string, unknown>;
+  declare models?: string[];
 
   /**
    * Provider-specific configuration settings.

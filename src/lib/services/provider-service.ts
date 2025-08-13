@@ -111,7 +111,7 @@ export class ProviderService {
       type: string;
       apiKey: string;
       baseUrl: string | undefined;
-      models: Record<string, unknown> | undefined;
+      models: string[] | undefined;
       settings: Record<string, unknown> | undefined;
       isActive: boolean;
       isDefault: boolean;
@@ -121,8 +121,7 @@ export class ProviderService {
     if (validatedData.type !== undefined) updateData.type = validatedData.type;
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
     if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
-    if (validatedData.models !== undefined)
-      updateData.models = validatedData.models as unknown as Record<string, unknown>;
+    if (validatedData.models !== undefined) updateData.models = validatedData.models;
     if (validatedData.settings !== undefined) updateData.settings = validatedData.settings;
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
     if (validatedData.isDefault !== undefined) updateData.isDefault = validatedData.isDefault;
@@ -216,7 +215,7 @@ export class ProviderService {
       type: envProvider.type,
       apiKey: envProvider.apiKey,
       baseUrl: envProvider.baseUrl || undefined,
-      models: envProvider.models as Record<string, unknown> | undefined,
+      models: envProvider.models,
       settings: envProvider.settings as Record<string, unknown> | undefined,
       isActive: envProvider.isActive,
       isDefault: true,
@@ -277,7 +276,7 @@ export class ProviderService {
           type: envProvider.type,
           apiKey: envProvider.apiKey,
           baseUrl: envProvider.baseUrl || undefined,
-          models: envProvider.models as Record<string, unknown> | undefined,
+          models: envProvider.models,
           settings: envProvider.settings as Record<string, unknown> | undefined,
           isActive: envProvider.isActive,
           isDefault: envProvider.isDefault,
