@@ -416,3 +416,103 @@
   .h-bar-success[data-width="30"],
   .h-bar-failed[data-width="30"] { width: 100%; }
 }
+
+/* Compact variants - extend WebTUI components */
+@layer components {
+  /* Compact button variant - badge-like spacing */
+  button[data-compact="true"],
+  input[type="button"][data-compact="true"],
+  input[type="submit"][data-compact="true"],
+  input[type="reset"][data-compact="true"],
+  [is-~="button"][data-compact="true"] {
+    padding: 0;  /* Remove horizontal padding */
+    height: 1lh; /* Same height as badge */
+    line-height: 1lh; /* Match badge line height */
+  }
+  
+  /* Override default size heights for compact buttons */
+  button[data-compact="true"][size-="large"],
+  button[data-compact="true"][size-="default"],
+  button[data-compact="true"]:not([size-]),
+  input[type="button"][data-compact="true"][size-="large"],
+  input[type="button"][data-compact="true"][size-="default"],
+  input[type="button"][data-compact="true"]:not([size-]),
+  input[type="submit"][data-compact="true"][size-="large"],
+  input[type="submit"][data-compact="true"][size-="default"],
+  input[type="submit"][data-compact="true"]:not([size-]),
+  input[type="reset"][data-compact="true"][size-="large"],
+  input[type="reset"][data-compact="true"][size-="default"],
+  input[type="reset"][data-compact="true"]:not([size-]),
+  [is-~="button"][data-compact="true"][size-="large"],
+  [is-~="button"][data-compact="true"][size-="default"],
+  [is-~="button"][data-compact="true"]:not([size-]) {
+    height: 1lh; /* Keep compact height regardless of size */
+  }
+
+  /* Ensure compact buttons with gradient background don't show it */
+  button[data-compact="true"]:not([box-]),
+  button[data-compact="true"][size-="default"]:not([box-]),
+  input[type="button"][data-compact="true"]:not([box-]),
+  input[type="button"][data-compact="true"][size-="default"]:not([box-]),
+  input[type="submit"][data-compact="true"]:not([box-]),
+  input[type="submit"][data-compact="true"][size-="default"]:not([box-]),
+  input[type="reset"][data-compact="true"]:not([box-]),
+  input[type="reset"][data-compact="true"][size-="default"]:not([box-]),
+  [is-~="button"][data-compact="true"]:not([box-]),
+  [is-~="button"][data-compact="true"][size-="default"]:not([box-]) {
+    background-image: none;
+    background-color: var(--mapped-primary);
+  }
+  
+  /* Compact table variant */
+  table[data-compact="true"] {
+    /* Remove all internal borders */
+    border-spacing: 0;
+    /* Add bottom margin to prevent overlap with following content in box */
+    margin-bottom: 1lh;
+  }
+
+  table[data-compact="true"]:before {
+    /* Keep outer border */
+    content: "";
+    position: absolute;
+    top: calc(.5lh - (var(--table-border-width) / 2));
+    left: calc(.5ch - (var(--table-border-width) / 2));
+    width: calc(100% - 1ch - var(--table-border-width));
+    height: calc(100% - 1lh - var(--table-border-width));
+    border: solid var(--table-border-width) var(--table-border-color);
+  }
+
+  /* Remove ALL padding on compact table cells */
+  table[data-compact="true"] tr th,
+  table[data-compact="true"] tr td {
+    padding: 0;
+  }
+
+  /* 
+   * IMPORTANT: WebTUI table borders are positioned INSIDE the table area.
+   * The border starts at .5lh from the top, which overlaps with content.
+   * 
+   * For compact tables:
+   * - First row SHOULD shear into top border (intentional design)
+   * - Last row needs padding to avoid shearing into bottom border
+   */
+  table[data-compact="true"] thead tr:first-of-type th {
+    /* Allow top row to shear into border for compact look */
+    padding-top: 0;
+  }
+
+  table[data-compact="true"] tbody tr:last-of-type td,
+  table[data-compact="true"] tbody tr:last-of-type th {
+    /* Add padding to prevent bottom row from shearing into border */
+    padding-bottom: 0.5lh;
+  }
+
+  /* Remove all internal dividers (borders) */
+  table[data-compact="true"] tr th:before,
+  table[data-compact="true"] tr td:before,
+  table[data-compact="true"] tr th:after,
+  table[data-compact="true"] tr td:after {
+    display: none;
+  }
+}

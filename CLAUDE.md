@@ -120,7 +120,16 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 **CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles.
 
-**MANDATORY**: Before adding, modifying, or overriding ANY CSS (especially WebTUI-related), ALWAYS examine `node_modules/@webtui/css/dist/` first. This directory contains all WebTUI CSS sources and must be referenced to maintain tight semantic styling consistency.
+**MANDATORY BEFORE ANY CSS CHANGES**:
+
+1. **ALWAYS** examine `node_modules/@webtui/css/dist/` FIRST to understand:
+   - Which `@layer` the component belongs to (base, components, utils)
+   - Existing CSS selectors and properties
+   - CSS variables being used
+   - How the component is structured
+2. For example, before modifying tables, check `node_modules/@webtui/css/dist/components/table.css`
+3. Match the EXACT layer when extending/overriding (e.g., table styles go in `@layer components`)
+4. This directory contains ALL WebTUI CSS sources and MUST be referenced to maintain consistency
 
 - **ABSOLUTELY NO Custom CSS**: Never create custom CSS classes or styles. The ONLY acceptable CSS is:
   - CSS that uses WebTUI's CSS variables (e.g., `var(--foreground1)`)
@@ -251,6 +260,30 @@ Essential box patterns for terminal-style UI:
 4. Leverage CSS variables for theming consistency
 5. Components handle their own spacing via `lh` (line-height) and `ch` (character) units
 6. WebTUI handles focus states (underline + bold) automatically
+
+#### WebTUI Table Border Shear Issue
+
+**CRITICAL UNDERSTANDING**: WebTUI table borders are positioned INSIDE the table content area, not outside:
+
+```css
+/* WebTUI positions table border at: */
+top: calc(0.5lh - (var(--table-border-width) / 2));
+/* This places the border 0.5lh from the top, OVERLAPPING with content */
+```
+
+**The Shear Problem**:
+
+- Without padding, table rows will "shear" into (overlap with) the border
+- The top border starts at 0.5lh, the bottom border ends at 0.5lh from bottom
+- Normal tables have `padding-top: 1lh` on first row to avoid this
+- Compact tables remove this padding, causing intentional top shear
+
+**Compact Table Design**:
+
+- **Top row**: SHOULD shear into border (intentional compact look)
+- **Bottom row**: MUST have padding-bottom to prevent shear
+- **Solution**: Add `padding-bottom: 0.5lh` to last row only
+- **Also**: Add `margin-bottom: 1lh` to table for spacing from next content
 
 ### Frontend Architecture
 
