@@ -78,7 +78,7 @@ export class ProviderService {
       name: validatedData.name,
       type: validatedData.type,
       apiKey: validatedData.apiKey,
-      baseUrl: validatedData.baseUrl || undefined,
+      baseUrl: validatedData.baseUrl,
       models: validatedData.models ? { models: validatedData.models } : undefined,
       settings: validatedData.settings || undefined,
       isActive: validatedData.isActive,
@@ -120,8 +120,7 @@ export class ProviderService {
     if (validatedData.name !== undefined) updateData.name = validatedData.name;
     if (validatedData.type !== undefined) updateData.type = validatedData.type;
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
-    if (validatedData.baseUrl !== undefined)
-      updateData.baseUrl = validatedData.baseUrl || undefined;
+    if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
     if (validatedData.models !== undefined)
       updateData.models = validatedData.models ? { models: validatedData.models } : undefined;
     if (validatedData.settings !== undefined) updateData.settings = validatedData.settings;

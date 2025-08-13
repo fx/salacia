@@ -7,6 +7,18 @@ import { z } from 'zod';
 export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq']);
 
 /**
+ * Base URL schema - allows valid URL or empty string, normalized to undefined
+ */
+const baseUrlSchema = z
+  .string()
+  .refine(
+    val => val === '' || z.string().url().safeParse(val).success,
+    'Base URL must be a valid URL or empty string'
+  )
+  .optional()
+  .transform(val => (val === '' ? undefined : val));
+
+/**
  * Schema for provider creation data.
  * Validates all required fields for creating a new AI provider.
  */
@@ -14,7 +26,7 @@ export const createProviderSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
   type: providerTypeSchema,
   apiKey: z.string().min(1, 'API key is required'),
-  baseUrl: z.string().url('Base URL must be a valid URL').optional().or(z.literal('')),
+  baseUrl: baseUrlSchema,
   models: z.array(z.string()).optional(),
   settings: z.record(z.unknown()).optional(),
   isActive: z.boolean().default(true),
@@ -33,7 +45,7 @@ export const updateProviderSchema = z.object({
     .optional(),
   type: providerTypeSchema.optional(),
   apiKey: z.string().min(1, 'API key is required').optional(),
-  baseUrl: z.string().url('Base URL must be a valid URL').optional().or(z.literal('')),
+  baseUrl: baseUrlSchema,
   models: z.array(z.string()).optional(),
   settings: z.record(z.unknown()).optional(),
   isActive: z.boolean().optional(),

@@ -138,7 +138,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         name: formData.name.trim(),
         type: formData.type,
         apiKey: formData.apiKey.trim(),
-        baseUrl: formData.baseUrl.trim() || undefined,
+        baseUrl: formData.baseUrl.trim(),
         models: formData.models.trim()
           ? formData.models
               .split(',')
