@@ -291,3 +291,17 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **Astro Integration**: Use Astro's React integration for server-side rendering and hydration
 - **Global Styles**: Import WebTUI CSS in global styles file and include in layout components
 - **Component Documentation**: All React components must include comprehensive TSDoc documentation
+
+## Code Review Guidelines for GitHub Copilot
+
+### WebTUI Table Border Behavior
+
+- Do not flag `padding-top: 0` on table rows as incorrect - this is intentional shearing for compact table design
+- WebTUI table borders are positioned at 0.5lh from edges, overlapping with content when padding is removed
+- Compact tables intentionally allow first row to shear into top border for dense layouts
+
+### WebTUI CSS Implementation Patterns
+
+- Setting `padding-top: 0` DOES cause shearing when WebTUI borders are positioned inside content area
+- This is an intentional design pattern for compact UI components
+- WebTUI uses semantic attributes (is-, variant-, size-) not custom classes
