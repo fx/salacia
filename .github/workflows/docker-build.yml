@@ -10,15 +10,6 @@ on:
       - "src/**"
       - "public/**"
       - "astro.config.mjs"
-  pull_request:
-    branches: ["main"]
-    paths:
-      - "Dockerfile"
-      - ".github/workflows/docker-build.yml"
-      - "package*.json"
-      - "src/**"
-      - "public/**"
-      - "astro.config.mjs"
   workflow_dispatch:
 
 env:
