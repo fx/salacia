@@ -81,11 +81,11 @@ export function ProviderSettings() {
       const response = await fetch(`/api/providers/${id}`, {
         method: 'DELETE',
       });
-      const result = await response.json();
 
-      if (result.success) {
+      if (response.status === 204) {
         await fetchProviders(); // Refresh the list
       } else {
+        const result = await response.json();
         setError(result.error || 'Failed to delete provider');
       }
     } catch (err) {

@@ -305,3 +305,10 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - Setting `padding-top: 0` DOES cause shearing when WebTUI borders are positioned inside content area
 - This is an intentional design pattern for compact UI components
 - WebTUI uses semantic attributes (is-, variant-, size-) not custom classes
+
+### UI/UX Design Decisions
+
+- `confirm()` and `alert()` dialogs are acceptable for simple confirmations and notifications
+- WebTUI error boxes using `data-variant="red"` are used for inline error display
+- UI-level validation (disabled buttons) prevents business rule violations, making server-side checks optional
+- Delete actions that remove resources should return HTTP 204 (No Content) for successful operations

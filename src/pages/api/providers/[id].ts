@@ -187,18 +187,9 @@ export const DELETE: APIRoute = async ({ params }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Provider deleted successfully',
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(null, {
+      status: 204,
+    });
   } catch (error) {
     console.error('Error deleting provider:', error);
 
