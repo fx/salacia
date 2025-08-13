@@ -19,6 +19,7 @@
    ```
 
 **For Claude Code**: When starting work on this project:
+
 - Always check if the database is running (`docker compose ps`)
 - If database is not running, start it with `docker compose up -d`
 - Always run `npm run dev` in the background for live development
@@ -55,28 +56,7 @@ This project uses the following core technologies:
 
 ## Development Standards
 
-### Pull Request Size Requirements
-
-We enforce strict pull request size limits to maintain code quality and review effectiveness:
-
-- **Hard limit**: 500 lines maximum of actual code changes
-- **Acceptable**: 200 lines or fewer of actual code changes
-- **Ideal**: 50 lines or fewer of actual code changes
-
-**Important**: These limits apply to human-written code only. The following do NOT count toward PR size limits:
-
-- Generated files (migrations, lock files, snapshots)
-- Configuration files that are mostly boilerplate
-- Auto-generated type definitions
-- Documentation files when appropriate
-
-**CRITICAL ENFORCEMENT**:
-
-- ALWAYS check PR size with `git diff main --stat` before creating PR
-- If approaching 500 lines, STOP immediately and break into smaller PRs
-- The pr-reviewer agent MUST check size limits as the FIRST review step
-- Size limit violations are BLOCKING issues that override all other concerns
-- Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests
+### Pull Request Requirements
 
 **PR Review Requirements**:
 
@@ -99,15 +79,6 @@ migrations/meta/*.json linguist-generated=true
 
 This helps reviewers focus on the actual code changes rather than generated artifacts.
 
-### Task Breakdown Requirements
-
-For changes that would exceed our PR size limits:
-
-1. Break the work into logical, independent chunks
-2. Create separate issues for each chunk
-3. Implement each chunk as a separate pull request
-4. Ensure each PR can be reviewed and merged independently
-
 ## Code Quality Standards
 
 ### Code Commenting Philosophy
@@ -122,7 +93,7 @@ Every function, class, method, and significant code construct must be documented
 - Include parameter descriptions, return types, and examples where helpful
 - Follow the TSDoc specification: https://tsdoc.org/
 
-**Note**: TSDoc documentation lines are given more leniency when judging pull request size, as comprehensive documentation is essential for maintainability.
+**Note**: Comprehensive documentation is essential for maintainability.
 
 ### Commit and PR Standards
 
@@ -147,7 +118,9 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 #### Styling Approach
 
-**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
+**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles.
+
+**MANDATORY**: Before adding, modifying, or overriding ANY CSS (especially WebTUI-related), ALWAYS examine `node_modules/@webtui/css/dist/` first. This directory contains all WebTUI CSS sources and must be referenced to maintain tight semantic styling consistency.
 
 - **ABSOLUTELY NO Custom CSS**: Never create custom CSS classes or styles. The ONLY acceptable CSS is:
   - CSS that uses WebTUI's CSS variables (e.g., `var(--foreground1)`)
@@ -190,6 +163,94 @@ Essential box patterns for terminal-style UI:
 ```
 
 **Required Import**: `@import "@webtui/css/utils/box.css";`
+
+#### WebTUI CSS Architecture
+
+**CSS Layers**: WebTUI uses CSS `@layer` for cascade control:
+
+- `@layer base` - Core variables and resets
+- `@layer components` - Component styles (buttons, inputs, tables, etc.)
+- `@layer utils` - Utility classes (box borders)
+
+**Semantic Attribute Selectors**:
+
+```css
+/* Components use semantic attributes, not classes */
+[is-~=button]     /* Button component */
+[is-~=separator]  /* Separator line */
+[is-~=input]      /* Input field */
+
+/* Size attributes */
+[size-=small]     /* Small variant */
+[size-=default]   /* Default size */
+[size-=large]     /* Large variant */
+
+/* Variant attributes for colors */
+[variant-=foreground0]  /* Primary text color */
+[variant-=foreground1]  /* Secondary text color */
+[variant-=background1]  /* Background variant */
+
+/* Direction and positioning */
+[direction-=x]    /* Horizontal */
+[direction-=y]    /* Vertical */
+[position-=center]  /* Center positioned */
+```
+
+**Common CSS Variables**:
+
+```css
+/* Colors - defined in @layer base */
+--background0, --background1, --background2, --background3
+--foreground0, --foreground1, --foreground2
+
+/* Typography */
+--font-family, --font-size, --line-height
+--font-weight-normal, --font-weight-bold
+
+/* Component-specific */
+--box-border-color, --box-border-width
+--table-border-color, --separator-color
+--button-primary, --button-secondary
+```
+
+**Example Patterns**:
+
+```html
+<!-- Button with box border -->
+<button box-="square" variant-="foreground1">Submit</button>
+
+<!-- Input with size -->
+<input type="text" size-="small" />
+
+<!-- Separator with direction -->
+<div is-="separator" direction-="horizontal"></div>
+
+<!-- Dialog positioning -->
+<dialog position-="center" size-="default" box-="double round"></dialog>
+
+<!-- Table (automatic borders via CSS) -->
+<table>
+  <!-- WebTUI handles borders via pseudo-elements -->
+</table>
+
+<!-- Checkbox and Radio (styled automatically) -->
+<input type="checkbox" />
+<!-- Shows as [X] when checked -->
+<input type="radio" />
+<!-- Shows as (*) when checked -->
+
+<!-- Switch variant -->
+<input type="checkbox" is-="switch" />
+```
+
+**Key Principles**:
+
+1. NEVER override WebTUI component styles directly
+2. Use semantic HTML elements - they're automatically styled
+3. Use data/attribute selectors, not custom classes
+4. Leverage CSS variables for theming consistency
+5. Components handle their own spacing via `lh` (line-height) and `ch` (character) units
+6. WebTUI handles focus states (underline + bold) automatically
 
 ### Frontend Architecture
 
