@@ -135,15 +135,6 @@ export function ProviderList({
           ))}
         </tbody>
       </table>
-
-      <div data-gap="1">
-        <p>
-          <strong>Total providers:</strong> {providers.length}
-        </p>
-        <small>
-          Active providers can be tested and set as default. The default provider cannot be deleted.
-        </small>
-      </div>
     </div>
   );
 }
