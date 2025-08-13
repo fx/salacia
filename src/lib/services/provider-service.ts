@@ -122,7 +122,7 @@ export class ProviderService {
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
     if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
     if (validatedData.models !== undefined)
-      updateData.models = (validatedData.models || undefined) as unknown as Record<string, unknown>;
+      updateData.models = validatedData.models as unknown as Record<string, unknown>;
     if (validatedData.settings !== undefined) updateData.settings = validatedData.settings;
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
     if (validatedData.isDefault !== undefined) updateData.isDefault = validatedData.isDefault;

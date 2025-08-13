@@ -213,7 +213,7 @@ export function ProviderSettings() {
       <div data-gap="2">
         <div data-align="space-between">
           <h2>{editingProvider ? 'Edit Provider' : 'Create Provider'}</h2>
-          <button type="button" onClick={handleCancel} className="wui-button">
+          <button type="button" onClick={handleCancel}>
             Back to List
           </button>
         </div>
@@ -231,7 +231,7 @@ export function ProviderSettings() {
     <div data-gap="2">
       <div data-align="space-between">
         <h2>AI Providers</h2>
-        <button type="button" onClick={handleCreate} className="wui-button">
+        <button type="button" onClick={handleCreate}>
           Add Provider
         </button>
       </div>
@@ -274,15 +274,10 @@ export function ProviderSettings() {
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete this provider?</p>
             <div data-align="space-between" data-gap="1">
-              <button type="button" onClick={cancelDelete} className="wui-button">
+              <button type="button" onClick={cancelDelete}>
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                className="wui-button"
-                data-variant="red"
-              >
+              <button type="button" onClick={confirmDelete} data-variant="red">
                 Delete
               </button>
             </div>

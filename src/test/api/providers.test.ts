@@ -136,7 +136,7 @@ describe('Provider API Endpoints', () => {
       };
 
       mockServer.use(
-        http.post(`${baseUrl}/api/providers`, async () => {
+        http.post(`${baseUrl}/api/providers`, () => {
           return HttpResponse.json(createdProvider, { status: 201 });
         })
       );
@@ -187,7 +187,7 @@ describe('Provider API Endpoints', () => {
       };
 
       mockServer.use(
-        http.post(`${baseUrl}/api/providers`, async () => {
+        http.post(`${baseUrl}/api/providers`, () => {
           return HttpResponse.json({ id: '4', ...defaultProvider }, { status: 201 });
         })
       );
@@ -222,7 +222,7 @@ describe('Provider API Endpoints', () => {
       };
 
       mockServer.use(
-        http.put(`${baseUrl}/api/providers/1`, async () => {
+        http.put(`${baseUrl}/api/providers/1`, () => {
           return HttpResponse.json(updatedProvider);
         })
       );

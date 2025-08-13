@@ -190,7 +190,6 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <input
             id="name"
             type="text"
-            className="wui-input"
             value={formData.name}
             onChange={e => handleChange('name', e.target.value)}
             placeholder="e.g., OpenAI GPT-4"
@@ -205,7 +204,6 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           </label>
           <select
             id="type"
-            className="wui-input"
             value={formData.type}
             onChange={e => handleChange('type', e.target.value)}
             required
@@ -226,7 +224,6 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <input
             id="apiKey"
             type="password"
-            className="wui-input"
             value={formData.apiKey}
             onChange={e => handleChange('apiKey', e.target.value)}
             placeholder="Enter your API key"
@@ -242,7 +239,6 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <input
             id="baseUrl"
             type="url"
-            className="wui-input"
             value={formData.baseUrl}
             onChange={e => handleChange('baseUrl', e.target.value)}
             placeholder="e.g., https://api.openai.com/v1"
@@ -257,7 +253,6 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <input
             id="models"
             type="text"
-            className="wui-input"
             value={formData.models}
             onChange={e => handleChange('models', e.target.value)}
             placeholder="e.g., gpt-4, gpt-3.5-turbo"
@@ -290,10 +285,10 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         </div>
 
         <div data-align="end" data-gap="1">
-          <button type="button" onClick={onCancel} className="wui-button" disabled={loading}>
+          <button type="button" onClick={onCancel} disabled={loading}>
             Cancel
           </button>
-          <button type="submit" className="wui-button" disabled={loading}>
+          <button type="submit" disabled={loading}>
             {loading ? 'Saving...' : provider ? 'Update Provider' : 'Create Provider'}
           </button>
         </div>

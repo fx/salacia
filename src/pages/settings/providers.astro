@@ -1,5 +1,5 @@
 ---
-import { Layout } from '../../components/Layout.tsx';
+import { LayoutSimple } from '../../components/LayoutSimple.tsx';
 import { ProviderSettings } from '../../components/ProviderSettings.tsx';
 ---
 
@@ -12,7 +12,7 @@ import { ProviderSettings } from '../../components/ProviderSettings.tsx';
     <meta name="description" content="Configure AI provider settings and credentials" />
   </head>
   <body>
-    <Layout client:idle>
+    <LayoutSimple client:idle>
       <main>
         <div data-box="square" data-align="center">
           <h1>Provider Settings</h1>
@@ -20,6 +20,6 @@ import { ProviderSettings } from '../../components/ProviderSettings.tsx';
 
         <ProviderSettings client:load />
       </main>
-    </Layout>
+    </LayoutSimple>
   </body>
 </html>

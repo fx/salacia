@@ -50,7 +50,7 @@ export function ProviderList({
 
   return (
     <div data-box="square">
-      <table className="wui-table" data-compact="true">
+      <table data-compact="true">
         <thead>
           <tr>
             <th>Name</th>
@@ -90,7 +90,6 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onSetDefault(provider.id)}
-                    className="wui-button"
                     data-compact="true"
                     disabled={!provider.isActive}
                   >
@@ -103,7 +102,6 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onTest(provider.id)}
-                    className="wui-button"
                     data-compact="true"
                     disabled={!provider.isActive}
                     title="Test provider connectivity"
@@ -113,7 +111,6 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onEdit(provider)}
-                    className="wui-button"
                     data-compact="true"
                     title="Edit provider settings"
                   >
@@ -122,7 +119,6 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onDelete(provider.id)}
-                    className="wui-button"
                     data-compact="true"
                     title="Delete provider"
                     disabled={provider.isDefault}
