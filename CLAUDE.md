@@ -308,7 +308,14 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 
 ### UI/UX Design Decisions
 
-- `confirm()` and `alert()` dialogs are acceptable for simple confirmations and notifications
+- WebTUI confirmation dialogs and inline messaging components are preferred over browser `confirm()` and `alert()`
 - WebTUI error boxes using `data-variant="red"` are used for inline error display
 - UI-level validation (disabled buttons) prevents business rule violations, making server-side checks optional
 - Delete actions that remove resources should return HTTP 204 (No Content) for successful operations
+
+### Data Model and API Patterns
+
+- Provider models field should store data directly as arrays, not wrapped in objects (e.g., `models: string[]` not `models: { models: string[] }`)
+- Global CSS imports should be handled at layout level, not in individual page components
+- API response structures should be consistent - test endpoints return `{ success: boolean, data: TestResult }` where TestResult also has success field
+- WebTUI attribute syntax requires proper naming: `data-variant` not `data-variant-`, `is` not `is-`

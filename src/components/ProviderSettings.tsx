@@ -46,6 +46,11 @@ export function ProviderSettings() {
   const [error, setError] = useState<string | null>(null);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [testMessage, setTestMessage] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   /**
    * Fetch providers from API
@@ -70,27 +75,42 @@ export function ProviderSettings() {
   };
 
   /**
-   * Delete a provider
+   * Initiate delete confirmation
    */
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this provider?')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  /**
+   * Confirm and execute provider deletion
+   */
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
 
     try {
-      const response = await fetch(`/api/providers/${id}`, {
+      const response = await fetch(`/api/providers/${confirmDeleteId}`, {
         method: 'DELETE',
       });
 
       if (response.status === 204) {
         await fetchProviders(); // Refresh the list
+        setError(null);
       } else {
         const result = await response.json();
         setError(result.error || 'Failed to delete provider');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setConfirmDeleteId(null);
     }
+  };
+
+  /**
+   * Cancel delete confirmation
+   */
+  const cancelDelete = () => {
+    setConfirmDeleteId(null);
   };
 
   /**
@@ -103,14 +123,23 @@ export function ProviderSettings() {
       });
       const result = await response.json();
 
-      if (result.success && result.data.success) {
-        alert('Provider test successful!');
+      if (result.success && result.data?.success) {
+        setTestMessage({ type: 'success', message: 'Provider test successful!' });
       } else {
-        alert(`Provider test failed: ${result.data.error || 'Unknown error'}`);
+        setTestMessage({
+          type: 'error',
+          message: `Provider test failed: ${result.data?.error || result.error || 'Unknown error'}`,
+        });
       }
     } catch (err) {
-      alert(`Test failed: ${err instanceof Error ? err.message : 'Network error'}`);
+      setTestMessage({
+        type: 'error',
+        message: `Test failed: ${err instanceof Error ? err.message : 'Network error'}`,
+      });
     }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setTestMessage(null), 5000);
   };
 
   /**
@@ -213,6 +242,13 @@ export function ProviderSettings() {
         </div>
       )}
 
+      {testMessage && (
+        <div data-box="square" data-variant={testMessage.type === 'success' ? 'green' : 'red'}>
+          <strong>{testMessage.type === 'success' ? 'Success:' : 'Error:'}</strong>{' '}
+          {testMessage.message}
+        </div>
+      )}
+
       <ProviderList
         providers={providers}
         onEdit={handleEdit}
@@ -220,6 +256,39 @@ export function ProviderSettings() {
         onTest={handleTest}
         onSetDefault={handleSetDefault}
       />
+
+      {confirmDeleteId && (
+        <dialog
+          open
+          data-box="square"
+          data-align="center"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+          }}
+        >
+          <div data-gap="2">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this provider?</p>
+            <div data-align="space-between" data-gap="1">
+              <button type="button" onClick={cancelDelete} className="wui-button">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="wui-button"
+                data-variant="red"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </div>
   );
 }
