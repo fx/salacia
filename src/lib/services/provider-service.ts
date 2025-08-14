@@ -1,5 +1,6 @@
 import { AiProvider as AiProviderModel } from '../db/models/AiProvider';
 import { ProviderManager } from '../ai/provider-manager';
+import { TokenManager } from '../auth/token-manager';
 import {
   createProviderSchema,
   updateProviderSchema,
@@ -159,26 +160,8 @@ export class ProviderService {
       return { success: false, error: 'Provider not found' };
     }
 
-    // Convert Sequelize model to plain object for ProviderManager
-    const providerData = {
-      id: provider.id,
-      name: provider.name,
-      type: provider.type,
-      authType: provider.authType,
-      apiKey: provider.apiKey,
-      baseUrl: provider.baseUrl || null,
-      models: provider.models,
-      settings: provider.settings,
-      isActive: provider.isActive,
-      isDefault: provider.isDefault,
-      oauthAccessToken: provider.oauthAccessToken,
-      oauthRefreshToken: provider.oauthRefreshToken,
-      oauthTokenExpiresAt: provider.oauthTokenExpiresAt,
-      oauthScope: provider.oauthScope,
-      oauthClientId: provider.oauthClientId,
-      createdAt: provider.createdAt,
-      updatedAt: provider.updatedAt,
-    };
+    // Convert Sequelize model to AiProvider interface with token handling
+    const providerData = await TokenManager.toAiProviderInterface(provider);
 
     try {
       return await ProviderManager.testProvider(providerData);

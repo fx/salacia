@@ -24,6 +24,14 @@ const envSchema = z.object({
   AI_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
   AI_STREAMING_ENABLED: z.coerce.boolean().default(true),
+
+  // Claude Max OAuth Configuration
+  CLAUDE_MAX_CLIENT_ID: z.string().optional(),
+  CLAUDE_MAX_CLIENT_SECRET: z.string().optional(),
+  CLAUDE_MAX_REDIRECT_URI: z.string().url().optional(),
+
+  // Application URL (for OAuth redirect)
+  PUBLIC_APP_URL: z.string().url().default('http://localhost:4321'),
 });
 
 /**
