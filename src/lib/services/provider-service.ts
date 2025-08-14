@@ -30,6 +30,10 @@ export class ProviderService {
       where.type = params.type;
     }
 
+    if (params.authType !== undefined) {
+      where.authType = params.authType;
+    }
+
     if (params.isActive !== undefined) {
       where.isActive = params.isActive;
     }
@@ -77,13 +81,15 @@ export class ProviderService {
     const createData = {
       name: validatedData.name,
       type: validatedData.type,
-      authType: 'api_key' as const,
+      authType: validatedData.authType,
       apiKey: validatedData.apiKey,
       baseUrl: validatedData.baseUrl,
       models: validatedData.models || undefined,
       settings: validatedData.settings || undefined,
       isActive: validatedData.isActive,
       isDefault: validatedData.isDefault,
+      // OAuth-specific fields for future use
+      oauthClientId: validatedData.oauthClientId,
     };
 
     return await AiProviderModel.create(createData);
@@ -110,16 +116,19 @@ export class ProviderService {
     const updateData: Partial<{
       name: string;
       type: string;
-      apiKey: string;
+      authType: 'api_key' | 'oauth';
+      apiKey: string | undefined;
       baseUrl: string | undefined;
       models: string[] | undefined;
       settings: Record<string, unknown> | undefined;
       isActive: boolean;
       isDefault: boolean;
+      oauthClientId: string | undefined;
     }> = {};
 
     if (validatedData.name !== undefined) updateData.name = validatedData.name;
     if (validatedData.type !== undefined) updateData.type = validatedData.type;
+    if (validatedData.authType !== undefined) updateData.authType = validatedData.authType;
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
     if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
     if (validatedData.models !== undefined) updateData.models = validatedData.models;
@@ -127,6 +136,8 @@ export class ProviderService {
       updateData.settings = validatedData.settings as Record<string, unknown> | undefined;
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
     if (validatedData.isDefault !== undefined) updateData.isDefault = validatedData.isDefault;
+    if (validatedData.oauthClientId !== undefined)
+      updateData.oauthClientId = validatedData.oauthClientId;
 
     await provider.update(updateData);
     return provider;
