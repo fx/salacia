@@ -31,12 +31,21 @@ export const POST: APIRoute = async ({ params }) => {
 
     const testResult = await ProviderService.testProvider(id);
 
-    return new Response(JSON.stringify({ success: true, data: testResult }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          success: testResult.success,
+          ...(testResult.error ? { error: testResult.error } : {}),
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error testing provider:', error);
 

@@ -120,13 +120,25 @@ export const PUT: APIRoute = async ({ params, request }) => {
   } catch (error) {
     console.error('Error updating provider:', error);
 
+    // Return 400 for malformed JSON, 422 for validation errors, 500 for others
+    let status = 500;
+    if (error instanceof SyntaxError) {
+      status = 400;
+    } else if (
+      error &&
+      typeof error === 'object' &&
+      'name' in error &&
+      error.name === 'ValidationError' // typical validation error
+    ) {
+      status = 422;
+    }
     return new Response(
       JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        status: 400,
+        status,
         headers: {
           'Content-Type': 'application/json',
         },

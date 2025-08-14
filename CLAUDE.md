@@ -341,6 +341,17 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 
 **Error responses only** use wrapper format: `{ success: false, error: string }`
 
+**HTTP Status Code Guidelines:**
+
+- Use 422 Unprocessable Entity for validation errors (not 400)
+- Use 400 Bad Request only for malformed JSON/syntax errors
+- Use 500 Internal Server Error for unexpected server errors
+
+**Frontend Response Handling:**
+
+- Check `response.ok` instead of `result.success` when provider endpoints return data directly
+- Only parse JSON for error responses when `!response.ok`
+
 **Validation schemas for provider endpoints:**
 
 - `updateProviderSchema.baseUrl` must be marked as `.optional()` to prevent unintended overwrites during updates

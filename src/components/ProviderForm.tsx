@@ -160,11 +160,10 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         body: JSON.stringify(submitData),
       });
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.ok) {
         onSubmit();
       } else {
+        const result = await response.json();
         setError(result.error || 'Failed to save provider');
       }
     } catch (err) {

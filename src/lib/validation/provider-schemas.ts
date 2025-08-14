@@ -11,11 +11,9 @@ export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq']);
  */
 const baseUrlSchema = z
   .string()
-  .refine(
-    val => val === '' || z.string().url().safeParse(val).success,
-    'Base URL must be a valid URL or empty string'
-  )
+  .url()
   .optional()
+  .or(z.literal(''))
   .transform(val => (val === '' ? undefined : val));
 
 /**
