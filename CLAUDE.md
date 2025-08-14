@@ -145,6 +145,7 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
   - Data attributes for dynamic values (`data-height="5"`)
 - **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
 - **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **CRITICAL ATTRIBUTE SYNTAX**: WebTUI attributes that end with `-=` (like `box-=`, `shear-=`, `position-=`, `is-=`, `variant-=`, `size-=`) MUST KEEP THE DASH. This is the CORRECT WebTUI syntax!
 - **NEVER modify padding on WebTUI boxes**: Elements with `box-=` attributes have their own padding - never add custom padding
 - **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
 - **Dialog Elements**: Use native HTML dialog with WebTUI attributes only (position-, container-, size-)
@@ -370,3 +371,70 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - Use `size-="compact"` for compact styling, not `data-compact="true"` - the CSS selectors target `[size-="compact"]`
 - Compact variants should use the size- attribute format for consistency with WebTUI semantic attributes
 - Compact tables and buttons require the size-="compact" attribute to apply minimal padding and spacing
+
+### Critical WebTUI Attribute Naming Patterns
+
+**CRITICAL: WebTUI has TWO types of attributes:**
+
+1. **Attributes WITH trailing dash** (KEEP THE DASH - these are CORRECT):
+   - `box-="square"` ✅ CORRECT
+   - `shear-="top"` ✅ CORRECT
+   - `position-="center"` ✅ CORRECT
+   - `is-="button"` ✅ CORRECT
+   - `variant-="red"` ✅ CORRECT
+   - `size-="compact"` ✅ CORRECT
+
+2. **Data attributes WITHOUT trailing dash** (used for custom/dynamic values):
+   - `data-variant="red"` ✅ CORRECT for custom variants
+   - `data-box="square"` ✅ CORRECT for custom box styles
+   - `data-height="5"` ✅ CORRECT for dynamic values
+
+**DO NOT CONFUSE THESE! The `-=` syntax is INTENTIONAL and REQUIRED for WebTUI semantic attributes.**
+
+### TypeScript Type Safety Guidelines
+
+- **NEVER use `as any`** in service layers or database operations
+- For Sequelize operations, use proper type assertions with model creation attributes:
+  - **CORRECT**: `await AiProviderModel.create(validatedData as AiProviderCreationAttributes)`
+  - **WRONG**: `await AiProviderModel.create(validatedData as any)`
+- Define proper interfaces for complex data transformations instead of bypassing type checking
+- Service layer methods should maintain type safety throughout the call chain
+
+### Browser API Usage Restrictions
+
+- **NEVER use browser `alert()`, `confirm()`, or `prompt()`** - they break WebTUI design consistency
+- **Use WebTUI components instead:**
+  - Confirmation dialogs: Use HTML `<dialog>` with WebTUI attributes
+  - Error display: Use `<div data-box="square" variant="red">`
+  - Success messages: Use `<div data-box="square" variant="green">`
+  - Status badges: Use `<span is="badge" variant="blue">`
+
+### API Validation Schema Consistency
+
+- **baseUrl validation must be consistent** across create/update schemas:
+  - Define shared `baseUrlSchema` once
+  - Reuse in both `createProviderSchema` and `updateProviderSchema`
+  - Use `.optional()` for update schemas to prevent unintended overwrites
+- **Empty string handling**: Transform empty strings to `undefined` for optional fields
+- **URL validation**: Use `z.string().url().optional()` not mixed approaches
+
+### API Endpoint Naming Consistency
+
+- **API endpoint paths must match test expectations:**
+  - File: `src/pages/api/providers/[id]/default.ts` (NOT `set-default.ts`)
+  - Route: `POST /api/providers/:id/default` (NOT `/set-default`)
+  - Test files expect `/default` endpoint - do not suggest changing to `/set-default`
+
+### Astro Page Redirect Best Practices
+
+- **Use `Astro.redirect()` for page redirects, not manual Response objects:**
+  - **CORRECT**: `return Astro.redirect('/settings/providers')`
+  - **WRONG**: `return new Response(null, { status: 302, headers: { Location: '/settings/providers' } })`
+- Astro.redirect() handles edge cases and headers properly
+
+### Service Layer Error Handling
+
+- **ProviderManager methods already have comprehensive error handling** - do not suggest additional try-catch
+- **Service methods that wrap ProviderManager calls can trust the return format**
+- **API test endpoints should pass through test results directly** without additional wrapping
+- Service layer should focus on business logic, not redundant error wrapping
