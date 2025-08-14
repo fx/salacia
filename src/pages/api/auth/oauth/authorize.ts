@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { OAuthService, type PKCEParams } from '../../../../lib/auth/oauth-service';
+import { OAuthService } from '../../../../lib/auth/oauth-service';
+import { oauthSessions } from '../../../../lib/auth/oauth-sessions';
 
 /**
  * Request schema for OAuth authorization
@@ -11,37 +12,6 @@ const AuthorizeRequestSchema = z.object({
   redirect_uri: z.string().url().optional(),
   scopes: z.array(z.string()).optional(),
 });
-
-/**
- * Session storage for OAuth state
- * In a production environment, this should use a more persistent storage
- * like Redis or database with proper cleanup
- */
-const oauthSessions = new Map<
-  string,
-  {
-    providerId: string;
-    pkceParams: PKCEParams;
-    clientId?: string;
-    redirectUri?: string;
-    createdAt: Date;
-  }
->();
-
-// Clean up expired sessions every 10 minutes
-setInterval(
-  () => {
-    const now = new Date();
-    const expiredCutoff = new Date(now.getTime() - 30 * 60 * 1000); // 30 minutes ago
-
-    for (const [sessionId, session] of oauthSessions.entries()) {
-      if (session.createdAt < expiredCutoff) {
-        oauthSessions.delete(sessionId);
-      }
-    }
-  },
-  10 * 60 * 1000
-);
 
 /**
  * GET /api/auth/oauth/authorize
@@ -84,21 +54,23 @@ export const GET: APIRoute = async ({ request, redirect }) => {
     // Generate PKCE parameters
     const pkceParams = await OAuthService.generatePKCEParams();
 
-    // Store session data
-    const sessionId = pkceParams.state; // Use state as session ID
-    oauthSessions.set(sessionId, {
+    // Store session data by provider ID for callback
+    // Also store by state for potential direct callback handling
+    const sessionData = {
       providerId: validatedParams.provider_id,
       pkceParams,
       clientId: validatedParams.client_id,
       redirectUri: validatedParams.redirect_uri,
       createdAt: new Date(),
-    });
+    };
+    oauthSessions.set(pkceParams.state, sessionData); // Store by state
+    oauthSessions.set(validatedParams.provider_id, sessionData); // Store by provider ID for manual callback
 
     // Generate authorization URL
     const authUrl = OAuthService.generateAuthorizationUrl(pkceParams, {
       clientId: validatedParams.client_id,
       redirectUri: validatedParams.redirect_uri,
-      scopes: validatedParams.scopes || ['read', 'write'],
+      scopes: validatedParams.scopes, // Let OAuthService use its defaults
     });
 
     return redirect(authUrl, 302);

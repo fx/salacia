@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { ProviderService } from '../../../../lib/services/provider-service';
+import { OAuthService } from '../../../../lib/auth/oauth-service';
+import { oauthSessions } from '../../../../lib/auth/oauth-sessions';
 
 /**
  * Request schema for OAuth initialization
@@ -79,24 +81,29 @@ export const POST: APIRoute = async ({ params, request }) => {
     const body = await request.json();
     const validatedParams = OAuthInitRequestSchema.parse(body);
 
-    // Build OAuth authorization URL
-    const authParams = new globalThis.URLSearchParams({
-      provider_id: providerId,
+    // Generate PKCE parameters and store session
+    const pkceParams = await OAuthService.generatePKCEParams();
+
+    // Store session data by provider ID for callback
+    const sessionData = {
+      providerId: providerId,
+      pkceParams,
+      clientId: validatedParams.client_id || '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
+      redirectUri:
+        validatedParams.redirect_uri || 'https://console.anthropic.com/oauth/code/callback',
+      createdAt: new Date(),
+    };
+
+    // Store by both state and provider ID
+    oauthSessions.set(pkceParams.state, sessionData);
+    oauthSessions.set(providerId, sessionData);
+
+    // Generate authorization URL
+    const authUrl = OAuthService.generateAuthorizationUrl(pkceParams, {
+      clientId: validatedParams.client_id,
+      redirectUri: validatedParams.redirect_uri,
+      scopes: validatedParams.scopes,
     });
-
-    if (validatedParams.client_id) {
-      authParams.set('client_id', validatedParams.client_id);
-    }
-
-    if (validatedParams.redirect_uri) {
-      authParams.set('redirect_uri', validatedParams.redirect_uri);
-    }
-
-    if (validatedParams.scopes) {
-      authParams.set('scopes', JSON.stringify(validatedParams.scopes));
-    }
-
-    const authUrl = `/api/auth/oauth/authorize?${authParams.toString()}`;
 
     // Return authorization URL for client to redirect to
     return new Response(

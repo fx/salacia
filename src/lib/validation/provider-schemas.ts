@@ -48,15 +48,11 @@ export const createProviderSchema = z
       if (data.authType === 'api_key') {
         return data.apiKey && data.apiKey.length > 0;
       }
-      // For OAuth providers, client ID is required
-      if (data.authType === 'oauth') {
-        return data.oauthClientId && data.oauthClientId.length > 0;
-      }
+      // OAuth providers don't need validation here - client ID is set automatically
       return true;
     },
     {
-      message:
-        'API key is required for api_key providers, OAuth client ID is required for oauth providers',
+      message: 'API key is required for API key authentication',
       path: ['apiKey'],
     }
   );

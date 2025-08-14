@@ -88,8 +88,11 @@ export class ProviderService {
       settings: validatedData.settings || undefined,
       isActive: validatedData.isActive,
       isDefault: validatedData.isDefault,
-      // OAuth-specific fields for future use
-      oauthClientId: validatedData.oauthClientId,
+      // Set OAuth client ID automatically for OAuth providers
+      oauthClientId:
+        validatedData.authType === 'oauth'
+          ? '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
+          : validatedData.oauthClientId,
     };
 
     return await AiProviderModel.create(createData);
@@ -266,8 +269,8 @@ export class ProviderService {
       return dbProviders;
     }
 
-    // Fall back to environment providers
-    const envProviders = await ProviderManager.getActiveProviders();
+    // No environment providers since we removed env var support
+    const envProviders: any[] = [];
 
     // Create database entries for environment providers
     const createdProviders: AiProviderModel[] = [];

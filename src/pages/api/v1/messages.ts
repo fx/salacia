@@ -29,6 +29,26 @@ export const POST: APIRoute = async ({ request }) => {
   let requestData: AnthropicRequest | null = null;
 
   try {
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    logger.debug('Incoming headers from Claude Code:', headers);
+
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      (globalThis as any).__claudeCodeToken = authHeader.substring(7);
+
+      const freshToken = authHeader.substring(7);
+      if (freshToken.startsWith('sk-ant-oat')) {
+        import('../../../lib/ai/provider-manager').then(({ ProviderManager }) => {
+          ProviderManager.updateOAuthToken(freshToken).catch(err => {
+            logger.debug('Failed to update OAuth token:', err);
+          });
+        });
+      }
+    }
+
     // Validate headers
     const headerValidation = validateHeaders(request);
     if (!headerValidation.isValid) {
@@ -143,7 +163,11 @@ export const POST: APIRoute = async ({ request }) => {
       if (error.message.includes('authentication') || error.message.includes('invalid x-api-key')) {
         logger.debug('Authentication error (expected when no API key configured)', error.message);
       } else {
-        logger.error('API endpoint error:', error);
+        logger.error('API endpoint error:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
       }
     } else {
       logger.error('Unknown error:', error);

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { env } from '../env';
 
 /**
  * OAuth 2.0 PKCE (Proof Key for Code Exchange) implementation
@@ -77,11 +76,12 @@ export interface ClaudeMaxOAuthConfig {
  */
 export class OAuthService {
   private static readonly DEFAULT_CONFIG: ClaudeMaxOAuthConfig = {
-    clientId: env.CLAUDE_MAX_CLIENT_ID || '',
-    redirectUri: env.CLAUDE_MAX_REDIRECT_URI || `${env.PUBLIC_APP_URL}/auth/callback`,
-    scopes: ['read', 'write'],
+    // Using OpenCode's Claude Max client ID and redirect URI
+    clientId: '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
+    redirectUri: 'https://console.anthropic.com/oauth/code/callback',
+    scopes: ['org:create_api_key', 'user:profile', 'user:inference'],
     authorizationEndpoint: 'https://claude.ai/oauth/authorize',
-    tokenEndpoint: 'https://claude.ai/oauth/token',
+    tokenEndpoint: 'https://console.anthropic.com/v1/oauth/token',
   };
 
   /**
@@ -106,13 +106,18 @@ export class OAuthService {
     pkceParams: PKCEParams,
     config: Partial<ClaudeMaxOAuthConfig> = {}
   ): string {
-    const finalConfig = { ...this.DEFAULT_CONFIG, ...config };
+    // Filter out undefined values from config to avoid overriding defaults
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config).filter(([_, v]) => v !== undefined)
+    ) as Partial<ClaudeMaxOAuthConfig>;
+    const finalConfig = { ...this.DEFAULT_CONFIG, ...cleanConfig };
 
     if (!finalConfig.clientId) {
       throw new Error('Claude Max client ID is required');
     }
 
     const params = new URLSearchParams({
+      code: 'true', // OpenCode includes this parameter
       response_type: 'code',
       client_id: finalConfig.clientId,
       redirect_uri: finalConfig.redirectUri,
@@ -131,37 +136,54 @@ export class OAuthService {
   static async exchangeCodeForToken(
     code: string,
     codeVerifier: string,
-    config: Partial<ClaudeMaxOAuthConfig> = {}
+    config: Partial<ClaudeMaxOAuthConfig> = {},
+    state?: string
   ): Promise<OAuthTokenResponse> {
-    const finalConfig = { ...this.DEFAULT_CONFIG, ...config };
+    // Filter out undefined values from config to avoid overriding defaults
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config).filter(([_, v]) => v !== undefined)
+    ) as Partial<ClaudeMaxOAuthConfig>;
+    const finalConfig = { ...this.DEFAULT_CONFIG, ...cleanConfig };
 
     if (!finalConfig.clientId) {
       throw new Error('Claude Max client ID is required');
     }
 
-    const params = new URLSearchParams({
+    // OpenCode sends JSON body, not form-urlencoded
+    const requestBody = {
+      code,
+      state: state || '', // State is required in the JSON body
       grant_type: 'authorization_code',
       client_id: finalConfig.clientId,
-      code,
       redirect_uri: finalConfig.redirectUri,
       code_verifier: codeVerifier,
-    });
+    };
 
     try {
       const response = await fetch(finalConfig.tokenEndpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json', // JSON, not form-urlencoded!
           Accept: 'application/json',
         },
-        body: params.toString(),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorResponse = OAuthErrorResponseSchema.parse(data);
-        throw new Error(`OAuth error: ${errorResponse.error} - ${errorResponse.error_description}`);
+        // Try to parse as OAuth error, but handle non-standard error responses
+        try {
+          const errorResponse = OAuthErrorResponseSchema.parse(data);
+          throw new Error(
+            `OAuth error: ${errorResponse.error} - ${errorResponse.error_description}`
+          );
+        } catch (_parseError) {
+          // If error doesn't match OAuth schema, create a generic error message
+          const errorMessage =
+            typeof data === 'object' && data !== null ? JSON.stringify(data) : String(data);
+          throw new Error(`OAuth token exchange failed: ${errorMessage}`);
+        }
       }
 
       return OAuthTokenResponseSchema.parse(data);
@@ -205,10 +227,18 @@ export class OAuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorResponse = OAuthErrorResponseSchema.parse(data);
-        throw new Error(
-          `OAuth refresh error: ${errorResponse.error} - ${errorResponse.error_description}`
-        );
+        // Try to parse as OAuth error, but handle non-standard error responses
+        try {
+          const errorResponse = OAuthErrorResponseSchema.parse(data);
+          throw new Error(
+            `OAuth refresh error: ${errorResponse.error} - ${errorResponse.error_description}`
+          );
+        } catch (_parseError) {
+          // If error doesn't match OAuth schema, create a generic error message
+          const errorMessage =
+            typeof data === 'object' && data !== null ? JSON.stringify(data) : String(data);
+          throw new Error(`OAuth token refresh failed: ${errorMessage}`);
+        }
       }
 
       return OAuthTokenResponseSchema.parse(data);
@@ -228,7 +258,11 @@ export class OAuthService {
     tokenType: 'access_token' | 'refresh_token' = 'access_token',
     config: Partial<ClaudeMaxOAuthConfig> = {}
   ): Promise<void> {
-    const finalConfig = { ...this.DEFAULT_CONFIG, ...config };
+    // Filter out undefined values from config to avoid overriding defaults
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config).filter(([_, v]) => v !== undefined)
+    ) as Partial<ClaudeMaxOAuthConfig>;
+    const finalConfig = { ...this.DEFAULT_CONFIG, ...cleanConfig };
 
     if (!finalConfig.clientId) {
       throw new Error('Claude Max client ID is required');

@@ -42,7 +42,7 @@ interface FormData {
  */
 interface ProviderFormProps {
   provider?: Provider | null;
-  onSubmit: () => void;
+  onSubmit: (provider?: Provider) => void;
   onCancel: () => void;
 }
 
@@ -51,6 +51,8 @@ interface ProviderFormProps {
  * Handles validation, submission, and error display.
  */
 export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps) {
+  // Track the current provider (either from props or newly created)
+  const [currentProvider, setCurrentProvider] = useState<Provider | null>(provider || null);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     type: 'openai',
@@ -63,6 +65,9 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showCallbackInput, setShowCallbackInput] = useState(false);
+  const [callbackCode, setCallbackCode] = useState('');
   const [oauthStatus, setOauthStatus] = useState<{
     hasValidTokens: boolean;
     isTokenExpired: boolean;
@@ -94,6 +99,8 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       // Fetch OAuth status for existing providers
       if (provider.id) {
         fetchOAuthStatus(provider.id);
+        // Update current provider when prop changes
+        setCurrentProvider(provider);
       }
     }
   }, [provider]);
@@ -104,6 +111,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
   const handleChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(null); // Clear error on input
+    setSuccessMessage(null); // Clear success message on input
   };
 
   /**
@@ -125,20 +133,64 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
    * Initialize OAuth flow
    */
   const handleOAuthInit = async () => {
-    if (!provider?.id) return;
+    const activeProvider = provider || currentProvider;
+    if (!activeProvider?.id) return;
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/providers/${provider.id}/oauth-init`, {
+      const response = await fetch(`/api/providers/${activeProvider.id}/oauth-init`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}), // Send empty object to avoid JSON parse error
       });
       const result = await response.json();
 
-      if (result.success && result.data.authUrl) {
-        // Redirect to OAuth authorization URL
-        window.location.href = result.data.authUrl;
+      if (result.success && result.data.authorizationUrl) {
+        // Open OAuth authorization URL in new tab
+        window.open(result.data.authorizationUrl, '_blank');
+        // Show callback code input field
+        setShowCallbackInput(true);
+        setSuccessMessage(
+          'Authorization page opened in new tab. After authorizing, paste the callback code below.'
+        );
       } else {
         setError(result.error || 'Failed to initialize OAuth');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Handle OAuth callback code submission
+   */
+  const handleCallbackSubmit = async () => {
+    const activeProvider = provider || currentProvider;
+    if (!activeProvider?.id || !callbackCode.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/providers/${activeProvider.id}/oauth-callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ callbackCode: callbackCode.trim() }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccessMessage('OAuth authentication successful!');
+        setShowCallbackInput(false);
+        setCallbackCode('');
+        // Refresh OAuth status
+        fetchOAuthStatus(activeProvider.id);
+      } else {
+        setError(result.error || 'Failed to process callback code');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
@@ -151,11 +203,12 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
    * Revoke OAuth tokens
    */
   const handleOAuthRevoke = async () => {
-    if (!provider?.id) return;
+    const activeProvider = provider || currentProvider;
+    if (!activeProvider?.id) return;
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/providers/${provider.id}/oauth-revoke`, {
+      const response = await fetch(`/api/providers/${activeProvider.id}/oauth-revoke`, {
         method: 'POST',
       });
       const result = await response.json();
@@ -253,7 +306,21 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       });
 
       if (response.ok) {
-        onSubmit();
+        const savedProvider = await response.json();
+        // For new OAuth providers, update the current provider state
+        // so the Connect button appears with the correct provider ID
+        if (!provider && savedProvider.authType === 'oauth') {
+          setCurrentProvider(savedProvider);
+          // Show success message for OAuth provider creation
+          setError(null);
+          setSuccessMessage(
+            'Provider created successfully! Now connect to Claude Max to complete setup.'
+          );
+          // Don't close the form - let user connect OAuth
+          onSubmit(savedProvider);
+        } else {
+          onSubmit();
+        }
       } else {
         const result = await response.json();
         setError(result.error || 'Failed to save provider');
@@ -271,6 +338,12 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         {error && (
           <div data-box="square" data-variant="red">
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div data-box="square" data-variant="green">
+            <strong>Success:</strong> {successMessage}
           </div>
         )}
 
@@ -360,7 +433,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           </div>
         )}
 
-        {formData.authType === 'oauth' && provider && (
+        {formData.authType === 'oauth' && (provider || currentProvider) && (
           <div data-gap="1">
             <label>
               <strong>OAuth Authentication</strong>
@@ -396,15 +469,56 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
                   <strong>OAuth Setup Required</strong>
                 </div>
                 <small>Connect to Claude Max to use OAuth authentication</small>
-                <button
-                  type="button"
-                  onClick={handleOAuthInit}
-                  disabled={loading}
-                  box-="square"
-                  variant-="blue"
-                >
-                  {loading ? 'Connecting...' : 'Connect to Claude Max'}
-                </button>
+
+                {!showCallbackInput ? (
+                  <button
+                    type="button"
+                    onClick={handleOAuthInit}
+                    disabled={loading}
+                    box-="square"
+                    variant-="blue"
+                  >
+                    {loading ? 'Connecting...' : 'Connect to Claude Max'}
+                  </button>
+                ) : (
+                  <div data-gap="1">
+                    <small>
+                      After authorizing, copy the entire callback URL and paste it here:
+                    </small>
+                    <div data-gap="1">
+                      <input
+                        type="text"
+                        value={callbackCode}
+                        onChange={e => setCallbackCode(e.target.value)}
+                        placeholder="Paste callback URL or code here"
+                        disabled={loading}
+                      />
+                      <div data-gap="1" data-align="space-between">
+                        <button
+                          type="button"
+                          onClick={handleCallbackSubmit}
+                          disabled={loading || !callbackCode.trim()}
+                          box-="square"
+                          variant-="green"
+                        >
+                          {loading ? 'Processing...' : 'Submit Code'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCallbackInput(false);
+                            setCallbackCode('');
+                            setSuccessMessage(null);
+                          }}
+                          disabled={loading}
+                          box-="square"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

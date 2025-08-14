@@ -34,7 +34,7 @@ interface Provider {
  */
 export function ProviderSettings() {
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -72,6 +72,7 @@ export function ProviderSettings() {
         setError(err?.error || 'Failed to fetch providers');
       }
     } catch (err) {
+      console.error('Error fetching providers:', err);
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setLoading(false);
@@ -178,10 +179,16 @@ export function ProviderSettings() {
   /**
    * Handle form submission (create or update) and refresh list.
    */
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = async (provider?: Provider) => {
     await fetchProviders();
-    setShowForm(false);
-    setEditingProvider(null);
+    // For OAuth providers, keep the form open to show Connect button
+    if (provider && provider.authType === 'oauth' && !provider.oauthAccessToken) {
+      setEditingProvider(provider);
+      // Keep form open to show OAuth connect button
+    } else {
+      setShowForm(false);
+      setEditingProvider(null);
+    }
   };
 
   /**

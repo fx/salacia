@@ -1,6 +1,7 @@
 import { generateText } from 'ai';
 import { ProviderManager } from './provider-manager';
 import { ProviderFactory } from './provider-factory';
+import { AnthropicClient } from './providers';
 import type { AnthropicRequest, AnthropicResponse, AIProviderType } from './types';
 import type { AiProvider } from './provider-manager';
 import { generateMessageId, estimateTokens } from './api-utils';
@@ -32,12 +33,32 @@ export class AIService {
         selectedProvider = await ProviderManager.ensureDefaultProvider();
       }
 
-      // Create AI SDK client
+      if (selectedProvider.authType === 'oauth' && selectedProvider.type === 'anthropic') {
+        const claudeCodeToken = (globalThis as any).__claudeCodeToken;
+        const tokenToUse = claudeCodeToken || selectedProvider.oauthAccessToken;
+
+        if (!tokenToUse) {
+          throw new Error('No OAuth token available for provider');
+        }
+
+        logger.debug('Using Anthropic client for OAuth', {
+          hasClaudeCodeToken: !!claudeCodeToken,
+          provider: selectedProvider.name,
+        });
+
+        const anthropicClient = new AnthropicClient(
+          tokenToUse,
+          selectedProvider.baseUrl || 'https://api.anthropic.com/v1'
+        );
+
+        return await anthropicClient.createMessage(request);
+      }
+
       const client = await ProviderManager.createClient(selectedProvider);
       const model = client(this.mapModelName(selectedProvider, request.model));
 
       // Convert Anthropic format to AI SDK format
-      const messages = this.convertAnthropicMessages(request);
+      const messages = this.convertAnthropicMessages(request, selectedProvider);
 
       // Generate response
       const generateOptions: Parameters<typeof generateText>[0] = {
@@ -94,7 +115,33 @@ export class AIService {
     request: AnthropicRequest,
     provider?: AiProvider
   ): Promise<ReadableStream> {
-    // For now, generate a regular completion and simulate streaming
+    // Get provider if not provided
+    let selectedProvider = provider;
+    if (!selectedProvider) {
+      selectedProvider = await ProviderManager.ensureDefaultProvider();
+    }
+
+    if (selectedProvider.authType === 'oauth' && selectedProvider.type === 'anthropic') {
+      const claudeCodeToken = (globalThis as any).__claudeCodeToken;
+      const tokenToUse = claudeCodeToken || selectedProvider.oauthAccessToken;
+
+      if (!tokenToUse) {
+        throw new Error('No OAuth token available for provider');
+      }
+
+      logger.debug('Using Anthropic client for streaming OAuth', {
+        hasClaudeCodeToken: !!claudeCodeToken,
+        provider: selectedProvider.name,
+      });
+
+      const anthropicClient = new AnthropicClient(
+        tokenToUse,
+        selectedProvider.baseUrl || 'https://api.anthropic.com/v1'
+      );
+
+      return await anthropicClient.createStreamingMessage(request);
+    }
+
     const response = await this.generateCompletion(request, provider);
 
     // Create a streaming response that chunks the text
@@ -195,16 +242,14 @@ export class AIService {
   /**
    * Convert Anthropic messages to AI SDK format
    */
-  private static convertAnthropicMessages(request: AnthropicRequest) {
+  private static convertAnthropicMessages(request: AnthropicRequest, _provider?: AiProvider) {
     const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
 
-    // Add system message if provided
     if (request.system) {
       let systemContent: string;
       if (typeof request.system === 'string') {
         systemContent = request.system;
       } else if (Array.isArray(request.system)) {
-        // Extract text from array format (Claude Code sends it as an array)
         systemContent = request.system
           .filter(
             block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
