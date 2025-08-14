@@ -51,10 +51,26 @@ export const ProviderConfigSchema = z.object({
   settings: ProviderSettingsSchema.default({}),
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
+  // OAuth fields
+  oauthAccessToken: z.string().optional(),
+  oauthRefreshToken: z.string().optional(),
+  oauthTokenExpiresAt: z.date().optional(),
+  oauthScope: z.string().optional(),
+  oauthClientId: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+
+/**
+ * Enhanced provider configuration with OAuth support
+ */
+export interface EnhancedProviderConfig extends ProviderConfig {
+  /** Indicates if token refresh is needed */
+  needsTokenRefresh?: boolean;
+  /** Fallback API key if OAuth fails */
+  fallbackApiKey?: string;
+}
 
 /**
  * Anthropic API message format

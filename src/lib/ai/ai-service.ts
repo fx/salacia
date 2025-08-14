@@ -33,7 +33,7 @@ export class AIService {
       }
 
       // Create AI SDK client
-      const client = ProviderManager.createClient(selectedProvider);
+      const client = await ProviderManager.createClient(selectedProvider);
       const model = client(this.mapModelName(selectedProvider, request.model));
 
       // Convert Anthropic format to AI SDK format

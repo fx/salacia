@@ -1,6 +1,12 @@
 import { ProviderFactory } from './provider-factory';
+import { TokenManager } from '../auth/token-manager';
 import { env } from '../env';
-import type { AIProviderType, ProviderSettings, ModelConfig } from './types';
+import type {
+  AIProviderType,
+  ProviderSettings,
+  ModelConfig,
+  EnhancedProviderConfig,
+} from './types';
 
 // Simple AiProvider type definition for compatibility
 export interface AiProvider {
@@ -157,29 +163,13 @@ export class ProviderManager {
   }
 
   /**
-   * Create an AI SDK client for a provider
+   * Create an AI SDK client for a provider with OAuth support
    */
-  static createClient(provider: AiProvider) {
+  static async createClient(provider: AiProvider) {
     // Validate provider type at runtime
     const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq'];
     if (!validTypes.includes(provider.type as AIProviderType)) {
       throw new Error(`Invalid provider type: ${provider.type}`);
-    }
-
-    // For OAuth providers, check if we have a valid access token
-    if (provider.authType === 'oauth') {
-      if (!provider.oauthAccessToken) {
-        throw new Error('OAuth provider missing access token');
-      }
-
-      // Check if token is expired
-      if (provider.oauthTokenExpiresAt && provider.oauthTokenExpiresAt <= new Date()) {
-        throw new Error('OAuth access token has expired');
-      }
-    } else if (provider.authType === 'api_key') {
-      if (!provider.apiKey) {
-        throw new Error('API key provider missing API key');
-      }
     }
 
     // Safely handle models and settings with proper type checking
@@ -223,13 +213,21 @@ export class ProviderManager {
       parsedSettings = { ...parsedSettings, baseUrl: provider.baseUrl };
     }
 
-    const providerConfig = {
+    const providerConfig: EnhancedProviderConfig = {
       id: provider.id,
       name: provider.name,
       type: provider.type as AIProviderType, // Safe after validation above
       authType: provider.authType,
-      // Use OAuth token or API key based on auth type
-      apiKey: provider.authType === 'oauth' ? provider.oauthAccessToken : provider.apiKey,
+      // For OAuth providers, we'll let ProviderFactory handle token refresh
+      apiKey: provider.authType === 'api_key' ? provider.apiKey : undefined,
+      // OAuth fields
+      oauthAccessToken: provider.oauthAccessToken,
+      oauthRefreshToken: provider.oauthRefreshToken,
+      oauthTokenExpiresAt: provider.oauthTokenExpiresAt,
+      oauthScope: provider.oauthScope,
+      oauthClientId: provider.oauthClientId,
+      // Include API key as fallback for OAuth providers
+      fallbackApiKey: provider.apiKey,
       models: parsedModels,
       settings: parsedSettings,
       isActive: provider.isActive,
@@ -238,15 +236,35 @@ export class ProviderManager {
       updatedAt: provider.updatedAt,
     };
 
-    return ProviderFactory.createProvider(providerConfig);
+    return ProviderFactory.createProviderWithRefresh(providerConfig);
   }
 
   /**
-   * Test provider connectivity
+   * Test provider connectivity with OAuth token refresh
    */
   static async testProvider(provider: AiProvider): Promise<{ success: boolean; error?: string }> {
     try {
-      const client = this.createClient(provider);
+      // For OAuth providers, validate token status first
+      if (provider.authType === 'oauth') {
+        try {
+          const hasValidTokens = await TokenManager.hasValidTokens(provider.id);
+          if (!hasValidTokens) {
+            return {
+              success: false,
+              error: 'OAuth tokens are invalid or expired. Please re-authenticate.',
+            };
+          }
+        } catch (error) {
+          return {
+            success: false,
+            error: `OAuth token validation failed: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+          };
+        }
+      }
+
+      const client = await this.createClient(provider);
 
       // For now, just test that we can create the client
       // In a full implementation, you might make a simple API call to test connectivity
@@ -260,6 +278,27 @@ export class ProviderManager {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  /**
+   * Get provider with fresh OAuth tokens if needed
+   */
+  static async getProviderWithFreshTokens(providerId: string): Promise<AiProvider | null> {
+    try {
+      // This would typically fetch from database
+      // For now, we'll use the TokenManager's interface conversion
+      const { AiProvider: AiProviderModel } = await import('../db/models/AiProvider');
+      const providerModel = await AiProviderModel.findByPk(providerId);
+
+      if (!providerModel) {
+        return null;
+      }
+
+      return TokenManager.toAiProviderInterface(providerModel);
+    } catch (error) {
+      console.error('Failed to get provider with fresh tokens:', error);
+      return null;
     }
   }
 
