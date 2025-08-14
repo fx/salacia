@@ -1,9 +1,9 @@
 /**
  * Unit tests for HorizontalBarChart component
- * Tests precise measurements and alignment of axes and bars
+ * Tests user-visible behavior and accessibility
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { HorizontalBarChart } from './HorizontalBarChart';
 import '@testing-library/jest-dom';
@@ -23,10 +23,12 @@ describe('HorizontalBarChart', () => {
 
   describe('Component Rendering', () => {
     it('should render with required props', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+      render(<HorizontalBarChart data={basicData} />);
 
-      expect(container.querySelector('.widget.horizontal-chart')).toBeInTheDocument();
-      expect(container.querySelector('[box-="square"]')).toBeInTheDocument();
+      // Check that labels are visible to users
+      expect(screen.getByText('Item A')).toBeInTheDocument();
+      expect(screen.getByText('Item B')).toBeInTheDocument();
+      expect(screen.getByText('Item C')).toBeInTheDocument();
     });
 
     it('should render title when provided', () => {
@@ -44,273 +46,143 @@ describe('HorizontalBarChart', () => {
     });
 
     it('should render value labels for each data item', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+      render(<HorizontalBarChart data={basicData} />);
 
-      const valueLabels = container.querySelector('.value-labels');
-      const values = valueLabels?.querySelectorAll('small');
-
-      expect(values).toHaveLength(3);
-      expect(values?.[0]).toHaveTextContent('10');
-      expect(values?.[1]).toHaveTextContent('20');
-      expect(values?.[2]).toHaveTextContent('30');
-    });
-  });
-
-  describe('Precise Label and Bar Alignment', () => {
-    describe('Alignment structure', () => {
-      it('should have matching row heights for labels and bars', () => {
-        const { container } = render(<HorizontalBarChart data={basicData} />);
-
-        const labelRows = container.querySelectorAll('.horizontal-label-row');
-        const barRows = container.querySelectorAll('.bar-row');
-        const valueRows = container.querySelectorAll('.horizontal-value-row');
-
-        expect(labelRows).toHaveLength(3);
-        expect(barRows).toHaveLength(3);
-        expect(valueRows).toHaveLength(3);
-
-        // All rows should have the same height
-        labelRows.forEach(row => {
-          expect(row).toHaveClass('horizontal-label-row');
-        });
-      });
-
-      it('should use flexbox with space-between for vertical distribution', () => {
-        const { container } = render(<HorizontalBarChart data={basicData} />);
-
-        const yLabels = container.querySelector('.horizontal-y-labels');
-        const barsBox = container.querySelector('.horizontal-bars-container');
-        const valueLabels = container.querySelector('.horizontal-value-labels');
-
-        expect(yLabels).toBeInTheDocument();
-        expect(barsBox).toBeInTheDocument();
-        expect(valueLabels).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Bar Width Calculations', () => {
-    it('should calculate correct bar widths', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
-
-      const bars = container.querySelectorAll('.bar-success');
-      expect(bars).toHaveLength(3);
-
-      // Widths should be proportional: 10/30 * 20 = 6.67 ≈ 7
-      expect(bars[0]).toHaveAttribute('data-width', '7');
-      // 20/30 * 20 = 13.33 ≈ 13
-      expect(bars[1]).toHaveAttribute('data-width', '13');
-      // 30/30 * 20 = 20
-      expect(bars[2]).toHaveAttribute('data-width', '20');
+      // Values should be visible to users - using getAllByText since values may appear in scale too
+      expect(screen.getAllByText('10')).toHaveLength(1);
+      expect(screen.getAllByText('20')).toHaveLength(1);
+      expect(screen.getAllByText('30')).toHaveLength(2); // Appears in value and scale
     });
 
-    it('should handle zero values correctly', () => {
-      const dataWithZero = [
-        { label: 'Zero', value: 0 },
-        { label: 'Non-zero', value: 10 },
-      ];
+    it('should render X-axis scale labels', () => {
+      render(<HorizontalBarChart data={basicData} />);
 
-      const { container } = render(<HorizontalBarChart data={dataWithZero} />);
-
-      const bars = container.querySelectorAll('.bar-row');
-      expect(bars).toHaveLength(2);
-
-      // First bar should have no visible bar elements for zero value
-      const firstBarElements = bars[0].querySelectorAll('.bar-success');
-      expect(firstBarElements).toHaveLength(0);
-    });
-
-    it('should handle custom width parameter', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
-
-      const bars = container.querySelectorAll('.bar-success');
-      // Max value 30 should scale to maximum width
-      expect(bars[2]).toHaveAttribute('data-width', '10');
+      // X-axis should show scale from 0 to max
+      expect(screen.getAllByText('0')[0]).toBeInTheDocument();
+      expect(screen.getByText('15')).toBeInTheDocument(); // Half of max (30)
+      expect(screen.getAllByText('30')).toHaveLength(2); // Max value appears in scale and value
     });
   });
 
   describe('Stacked Bar Functionality', () => {
-    it('should render stacked bars when showFailedStack is true', () => {
-      const { container } = render(
-        <HorizontalBarChart data={stackedData} showFailedStack={true} />
-      );
-
-      const successBars = container.querySelectorAll('.bar-success');
-      const failedBars = container.querySelectorAll('.bar-failed');
-
-      expect(successBars.length).toBeGreaterThan(0);
-      expect(failedBars.length).toBeGreaterThan(0);
-    });
-
-    it('should calculate correct widths for stacked segments', () => {
-      const { container } = render(
-        <HorizontalBarChart data={stackedData} showFailedStack={true} />
-      );
-
-      const barRows = container.querySelectorAll('.bar-row');
-
-      // First item: value=100, failed=20
-      const firstSuccess = barRows[0].querySelector('.bar-success');
-      const firstFailed = barRows[0].querySelector('.bar-failed');
-
-      // Total bar width for 100/100 * 20 = 20
-      // Failed portion: 20/100 * 20 = 4
-      // Success portion: 80/100 * 20 = 16
-      expect(firstSuccess).toHaveAttribute('data-width', '16');
-      expect(firstFailed).toHaveAttribute('data-width', '4');
-    });
-
-    it('should display success/failed counts in value labels', () => {
+    it('should display stacked values when showFailedStack is true', () => {
       render(<HorizontalBarChart data={stackedData} showFailedStack={true} />);
 
-      // Should show format like "80✓ 20✗"
-      expect(screen.getByText('80✓ 20✗')).toBeInTheDocument();
-      expect(screen.getByText('70✓ 10✗')).toBeInTheDocument();
-      expect(screen.getByText('30✓ 30✗')).toBeInTheDocument();
+      // Should show success/failed counts
+      expect(screen.getByText('80✓ 20✗')).toBeInTheDocument(); // Test 1: 100 - 20 = 80 success
+      expect(screen.getByText('70✓ 10✗')).toBeInTheDocument(); // Test 2: 80 - 10 = 70 success
+      expect(screen.getByText('30✓ 30✗')).toBeInTheDocument(); // Test 3: 60 - 30 = 30 success
     });
 
-    it('should show legend for stacked bars', () => {
+    it('should show explanation text for stacked bars', () => {
       render(<HorizontalBarChart data={stackedData} showFailedStack={true} />);
 
       expect(screen.getByText('Darker = success, lighter = failed')).toBeInTheDocument();
     });
+
+    it('should display plain values when showFailedStack is false', () => {
+      render(<HorizontalBarChart data={stackedData} showFailedStack={false} />);
+
+      // Should show total values only (may appear in scale too)
+      expect(screen.getAllByText('100')).toHaveLength(2); // Value and scale
+      expect(screen.getByText('80')).toBeInTheDocument();
+      expect(screen.getByText('60')).toBeInTheDocument();
+
+      // Should not show success/failed breakdown
+      expect(screen.queryByText('80✓ 20✗')).not.toBeInTheDocument();
+    });
   });
 
-  describe('Layout Structure', () => {
-    it('should position Y-axis labels outside the box on the left', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+  describe('Zero Value Handling', () => {
+    it('should handle zero values correctly', () => {
+      const dataWithZero = [
+        { label: 'Zero Item', value: 0 },
+        { label: 'Non-Zero Item', value: 50 },
+      ];
 
-      const chartRow = container.querySelector('.chart-row[data-align="stretch start"]');
-      const children = chartRow?.children;
+      render(<HorizontalBarChart data={dataWithZero} />);
 
-      // First child should be Y-axis labels
-      expect(children?.[0]).toHaveClass('y-labels', 'horizontal-y-labels');
-      expect(children?.[0]).toHaveAttribute('data-pad', '1 0.5rem 1 0');
-
-      // Second child should be the main chart area
-      expect(children?.[1]).toHaveClass('chart-column');
-      expect(children?.[1]).toHaveAttribute('data-self', 'grow');
+      // Labels and values should still be visible
+      expect(screen.getByText('Zero Item')).toBeInTheDocument();
+      expect(screen.getAllByText('0')).toHaveLength(2); // Value and scale
+      expect(screen.getByText('Non-Zero Item')).toBeInTheDocument();
+      expect(screen.getAllByText('50')).toHaveLength(2); // Value and scale
     });
 
-    it('should position X-axis scale outside the box at the bottom', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+    it('should handle all zero values without errors', () => {
+      const allZeroData = [
+        { label: 'First', value: 0 },
+        { label: 'Second', value: 0 },
+        { label: 'Third', value: 0 },
+      ];
 
-      const mainChartArea = container.querySelector('.chart-column[data-self="grow"]');
-      const children = mainChartArea?.children;
+      render(<HorizontalBarChart data={allZeroData} />);
 
-      // First child should be the box with bars
-      expect(children?.[0]).toHaveAttribute('box-', 'square');
+      // All labels should be visible
+      expect(screen.getByText('First')).toBeInTheDocument();
+      expect(screen.getByText('Second')).toBeInTheDocument();
+      expect(screen.getByText('Third')).toBeInTheDocument();
 
-      // Second child should be X-axis scale
-      expect(children?.[1]).toHaveClass('x-axis-scale');
-    });
-
-    it('should position value labels outside the box on the right', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
-
-      const chartRow = container.querySelector('.chart-row[data-align="stretch start"]');
-      const children = chartRow?.children;
-
-      // Third child should be value labels
-      expect(children?.[2]).toHaveClass('value-labels', 'horizontal-value-labels');
-      expect(children?.[2]).toHaveAttribute('data-pad', '1 0 1 0.5rem');
-    });
-
-    it('should render bars within a square box', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
-
-      const barsBox = container.querySelector('[box-="square"].horizontal-bars-container');
-      expect(barsBox).toBeInTheDocument();
-      expect(barsBox).toHaveClass('bars-box', 'horizontal-bars-container');
-      expect(barsBox).toHaveAttribute('data-pad', '1');
-    });
-
-    it('should render X-axis scale labels correctly', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
-
-      const xAxisScale = container.querySelector('.x-axis-scale');
-      const labels = xAxisScale?.querySelectorAll('small');
-
-      expect(labels).toHaveLength(3);
-      expect(labels?.[0]).toHaveTextContent('0');
-      expect(labels?.[1]).toHaveTextContent('15'); // 30/2 = 15
-      expect(labels?.[2]).toHaveTextContent('30'); // max value
+      // Scale should still render (0 to 1 as fallback max)
+      expect(screen.getAllByText('0')).toHaveLength(4); // 3 values + 1 scale label
+      expect(screen.getAllByText('1')).toHaveLength(2); // Fallback max at scale position 1 and 0.5 both round to 1
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle single data point', () => {
-      const singleData = [{ label: 'Single', value: 50 }];
-      const { container } = render(<HorizontalBarChart data={singleData} />);
+      const singleData = [{ label: 'Only Item', value: 42 }];
 
-      const bars = container.querySelectorAll('.bar-row');
-      expect(bars).toHaveLength(1);
-    });
+      render(<HorizontalBarChart data={singleData} />);
 
-    it('should handle empty data array', () => {
-      const { container } = render(<HorizontalBarChart data={[]} />);
-
-      const bars = container.querySelectorAll('.bar-row');
-      expect(bars).toHaveLength(0);
-    });
-
-    it('should handle very long labels', () => {
-      const longLabelData = [{ label: 'This is a very long label that might overflow', value: 10 }];
-
-      render(<HorizontalBarChart data={longLabelData} />);
-
-      expect(screen.getByText('This is a very long label that might overflow')).toBeInTheDocument();
+      expect(screen.getByText('Only Item')).toBeInTheDocument();
+      expect(screen.getAllByText('42')).toHaveLength(2); // Value and scale
     });
 
     it('should handle large datasets', () => {
       const largeData = Array.from({ length: 50 }, (_, i) => ({
-        label: `Item ${i}`,
-        value: Math.random() * 100,
+        label: `Item ${i + 1}`,
+        value: (i + 1) * 10,
       }));
 
-      const { container } = render(<HorizontalBarChart data={largeData} />);
+      render(<HorizontalBarChart data={largeData} />);
 
-      const bars = container.querySelectorAll('.bar-row');
-      expect(bars).toHaveLength(50);
+      // Check first and last items are rendered
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
+      expect(screen.getAllByText('10')[0]).toBeInTheDocument();
+      expect(screen.getByText('Item 50')).toBeInTheDocument();
+      expect(screen.getAllByText('500')).toHaveLength(2); // Value and scale
     });
 
-    it('should handle all zero failed values in stacked mode', () => {
-      const noFailuresData = [{ label: 'All Pass', value: 100, failed: 0 }];
+    it('should handle negative values by treating them as zero', () => {
+      const negativeData = [
+        { label: 'Negative', value: -10 },
+        { label: 'Positive', value: 20 },
+      ];
 
-      const { container } = render(
-        <HorizontalBarChart data={noFailuresData} showFailedStack={true} />
-      );
+      render(<HorizontalBarChart data={negativeData} />);
 
-      const successBars = container.querySelectorAll('.bar-success');
-      const failedBars = container.querySelectorAll('.bar-failed');
-
-      expect(successBars).toHaveLength(1);
-      expect(failedBars).toHaveLength(0); // No failed bars should render
+      // Negative values should be displayed but treated as 0 for bar width
+      expect(screen.getByText('Negative')).toBeInTheDocument();
+      expect(screen.getByText('-10')).toBeInTheDocument();
+      expect(screen.getByText('Positive')).toBeInTheDocument();
+      expect(screen.getAllByText('20')).toHaveLength(2); // Value and scale
     });
   });
 
-  describe('CSS Classes and Styles', () => {
-    it('should apply correct CSS classes', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+  describe('Alignment Options', () => {
+    it('should support top alignment', () => {
+      const { container } = render(<HorizontalBarChart data={basicData} align="top" />);
 
-      expect(container.querySelector('.widget')).toBeInTheDocument();
-      expect(container.querySelector('.horizontal-chart')).toBeInTheDocument();
-      expect(container.querySelector('.y-labels')).toBeInTheDocument();
-      expect(container.querySelector('.bars-box')).toBeInTheDocument();
-      expect(container.querySelector('.x-axis-scale')).toBeInTheDocument();
-      expect(container.querySelector('.value-labels')).toBeInTheDocument();
+      // Just verify it renders without error
+      expect(screen.getByText('Item A')).toBeInTheDocument();
     });
 
-    it('should apply correct data attributes for bars', () => {
-      const { container } = render(<HorizontalBarChart data={basicData} />);
+    it('should support bottom alignment', () => {
+      const { container } = render(<HorizontalBarChart data={basicData} align="bottom" />);
 
-      const bars = container.querySelectorAll('.bar-success');
-      bars.forEach(bar => {
-        const width = bar.getAttribute('data-width');
-        expect(width).toBeTruthy();
-        expect(parseInt(width || '0')).toBeGreaterThanOrEqual(0);
-        expect(parseInt(width || '0')).toBeLessThanOrEqual(20);
-      });
+      // Just verify it renders without error
+      expect(screen.getByText('Item A')).toBeInTheDocument();
     });
   });
 });

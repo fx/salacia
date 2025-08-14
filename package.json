@@ -18,6 +18,7 @@
     "format": "prettier --write src/**/*.{ts,astro,json}",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts",
     "prepare": "husky"
   },
   "dependencies": {

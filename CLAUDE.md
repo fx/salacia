@@ -438,3 +438,31 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **Service methods that wrap ProviderManager calls can trust the return format**
 - **API test endpoints should pass through test results directly** without additional wrapping
 - Service layer should focus on business logic, not redundant error wrapping
+
+## Testing Best Practices
+
+### React Testing Library Principles
+
+**Core Philosophy**: Test user behavior, not implementation details.
+
+**Query Priority** (in order of preference):
+
+1. `getByRole` - Queries by accessibility role
+2. `getByLabelText` - For form fields
+3. `getByPlaceholderText` - When label isn't available
+4. `getByText` - For non-interactive elements
+5. `getByDisplayValue` - For form element values
+
+**Anti-patterns to AVOID**:
+
+- `container.querySelector('.class-name')` - Tests implementation, not behavior
+- Testing CSS classes directly - Classes can change without breaking functionality
+- `getByTestId` - Only use as last resort
+- Testing component internals/state - Focus on outputs users see
+
+**Best Practices**:
+
+- Use `screen` queries instead of destructuring from `render()`
+- Use `@testing-library/user-event` over `fireEvent` for realistic interactions
+- Query elements how users perceive them (visible text, labels, roles)
+- Write tests that give confidence the app works for real users
