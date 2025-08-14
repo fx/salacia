@@ -138,6 +138,7 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **NO Tailwind**: This project does not use Tailwind CSS classes
 - **NO Inline Styles**: Do not use style attributes - use data attributes instead
 - **WebTUI Data Attributes**: Use data attributes like `data-box`, `data-is`, `data-align`, `data-gap`, etc.
+- **NEVER use data-compact**: Use `size-="compact"` instead - this is the proper WebTUI semantic attribute for compact variants
 - **Reference VerticalBarChart.tsx**: This component is the PERFECT example - it uses ONLY:
   - WebTUI data attributes (`data-box="square"`, `data-is="separator"`, etc.)
   - Simple CSS classes for layout (`chart-row`, `chart-column`)
@@ -193,6 +194,7 @@ Essential box patterns for terminal-style UI:
 [size-=small]     /* Small variant */
 [size-=default]   /* Default size */
 [size-=large]     /* Large variant */
+[size-=compact]   /* Compact variant - minimal padding/spacing */
 
 /* Variant attributes for colors */
 [variant-=foreground0]  /* Primary text color */

@@ -420,59 +420,59 @@
 /* Compact variants - extend WebTUI components */
 @layer components {
   /* Compact button variant - badge-like spacing */
-  button[data-compact="true"],
-  input[type="button"][data-compact="true"],
-  input[type="submit"][data-compact="true"],
-  input[type="reset"][data-compact="true"],
-  [is-~="button"][data-compact="true"] {
+  button[size-="compact"],
+  input[type="button"][size-="compact"],
+  input[type="submit"][size-="compact"],
+  input[type="reset"][size-="compact"],
+  [is-~="button"][size-="compact"] {
     padding: 0;  /* Remove horizontal padding */
     height: 1lh; /* Same height as badge */
     line-height: 1lh; /* Match badge line height */
   }
   
   /* Override default size heights for compact buttons */
-  button[data-compact="true"][size-="large"],
-  button[data-compact="true"][size-="default"],
-  button[data-compact="true"]:not([size-]),
-  input[type="button"][data-compact="true"][size-="large"],
-  input[type="button"][data-compact="true"][size-="default"],
-  input[type="button"][data-compact="true"]:not([size-]),
-  input[type="submit"][data-compact="true"][size-="large"],
-  input[type="submit"][data-compact="true"][size-="default"],
-  input[type="submit"][data-compact="true"]:not([size-]),
-  input[type="reset"][data-compact="true"][size-="large"],
-  input[type="reset"][data-compact="true"][size-="default"],
-  input[type="reset"][data-compact="true"]:not([size-]),
-  [is-~="button"][data-compact="true"][size-="large"],
-  [is-~="button"][data-compact="true"][size-="default"],
-  [is-~="button"][data-compact="true"]:not([size-]) {
+  button[size-="compact"][size-="large"],
+  button[size-="compact"][size-="default"],
+  button[size-="compact"]:not([size-]),
+  input[type="button"][size-="compact"][size-="large"],
+  input[type="button"][size-="compact"][size-="default"],
+  input[type="button"][size-="compact"]:not([size-]),
+  input[type="submit"][size-="compact"][size-="large"],
+  input[type="submit"][size-="compact"][size-="default"],
+  input[type="submit"][size-="compact"]:not([size-]),
+  input[type="reset"][size-="compact"][size-="large"],
+  input[type="reset"][size-="compact"][size-="default"],
+  input[type="reset"][size-="compact"]:not([size-]),
+  [is-~="button"][size-="compact"][size-="large"],
+  [is-~="button"][size-="compact"][size-="default"],
+  [is-~="button"][size-="compact"]:not([size-]) {
     height: 1lh; /* Keep compact height regardless of size */
   }
 
   /* Ensure compact buttons with gradient background don't show it */
-  button[data-compact="true"]:not([box-]),
-  button[data-compact="true"][size-="default"]:not([box-]),
-  input[type="button"][data-compact="true"]:not([box-]),
-  input[type="button"][data-compact="true"][size-="default"]:not([box-]),
-  input[type="submit"][data-compact="true"]:not([box-]),
-  input[type="submit"][data-compact="true"][size-="default"]:not([box-]),
-  input[type="reset"][data-compact="true"]:not([box-]),
-  input[type="reset"][data-compact="true"][size-="default"]:not([box-]),
-  [is-~="button"][data-compact="true"]:not([box-]),
-  [is-~="button"][data-compact="true"][size-="default"]:not([box-]) {
+  button[size-="compact"]:not([box-]),
+  button[size-="compact"][size-="default"]:not([box-]),
+  input[type="button"][size-="compact"]:not([box-]),
+  input[type="button"][size-="compact"][size-="default"]:not([box-]),
+  input[type="submit"][size-="compact"]:not([box-]),
+  input[type="submit"][size-="compact"][size-="default"]:not([box-]),
+  input[type="reset"][size-="compact"]:not([box-]),
+  input[type="reset"][size-="compact"][size-="default"]:not([box-]),
+  [is-~="button"][size-="compact"]:not([box-]),
+  [is-~="button"][size-="compact"][size-="default"]:not([box-]) {
     background-image: none;
     background-color: var(--mapped-primary);
   }
   
   /* Compact table variant */
-  table[data-compact="true"] {
+  table[size-="compact"] {
     /* Remove all internal borders */
     border-spacing: 0;
     /* Add bottom margin to prevent overlap with following content in box */
     margin-bottom: 1lh;
   }
 
-  table[data-compact="true"]:before {
+  table[size-="compact"]:before {
     /* Keep outer border */
     content: "";
     position: absolute;
@@ -484,8 +484,8 @@
   }
 
   /* Remove ALL padding on compact table cells */
-  table[data-compact="true"] tr th,
-  table[data-compact="true"] tr td {
+  table[size-="compact"] tr th,
+  table[size-="compact"] tr td {
     padding: 0;
   }
 
@@ -497,22 +497,22 @@
    * - First row SHOULD shear into top border (intentional design)
    * - Last row needs padding to avoid shearing into bottom border
    */
-  table[data-compact="true"] thead tr:first-of-type th {
+  table[size-="compact"] thead tr:first-of-type th {
     /* Allow top row to shear into border for compact look */
     padding-top: 0;
   }
 
-  table[data-compact="true"] tbody tr:last-of-type td,
-  table[data-compact="true"] tbody tr:last-of-type th {
+  table[size-="compact"] tbody tr:last-of-type td,
+  table[size-="compact"] tbody tr:last-of-type th {
     /* Add padding to prevent bottom row from shearing into border */
     padding-bottom: 0.5lh;
   }
 
   /* Remove all internal dividers (borders) */
-  table[data-compact="true"] tr th:before,
-  table[data-compact="true"] tr td:before,
-  table[data-compact="true"] tr th:after,
-  table[data-compact="true"] tr td:after {
+  table[size-="compact"] tr th:before,
+  table[size-="compact"] tr td:before,
+  table[size-="compact"] tr th:after,
+  table[size-="compact"] tr td:after {
     display: none;
   }
 }
