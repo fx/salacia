@@ -80,7 +80,7 @@ export class ProviderService {
       apiKey: validatedData.apiKey,
       baseUrl: validatedData.baseUrl,
       models: validatedData.models || undefined,
-      settings: validatedData.settings || undefined,
+      settings: (validatedData.settings || undefined) as Record<string, unknown> | undefined,
       isActive: validatedData.isActive,
       isDefault: validatedData.isDefault,
     };
@@ -122,7 +122,8 @@ export class ProviderService {
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
     if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
     if (validatedData.models !== undefined) updateData.models = validatedData.models;
-    if (validatedData.settings !== undefined) updateData.settings = validatedData.settings;
+    if (validatedData.settings !== undefined)
+      updateData.settings = validatedData.settings as Record<string, unknown> | undefined;
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
     if (validatedData.isDefault !== undefined) updateData.isDefault = validatedData.isDefault;
 
@@ -213,16 +214,17 @@ export class ProviderService {
     }
 
     // Create new provider entry from environment
-    return await AiProviderModel.create({
+    const envData = {
       name: envProvider.name,
       type: envProvider.type,
       apiKey: envProvider.apiKey,
       baseUrl: envProvider.baseUrl || undefined,
-      models: envProvider.models,
+      models: envProvider.models as string[] | undefined,
       settings: envProvider.settings as Record<string, unknown> | undefined,
       isActive: envProvider.isActive,
       isDefault: true,
-    } as CreationAttributes<AiProviderModel>);
+    };
+    return await AiProviderModel.create(envData as CreationAttributes<AiProviderModel>);
   }
 
   /**
@@ -274,16 +276,19 @@ export class ProviderService {
       });
 
       if (!existing) {
-        const created = await AiProviderModel.create({
+        const createdData = {
           name: envProvider.name,
           type: envProvider.type,
           apiKey: envProvider.apiKey,
           baseUrl: envProvider.baseUrl || undefined,
-          models: envProvider.models,
+          models: envProvider.models as string[] | undefined,
           settings: envProvider.settings as Record<string, unknown> | undefined,
           isActive: envProvider.isActive,
           isDefault: envProvider.isDefault,
-        } as CreationAttributes<AiProviderModel>);
+        };
+        const created = await AiProviderModel.create(
+          createdData as CreationAttributes<AiProviderModel>
+        );
         createdProviders.push(created);
       } else {
         createdProviders.push(existing);
