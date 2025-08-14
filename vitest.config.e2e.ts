@@ -9,13 +9,6 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    environmentMatchGlobs: [['src/components/**/*.test.{ts,tsx}', 'jsdom']],
-    exclude: [
-      'node_modules/**',
-      'dist/**',
-      'cypress/**',
-      '**/*.e2e.test.{ts,tsx}',
-      '**/claude-code-e2e.test.{ts,tsx}',
-    ],
+    include: ['**/*.e2e.test.{ts,tsx}', '**/claude-code-e2e.test.{ts,tsx}'],
   },
 });

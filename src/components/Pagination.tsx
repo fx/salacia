@@ -1,17 +1,17 @@
 /**
  * Pagination component for navigating through paginated data.
- * 
+ *
  * This component provides a complete pagination interface with WebTUI styling,
  * including page numbers, navigation controls, and accessibility features.
  * Supports large datasets with intelligent page range display.
- * 
+ *
  * Features:
  * - Smart page range calculation to avoid overwhelming UI
  * - Accessible navigation with ARIA labels and keyboard support
  * - Responsive design with mobile-friendly controls
  * - Previous/Next navigation with disabled state handling
  * - Jump to first/last page functionality
- * 
+ *
  * @module Pagination
  */
 
@@ -41,7 +41,7 @@ export interface PaginationProps {
 /**
  * Calculates the range of page numbers to display in pagination.
  * Uses intelligent centering around current page with fallback to start/end.
- * 
+ *
  * @param currentPage - Current page number
  * @param totalPages - Total number of pages
  * @returns Array of page numbers to display
@@ -74,28 +74,24 @@ function calculatePageRange(currentPage: number, totalPages: number): number[] {
 
 /**
  * Formats the current page info text for accessibility and user information.
- * 
+ *
  * @param currentPage - Current page number
  * @param totalPages - Total number of pages
  * @param totalItems - Total number of items
  * @param pageSize - Items per page
  * @returns Formatted info text
  */
-function formatPageInfo(
-  currentPage: number,
-  totalItems: number,
-  pageSize: number
-): string {
+function formatPageInfo(currentPage: number, totalItems: number, pageSize: number): string {
   const startItem = Math.min((currentPage - 1) * pageSize + 1, totalItems);
   const endItem = Math.min(currentPage * pageSize, totalItems);
-  
+
   return `Showing ${startItem.toLocaleString()}-${endItem.toLocaleString()} of ${totalItems.toLocaleString()} results`;
 }
 
 /**
  * Pagination component providing navigation controls for paginated data.
  * Integrates with WebTUI design system and includes comprehensive accessibility features.
- * 
+ *
  * @param props - Component props
  * @returns JSX element representing the pagination controls
  */
@@ -115,7 +111,11 @@ export function Pagination({
 
   // Don't render pagination if there's only one page or no items
   if (totalPages <= 1 || totalItems === 0) {
-    return <div aria-live="polite" className="sr-only">{pageInfo}</div>;
+    return (
+      <div aria-live="polite" className="sr-only">
+        {pageInfo}
+      </div>
+    );
   }
 
   /**
@@ -156,7 +156,7 @@ export function Pagination({
           is-="button"
           variant-="secondary"
           onClick={() => handlePageChange(currentPage - 1)}
-          onKeyDown={(e) => handleKeyDown(e, currentPage - 1)}
+          onKeyDown={e => handleKeyDown(e, currentPage - 1)}
           disabled={!hasPrevious || disabled}
           aria-label="Go to previous page"
           title="Previous page"
@@ -172,7 +172,7 @@ export function Pagination({
               is-="button"
               variant-="outline"
               onClick={() => handlePageChange(1)}
-              onKeyDown={(e) => handleKeyDown(e, 1)}
+              onKeyDown={e => handleKeyDown(e, 1)}
               disabled={disabled}
               aria-label="Go to first page"
               title="Go to page 1"
@@ -189,18 +189,16 @@ export function Pagination({
         )}
 
         {/* Page number buttons */}
-        {pageNumbers.map((pageNum) => (
+        {pageNumbers.map(pageNum => (
           <button
             key={pageNum}
             is-="button"
             variant-={pageNum === currentPage ? 'primary' : 'outline'}
             onClick={() => handlePageChange(pageNum)}
-            onKeyDown={(e) => handleKeyDown(e, pageNum)}
+            onKeyDown={e => handleKeyDown(e, pageNum)}
             disabled={disabled}
             aria-label={
-              pageNum === currentPage
-                ? `Current page, page ${pageNum}`
-                : `Go to page ${pageNum}`
+              pageNum === currentPage ? `Current page, page ${pageNum}` : `Go to page ${pageNum}`
             }
             aria-current={pageNum === currentPage ? 'page' : undefined}
             title={`Go to page ${pageNum}`}
@@ -222,7 +220,7 @@ export function Pagination({
               is-="button"
               variant-="outline"
               onClick={() => handlePageChange(totalPages)}
-              onKeyDown={(e) => handleKeyDown(e, totalPages)}
+              onKeyDown={e => handleKeyDown(e, totalPages)}
               disabled={disabled}
               aria-label="Go to last page"
               title={`Go to page ${totalPages}`}
@@ -238,7 +236,7 @@ export function Pagination({
           is-="button"
           variant-="secondary"
           onClick={() => handlePageChange(currentPage + 1)}
-          onKeyDown={(e) => handleKeyDown(e, currentPage + 1)}
+          onKeyDown={e => handleKeyDown(e, currentPage + 1)}
           disabled={!hasNext || disabled}
           aria-label="Go to next page"
           title="Next page"

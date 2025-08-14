@@ -193,6 +193,9 @@ export function Navigation() {
         <a href="/stats">
           <span is-="badge">STATS</span>
         </a>
+        <a href="/settings">
+          <span is-="badge">SETTINGS</span>
+        </a>
       </span>
       <span>
         {combinedIsConnected && (

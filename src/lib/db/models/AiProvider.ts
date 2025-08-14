@@ -1,4 +1,10 @@
-import { DataTypes, Model, type InferAttributes, type InferCreationAttributes } from 'sequelize';
+import {
+  DataTypes,
+  Model,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationOptional,
+} from 'sequelize';
 import { sequelize } from '../sequelize-connection';
 
 /**
@@ -35,7 +41,7 @@ export class AiProvider extends Model<
    * Primary key UUID for the AI provider record.
    * Generated automatically using PostgreSQL's gen_random_uuid() function.
    */
-  declare id: string;
+  declare id: CreationOptional<string>;
 
   /**
    * Unique display name for the AI provider.
@@ -69,7 +75,7 @@ export class AiProvider extends Model<
    * Stored as JSON array for flexible model management.
    * Examples: ['gpt-4', 'gpt-3.5-turbo'] or ['claude-3-opus', 'claude-3-sonnet']
    */
-  declare models?: Record<string, unknown>;
+  declare models?: string[];
 
   /**
    * Provider-specific configuration settings.
@@ -82,25 +88,25 @@ export class AiProvider extends Model<
    * Whether the provider is currently active and available for use.
    * Inactive providers are ignored during provider selection.
    */
-  declare isActive: boolean;
+  declare isActive: CreationOptional<boolean>;
 
   /**
    * Whether this provider is the default choice for new requests.
    * Only one provider should be marked as default at a time.
    */
-  declare isDefault: boolean;
+  declare isDefault: CreationOptional<boolean>;
 
   /**
    * Timestamp indicating when the provider was created.
    * Set automatically on record creation.
    */
-  declare createdAt: Date;
+  declare createdAt: CreationOptional<Date>;
 
   /**
    * Timestamp indicating when the provider was last updated.
    * Updated automatically whenever the record is modified.
    */
-  declare updatedAt: Date;
+  declare updatedAt: CreationOptional<Date>;
 }
 
 /**

@@ -37,7 +37,6 @@ export interface TableFiltersProps {
   disabled?: boolean;
 }
 
-
 /**
  * Formats a date to YYYY-MM-DD format for HTML date inputs.
  *

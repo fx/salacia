@@ -19,6 +19,7 @@
    ```
 
 **For Claude Code**: When starting work on this project:
+
 - Always check if the database is running (`docker compose ps`)
 - If database is not running, start it with `docker compose up -d`
 - Always run `npm run dev` in the background for live development
@@ -55,28 +56,7 @@ This project uses the following core technologies:
 
 ## Development Standards
 
-### Pull Request Size Requirements
-
-We enforce strict pull request size limits to maintain code quality and review effectiveness:
-
-- **Hard limit**: 500 lines maximum of actual code changes
-- **Acceptable**: 200 lines or fewer of actual code changes
-- **Ideal**: 50 lines or fewer of actual code changes
-
-**Important**: These limits apply to human-written code only. The following do NOT count toward PR size limits:
-
-- Generated files (migrations, lock files, snapshots)
-- Configuration files that are mostly boilerplate
-- Auto-generated type definitions
-- Documentation files when appropriate
-
-**CRITICAL ENFORCEMENT**:
-
-- ALWAYS check PR size with `git diff main --stat` before creating PR
-- If approaching 500 lines, STOP immediately and break into smaller PRs
-- The pr-reviewer agent MUST check size limits as the FIRST review step
-- Size limit violations are BLOCKING issues that override all other concerns
-- Any issue or task that would produce a change exceeding these limits must be automatically broken down into smaller tasks, resulting in multiple smaller pull requests
+### Pull Request Requirements
 
 **PR Review Requirements**:
 
@@ -99,15 +79,6 @@ migrations/meta/*.json linguist-generated=true
 
 This helps reviewers focus on the actual code changes rather than generated artifacts.
 
-### Task Breakdown Requirements
-
-For changes that would exceed our PR size limits:
-
-1. Break the work into logical, independent chunks
-2. Create separate issues for each chunk
-3. Implement each chunk as a separate pull request
-4. Ensure each PR can be reviewed and merged independently
-
 ## Code Quality Standards
 
 ### Code Commenting Philosophy
@@ -122,7 +93,7 @@ Every function, class, method, and significant code construct must be documented
 - Include parameter descriptions, return types, and examples where helpful
 - Follow the TSDoc specification: https://tsdoc.org/
 
-**Note**: TSDoc documentation lines are given more leniency when judging pull request size, as comprehensive documentation is essential for maintainability.
+**Note**: Comprehensive documentation is essential for maintainability.
 
 ### Commit and PR Standards
 
@@ -147,7 +118,18 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 
 #### Styling Approach
 
-**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles:
+**CRITICAL**: Use WebTUI's built-in styling ONLY - no custom CSS or inline styles.
+
+**MANDATORY BEFORE ANY CSS CHANGES**:
+
+1. **ALWAYS** examine `node_modules/@webtui/css/dist/` FIRST to understand:
+   - Which `@layer` the component belongs to (base, components, utils)
+   - Existing CSS selectors and properties
+   - CSS variables being used
+   - How the component is structured
+2. For example, before modifying tables, check `node_modules/@webtui/css/dist/components/table.css`
+3. Match the EXACT layer when extending/overriding (e.g., table styles go in `@layer components`)
+4. This directory contains ALL WebTUI CSS sources and MUST be referenced to maintain consistency
 
 - **ABSOLUTELY NO Custom CSS**: Never create custom CSS classes or styles. The ONLY acceptable CSS is:
   - CSS that uses WebTUI's CSS variables (e.g., `var(--foreground1)`)
@@ -156,12 +138,14 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **NO Tailwind**: This project does not use Tailwind CSS classes
 - **NO Inline Styles**: Do not use style attributes - use data attributes instead
 - **WebTUI Data Attributes**: Use data attributes like `data-box`, `data-is`, `data-align`, `data-gap`, etc.
+- **Compact Variants**: Use `size-="compact"` for compact tables and buttons to match the CSS selectors in global.css
 - **Reference VerticalBarChart.tsx**: This component is the PERFECT example - it uses ONLY:
   - WebTUI data attributes (`data-box="square"`, `data-is="separator"`, etc.)
   - Simple CSS classes for layout (`chart-row`, `chart-column`)
   - Data attributes for dynamic values (`data-height="5"`)
 - **Use Semantic HTML**: Prefer semantic HTML elements (h1-h6, ul, li, strong, small, etc.)
 - **WebTUI Utilities**: Use WebTUI's built-in utilities like `box-="square"` for borders
+- **CRITICAL ATTRIBUTE SYNTAX**: WebTUI attributes that end with `-=` (like `box-=`, `shear-=`, `position-=`, `is-=`, `variant-=`, `size-=`) MUST KEEP THE DASH. This is the CORRECT WebTUI syntax!
 - **NEVER modify padding on WebTUI boxes**: Elements with `box-=` attributes have their own padding - never add custom padding
 - **WebTUI Classes**: Use provided classes like `wui-table`, `wui-button`, `wui-input` for components
 - **Dialog Elements**: Use native HTML dialog with WebTUI attributes only (position-, container-, size-)
@@ -191,9 +175,294 @@ Essential box patterns for terminal-style UI:
 
 **Required Import**: `@import "@webtui/css/utils/box.css";`
 
+#### WebTUI CSS Architecture
+
+**CSS Layers**: WebTUI uses CSS `@layer` for cascade control:
+
+- `@layer base` - Core variables and resets
+- `@layer components` - Component styles (buttons, inputs, tables, etc.)
+- `@layer utils` - Utility classes (box borders)
+
+**Semantic Attribute Selectors**:
+
+```css
+/* Components use semantic attributes, not classes */
+[is-~=button]     /* Button component */
+[is-~=separator]  /* Separator line */
+[is-~=input]      /* Input field */
+
+/* Size attributes */
+[size-=small]     /* Small variant */
+[size-=default]   /* Default size */
+[size-=large]     /* Large variant */
+[size-=compact]   /* Compact variant - minimal padding/spacing */
+
+/* Variant attributes for colors */
+[variant-=foreground0]  /* Primary text color */
+[variant-=foreground1]  /* Secondary text color */
+[variant-=background1]  /* Background variant */
+
+/* Direction and positioning */
+[direction-=x]    /* Horizontal */
+[direction-=y]    /* Vertical */
+[position-=center]  /* Center positioned */
+```
+
+**Common CSS Variables**:
+
+```css
+/* Colors - defined in @layer base */
+--background0, --background1, --background2, --background3
+--foreground0, --foreground1, --foreground2
+
+/* Typography */
+--font-family, --font-size, --line-height
+--font-weight-normal, --font-weight-bold
+
+/* Component-specific */
+--box-border-color, --box-border-width
+--table-border-color, --separator-color
+--button-primary, --button-secondary
+```
+
+**Example Patterns**:
+
+```html
+<!-- Button with box border -->
+<button box-="square" variant-="foreground1">Submit</button>
+
+<!-- Input with size -->
+<input type="text" size-="small" />
+
+<!-- Separator with direction -->
+<div is-="separator" direction-="horizontal"></div>
+
+<!-- Dialog positioning -->
+<dialog position-="center" size-="default" box-="double round"></dialog>
+
+<!-- Table (automatic borders via CSS) -->
+<table>
+  <!-- WebTUI handles borders via pseudo-elements -->
+</table>
+
+<!-- Checkbox and Radio (styled automatically) -->
+<input type="checkbox" />
+<!-- Shows as [X] when checked -->
+<input type="radio" />
+<!-- Shows as (*) when checked -->
+
+<!-- Switch variant -->
+<input type="checkbox" is-="switch" />
+```
+
+**Key Principles**:
+
+1. NEVER override WebTUI component styles directly
+2. Use semantic HTML elements - they're automatically styled
+3. Use data/attribute selectors, not custom classes
+4. Leverage CSS variables for theming consistency
+5. Components handle their own spacing via `lh` (line-height) and `ch` (character) units
+6. WebTUI handles focus states (underline + bold) automatically
+
+#### WebTUI Table Border Shear Issue
+
+**CRITICAL UNDERSTANDING**: WebTUI table borders are positioned INSIDE the table content area, not outside:
+
+```css
+/* WebTUI positions table border at: */
+top: calc(0.5lh - (var(--table-border-width) / 2));
+/* This places the border 0.5lh from the top, OVERLAPPING with content */
+```
+
+**The Shear Problem**:
+
+- Without padding, table rows will "shear" into (overlap with) the border
+- The top border starts at 0.5lh, the bottom border ends at 0.5lh from bottom
+- Normal tables have `padding-top: 1lh` on first row to avoid this
+- Compact tables remove this padding, causing intentional top shear
+
+**Compact Table Design**:
+
+- **Top row**: SHOULD shear into border (intentional compact look)
+- **Bottom row**: MUST have padding-bottom to prevent shear
+- **Solution**: Add `padding-bottom: 0.5lh` to last row only
+- **Also**: Add `margin-bottom: 1lh` to table for spacing from next content
+
 ### Frontend Architecture
 
 - **React Components**: All interactive UI components should be built with React and TypeScript
 - **Astro Integration**: Use Astro's React integration for server-side rendering and hydration
 - **Global Styles**: Import WebTUI CSS in global styles file and include in layout components
 - **Component Documentation**: All React components must include comprehensive TSDoc documentation
+
+## Code Review Guidelines for GitHub Copilot
+
+### WebTUI Table Border Behavior
+
+- Do not flag `padding-top: 0` on table rows as incorrect - this is intentional shearing for compact table design
+- WebTUI table borders are positioned at 0.5lh from edges, overlapping with content when padding is removed
+- Compact tables intentionally allow first row to shear into top border for dense layouts
+
+### WebTUI CSS Implementation Patterns
+
+- Setting `padding-top: 0` DOES cause shearing when WebTUI borders are positioned inside content area
+- This is an intentional design pattern for compact UI components
+- WebTUI uses semantic attributes (is-, variant-, size-) not custom classes
+
+### UI/UX Design Decisions
+
+- WebTUI confirmation dialogs and inline messaging components are preferred over browser `confirm()` and `alert()`
+- WebTUI error boxes using `data-variant="red"` are used for inline error display
+- UI-level validation (disabled buttons) prevents business rule violations, making server-side checks optional
+- Delete actions that remove resources should return HTTP 204 (No Content) for successful operations
+
+### Data Model and API Patterns
+
+- Provider models field should store data directly as arrays, not wrapped in objects (e.g., `models: string[]` not `models: { models: string[] }`)
+- Global CSS imports should be handled at layout level, not in individual page components
+- API response structures should be consistent - test endpoints return `{ success: boolean, data: TestResult }` where TestResult also has success field
+- WebTUI attribute syntax requires proper naming: `data-variant` not `data-variant-`, `is` not `is-`
+
+### Test Infrastructure and Global Setup
+
+- `globalThis.TestUtils.mockServer` is properly configured in `src/test/setup.ts` - do not flag as missing
+- Test files can safely access `globalThis.TestUtils` for MSW mock server functionality
+- The TestUtils global is initialized during test setup and is available throughout test execution
+
+### API Response Structure Guidelines
+
+**CRITICAL: Provider API endpoints return data directly without wrapper objects:**
+
+- **Provider list endpoints** (GET /api/providers): Return `Provider[]` directly, NOT wrapped in success/data objects
+- **Single provider endpoints** (GET /api/providers/:id): Return `Provider` directly, NOT wrapped in success/data objects
+- **Create provider endpoints** (POST /api/providers): Return `Provider` directly, NOT wrapped in success/data objects
+- **Update provider endpoints** (PUT /api/providers/:id): Return `Provider` directly, NOT wrapped in success/data objects
+- **Delete provider endpoints** (DELETE /api/providers/:id): Return HTTP 204 No Content with empty body
+- **Test endpoints specifically** (POST /api/providers/:id/test): Return `{ success: true, data: { success: boolean, error?: string } }`
+
+**Error responses only** use wrapper format: `{ success: false, error: string }`
+
+**HTTP Status Code Guidelines:**
+
+- Use 422 Unprocessable Entity for validation errors (not 400)
+- Use 400 Bad Request only for malformed JSON/syntax errors
+- Use 500 Internal Server Error for unexpected server errors
+
+**Frontend Response Handling:**
+
+- Check `response.ok` instead of `result.success` when provider endpoints return data directly
+- Only parse JSON for error responses when `!response.ok`
+
+**Validation schemas for provider endpoints:**
+
+- `updateProviderSchema.baseUrl` must be marked as `.optional()` to prevent unintended overwrites during updates
+- `baseUrlSchema` already handles empty string transformation to undefined - do not flag this as incorrect
+
+### Error Handling Patterns
+
+- ProviderManager.testProvider already returns proper `{ success: boolean, error?: string }` format
+- ProviderService methods have comprehensive try-catch error handling - do not suggest additional validation
+- Service methods that call ProviderManager methods can trust the return format consistency
+- Do not suggest redundant try-catch blocks around ProviderManager calls that already handle errors
+- API test endpoints should return the test result directly without wrapping in additional success/data objects
+
+### WebTUI Attribute Syntax Guidelines
+
+- Use `size-="compact"` for compact styling, not `data-compact="true"` - the CSS selectors target `[size-="compact"]`
+- Compact variants should use the size- attribute format for consistency with WebTUI semantic attributes
+- Compact tables and buttons require the size-="compact" attribute to apply minimal padding and spacing
+
+### Critical WebTUI Attribute Naming Patterns
+
+**CRITICAL: WebTUI has TWO types of attributes:**
+
+1. **Attributes WITH trailing dash** (KEEP THE DASH - these are CORRECT):
+   - `box-="square"` ✅ CORRECT
+   - `shear-="top"` ✅ CORRECT
+   - `position-="center"` ✅ CORRECT
+   - `is-="button"` ✅ CORRECT
+   - `variant-="red"` ✅ CORRECT
+   - `size-="compact"` ✅ CORRECT
+
+2. **Data attributes WITHOUT trailing dash** (used for custom/dynamic values):
+   - `data-variant="red"` ✅ CORRECT for custom variants
+   - `data-box="square"` ✅ CORRECT for custom box styles
+   - `data-height="5"` ✅ CORRECT for dynamic values
+
+**DO NOT CONFUSE THESE! The `-=` syntax is INTENTIONAL and REQUIRED for WebTUI semantic attributes.**
+
+### TypeScript Type Safety Guidelines
+
+- **NEVER use `as any`** in service layers or database operations
+- For Sequelize operations, use proper type assertions with model creation attributes:
+  - **CORRECT**: `await AiProviderModel.create(validatedData as AiProviderCreationAttributes)`
+  - **WRONG**: `await AiProviderModel.create(validatedData as any)`
+- Define proper interfaces for complex data transformations instead of bypassing type checking
+- Service layer methods should maintain type safety throughout the call chain
+
+### Browser API Usage Restrictions
+
+- **NEVER use browser `alert()`, `confirm()`, or `prompt()`** - they break WebTUI design consistency
+- **Use WebTUI components instead:**
+  - Confirmation dialogs: Use HTML `<dialog>` with WebTUI attributes
+  - Error display: Use `<div data-box="square" variant="red">`
+  - Success messages: Use `<div data-box="square" variant="green">`
+  - Status badges: Use `<span is="badge" variant="blue">`
+
+### API Validation Schema Consistency
+
+- **baseUrl validation must be consistent** across create/update schemas:
+  - Define shared `baseUrlSchema` once
+  - Reuse in both `createProviderSchema` and `updateProviderSchema`
+  - Use `.optional()` for update schemas to prevent unintended overwrites
+- **Empty string handling**: Transform empty strings to `undefined` for optional fields
+- **URL validation**: Use `z.string().url().optional()` not mixed approaches
+
+### API Endpoint Naming Consistency
+
+- **API endpoint paths must match test expectations:**
+  - File: `src/pages/api/providers/[id]/default.ts` (NOT `set-default.ts`)
+  - Route: `POST /api/providers/:id/default` (NOT `/set-default`)
+  - Test files expect `/default` endpoint - do not suggest changing to `/set-default`
+
+### Astro Page Redirect Best Practices
+
+- **Use `Astro.redirect()` for page redirects, not manual Response objects:**
+  - **CORRECT**: `return Astro.redirect('/settings/providers')`
+  - **WRONG**: `return new Response(null, { status: 302, headers: { Location: '/settings/providers' } })`
+- Astro.redirect() handles edge cases and headers properly
+
+### Service Layer Error Handling
+
+- **ProviderManager methods already have comprehensive error handling** - do not suggest additional try-catch
+- **Service methods that wrap ProviderManager calls can trust the return format**
+- **API test endpoints should pass through test results directly** without additional wrapping
+- Service layer should focus on business logic, not redundant error wrapping
+
+## Testing Best Practices
+
+### React Testing Library Principles
+
+**Core Philosophy**: Test user behavior, not implementation details.
+
+**Query Priority** (in order of preference):
+
+1. `getByRole` - Queries by accessibility role
+2. `getByLabelText` - For form fields
+3. `getByPlaceholderText` - When label isn't available
+4. `getByText` - For non-interactive elements
+5. `getByDisplayValue` - For form element values
+
+**Anti-patterns to AVOID**:
+
+- `container.querySelector('.class-name')` - Tests implementation, not behavior
+- Testing CSS classes directly - Classes can change without breaking functionality
+- `getByTestId` - Only use as last resort
+- Testing component internals/state - Focus on outputs users see
+
+**Best Practices**:
+
+- Use `screen` queries instead of destructuring from `render()`
+- Use `@testing-library/user-event` over `fireEvent` for realistic interactions
+- Query elements how users perceive them (visible text, labels, roles)
+- Write tests that give confidence the app works for real users

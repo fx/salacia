@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
-import { Navigation } from './Navigation';
-import { RealtimeProvider } from '../context/realtime.js';
+import { NavigationSimple } from './NavigationSimple';
 
 /**
- * Props for the Layout component
+ * Props for the LayoutSimple component
  */
-interface LayoutProps {
+interface LayoutSimpleProps {
   /** The main content to be rendered within the layout */
   children: ReactNode;
   /** The title of the page that will be displayed in the document title */
@@ -13,7 +12,8 @@ interface LayoutProps {
 }
 
 /**
- * Main layout component that provides the overall terminal-like structure for the application.
+ * Lightweight layout component without realtime SSE connections.
+ * Used for settings pages and other non-realtime views for better performance.
  * Creates a full viewport terminal interface with navigation and content areas wrapped in a single bordered box.
  * Navigation items are direct children of the main box to enable proper shearing.
  * Uses WebTUI CSS utilities exclusively for consistent theming and spacing.
@@ -23,13 +23,11 @@ interface LayoutProps {
  * @param props.title - The page title (optional)
  * @returns The terminal-style page layout with navigation and content in a single bordered container
  */
-export function Layout({ children, title }: LayoutProps) {
+export function LayoutSimple({ children, title }: LayoutSimpleProps) {
   return (
-    <RealtimeProvider>
-      <div box-="square" shear-="top">
-        <Navigation />
-        <main>{children}</main>
-      </div>
-    </RealtimeProvider>
+    <div box-="square" shear-="top">
+      <NavigationSimple />
+      <main>{children}</main>
+    </div>
   );
 }
