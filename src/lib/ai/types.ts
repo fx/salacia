@@ -33,21 +33,44 @@ export const ProviderSettingsSchema = z.object({
 export type ProviderSettings = z.infer<typeof ProviderSettingsSchema>;
 
 /**
+ * Authentication type for provider configuration
+ */
+export const AuthTypeSchema = z.enum(['api_key', 'oauth']);
+export type AuthType = z.infer<typeof AuthTypeSchema>;
+
+/**
  * Complete provider configuration
  */
 export const ProviderConfigSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   type: AIProviderTypeSchema,
-  apiKey: z.string(),
+  authType: AuthTypeSchema.default('api_key'),
+  apiKey: z.string().optional(),
   models: z.array(ModelConfigSchema).default([]),
   settings: ProviderSettingsSchema.default({}),
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
+  // OAuth fields
+  oauthAccessToken: z.string().optional(),
+  oauthRefreshToken: z.string().optional(),
+  oauthTokenExpiresAt: z.date().optional(),
+  oauthScope: z.string().optional(),
+  oauthClientId: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+
+/**
+ * Enhanced provider configuration with OAuth support
+ */
+export interface EnhancedProviderConfig extends ProviderConfig {
+  /** Indicates if token refresh is needed */
+  needsTokenRefresh?: boolean;
+  /** Fallback API key if OAuth fails */
+  fallbackApiKey?: string;
+}
 
 /**
  * Anthropic API message format

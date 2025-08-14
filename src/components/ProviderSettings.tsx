@@ -3,18 +3,24 @@ import { ProviderList } from './ProviderList';
 import { ProviderForm } from './ProviderForm';
 
 /**
- * Provider entity as used by the settings UI and API.
+ * Provider entity as used by the settings UI and API with OAuth support.
  */
 interface Provider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl?: string;
   models?: string[];
   settings?: Record<string, unknown>;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: string;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,12 +34,16 @@ interface Provider {
  */
 export function ProviderSettings() {
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [testMessage, setTestMessage] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [oauthMessage, setOauthMessage] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
@@ -62,6 +72,7 @@ export function ProviderSettings() {
         setError(err?.error || 'Failed to fetch providers');
       }
     } catch (err) {
+      console.error('Error fetching providers:', err);
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setLoading(false);
@@ -168,10 +179,16 @@ export function ProviderSettings() {
   /**
    * Handle form submission (create or update) and refresh list.
    */
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = async (provider?: Provider) => {
     await fetchProviders();
-    setShowForm(false);
-    setEditingProvider(null);
+    // For OAuth providers, keep the form open to show Connect button
+    if (provider && provider.authType === 'oauth' && !provider.oauthAccessToken) {
+      setEditingProvider(provider);
+      // Keep form open to show OAuth connect button
+    } else {
+      setShowForm(false);
+      setEditingProvider(null);
+    }
   };
 
   /**
@@ -198,9 +215,24 @@ export function ProviderSettings() {
     setEditingProvider(null);
   };
 
-  // Fetch providers on component mount
+  // Fetch providers on component mount and handle OAuth callback messages
   useEffect(() => {
     fetchProviders();
+
+    // Check for OAuth callback messages in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+
+    if (success) {
+      setOauthMessage({ type: 'success', message: success });
+      // Clear URL params after showing message
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (error) {
+      setOauthMessage({ type: 'error', message: error });
+      // Clear URL params after showing message
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   if (loading) {
@@ -249,6 +281,21 @@ export function ProviderSettings() {
         <div data-box="square" data-variant={testMessage.type === 'success' ? 'green' : 'red'}>
           <strong>{testMessage.type === 'success' ? 'Success:' : 'Error:'}</strong>{' '}
           {testMessage.message}
+        </div>
+      )}
+
+      {oauthMessage && (
+        <div data-box="square" data-variant={oauthMessage.type === 'success' ? 'green' : 'red'}>
+          <strong>{oauthMessage.type === 'success' ? 'OAuth Success:' : 'OAuth Error:'}</strong>{' '}
+          {oauthMessage.message}
+          <button
+            type="button"
+            onClick={() => setOauthMessage(null)}
+            size-="compact"
+            style={{ float: 'right' }}
+          >
+            ×
+          </button>
         </div>
       )}
 

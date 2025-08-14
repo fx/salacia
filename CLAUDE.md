@@ -24,13 +24,14 @@
 - If database is not running, start it with `docker compose up -d`
 - Always run `npm run dev` in the background for live development
 - The dev server runs on http://localhost:4321 by default
-- **IMPORTANT**: If the server starts on a different port (4322, 4323, etc.), it means multiple servers are running. Kill all dev servers and start fresh:
+- **IMPORTANT**: The Astro dev server doesn't handle hot reload very well. Always restart it after completing a task:
   ```bash
-  # Kill all node processes running Astro dev servers
+  # Kill the existing dev server
   pkill -f "astro dev" || killall node
-  # Then start a single new dev server
+  # Start a fresh dev server in the background
   npm run dev
   ```
+- **IMPORTANT**: If the server starts on a different port (4322, 4323, etc.), it means multiple servers are running. Kill all dev servers and start fresh as shown above
 
 ### Managing Services
 
@@ -53,6 +54,26 @@ This project uses the following core technologies:
 - **React** - Frontend components and interactivity
 - **WebTUI** - Design system and CSS framework
 - **Sequelize ORM** - Database ORM and migration management
+- **Vercel AI SDK** - For broad AI provider support (OpenAI, Anthropic, Groq, etc.)
+
+### AI Provider Implementation Strategy
+
+**IMPORTANT**: While we use Vercel's AI SDK for broad provider support, some providers require custom implementations:
+
+- **Use Vercel AI SDK** for standard API key-based providers (OpenAI, Groq, standard Anthropic)
+- **Bypass Vercel AI SDK** when a provider requires specific authentication or request formatting:
+  - OAuth-based authentication (e.g., Claude Max OAuth)
+  - Custom header requirements
+  - Non-standard API behaviors
+
+**Example**: OAuth Anthropic implementation bypasses the SDK entirely to:
+
+1. Control exact headers sent (user-agent, beta flags, etc.)
+2. Inject system prompts
+3. Handle OAuth Bearer tokens properly
+4. Make direct API calls without SDK interference
+
+See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pattern.
 
 ## Development Standards
 
@@ -438,6 +459,12 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **Service methods that wrap ProviderManager calls can trust the return format**
 - **API test endpoints should pass through test results directly** without additional wrapping
 - Service layer should focus on business logic, not redundant error wrapping
+
+### OAuth Implementation Review Guidelines
+
+- **OAuth API response structure**: ProviderForm correctly checks for `result.data.authorizationUrl` - this matches the actual API response structure
+- **Property name consistency**: Do not flag correct property names as mismatches without verifying the actual API response format
+- **OAuth flow validation**: The OAuth initialization flow uses the correct property names throughout the codebase
 
 ## Testing Best Practices
 

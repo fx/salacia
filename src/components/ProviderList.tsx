@@ -1,18 +1,24 @@
 import React from 'react';
 
 /**
- * Provider data interface
+ * Provider data interface with OAuth support
  */
 interface Provider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl?: string;
   models?: string[];
   settings?: Record<string, unknown>;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: string;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +61,7 @@ export function ProviderList({
           <tr>
             <th>Name</th>
             <th>Type</th>
+            <th>Auth</th>
             <th>Status</th>
             <th>Default</th>
             <th>Actions</th>
@@ -77,9 +84,32 @@ export function ProviderList({
                 </span>
               </td>
               <td>
-                <span data-is="badge" data-variant={provider.isActive ? 'green' : 'surface0'}>
-                  {provider.isActive ? 'ACTIVE' : 'INACTIVE'}
+                <span
+                  data-is="badge"
+                  data-variant={provider.authType === 'oauth' ? 'yellow' : 'surface1'}
+                >
+                  {provider.authType === 'oauth' ? 'OAUTH' : 'API KEY'}
                 </span>
+              </td>
+              <td>
+                <div data-gap="0.5">
+                  <span data-is="badge" data-variant={provider.isActive ? 'green' : 'surface0'}>
+                    {provider.isActive ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                  {provider.authType === 'oauth' && provider.oauthTokenExpiresAt && (
+                    <small>
+                      {new Date(provider.oauthTokenExpiresAt) < new Date() ? (
+                        <span data-is="badge" data-variant="red" size-="compact">
+                          EXPIRED
+                        </span>
+                      ) : (
+                        <span data-is="badge" data-variant="green" size-="compact">
+                          VALID
+                        </span>
+                      )}
+                    </small>
+                  )}
+                </div>
               </td>
               <td>
                 {provider.isDefault ? (

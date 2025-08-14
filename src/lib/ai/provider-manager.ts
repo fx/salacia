@@ -1,18 +1,32 @@
 import { ProviderFactory } from './provider-factory';
-import { env } from '../env';
-import type { AIProviderType, ProviderSettings, ModelConfig } from './types';
+import { TokenManager } from '../auth/token-manager';
+import type {
+  AIProviderType,
+  ProviderSettings,
+  ModelConfig,
+  EnhancedProviderConfig,
+} from './types';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ProviderManager');
 
 // Simple AiProvider type definition for compatibility
 export interface AiProvider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl: string | null;
   models: unknown;
   settings: unknown;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: Date;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,131 +42,70 @@ export class ProviderManager {
   private static providerCache: Map<string, AiProvider> = new Map();
 
   /**
+   * Update OAuth token for the default OAuth provider
+   */
+  static async updateOAuthToken(newToken: string): Promise<void> {
+    try {
+      const { AiProvider: AiProviderModel } = await import('../db/models/AiProvider');
+      const providers = await AiProviderModel.findAll({
+        where: {
+          authType: 'oauth',
+          isActive: true,
+        },
+        order: [
+          ['isDefault', 'DESC'],
+          ['createdAt', 'DESC'],
+        ],
+        limit: 1,
+      });
+
+      if (providers.length > 0) {
+        const provider = providers[0];
+        await provider.update({
+          oauthAccessToken: newToken,
+          oauthTokenExpiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+        });
+        logger.debug('Updated OAuth token for provider:', provider.name);
+      }
+    } catch (error) {
+      logger.error('Failed to update OAuth token:', error);
+    }
+  }
+
+  /**
    * Get the default provider for handling requests
    */
   static async getDefaultProvider(): Promise<AiProvider | null> {
     try {
-      // Check environment variable for default provider
-      if (env.DEFAULT_AI_PROVIDER) {
-        const envProvider = await this.getProviderByType(env.DEFAULT_AI_PROVIDER);
-        if (envProvider) {
-          return envProvider;
-        }
+      // First, check if there's a database provider marked as default
+      const { ProviderService } = await import('../services/provider-service');
+      const result = await ProviderService.getProviders();
+      const providers = result.providers;
+
+      // Find the default provider or any active OAuth provider
+      const defaultProvider = providers.find((p: any) => p.isDefault && p.isActive);
+      if (defaultProvider) {
+        return defaultProvider as AiProvider;
       }
 
-      // Fall back to creating a provider from available environment variables
-      return this.createFallbackProvider();
-    } catch (error) {
-      console.error('Failed to get default provider:', error, {
-        envProvider: env.DEFAULT_AI_PROVIDER,
-        hasOpenAI: !!env.OPENAI_API_KEY,
-        hasAnthropic: !!env.ANTHROPIC_API_KEY,
-        hasGroq: !!env.GROQ_API_KEY,
-      });
-      return this.createFallbackProvider();
-    }
-  }
+      // If no default, try to find any active OAuth provider
+      const oauthProvider = providers.find((p: any) => p.authType === 'oauth' && p.isActive);
+      if (oauthProvider) {
+        return oauthProvider as AiProvider;
+      }
 
-  /**
-   * Get a provider by type from environment
-   */
-  static async getProviderByType(type: AIProviderType): Promise<AiProvider | null> {
-    try {
-      // Create from environment if available
-      return this.createProviderFromEnv(type);
+      // No fallback to environment variables - must use database providers
+      return null;
     } catch (error) {
-      console.error(`Failed to get provider for type ${type}:`, error, {
-        attemptedType: type,
-        error: error instanceof Error ? error.message : 'Unknown',
-      });
+      console.error('Failed to get default provider:', error);
       return null;
     }
   }
 
   /**
-   * Create a provider configuration from environment variables
+   * Create an AI SDK client for a provider with OAuth support
    */
-  private static createProviderFromEnv(type: AIProviderType): AiProvider | null {
-    let apiKey: string | undefined;
-    let baseUrl: string | undefined;
-
-    switch (type) {
-      case 'openai':
-        apiKey = env.OPENAI_API_KEY;
-        break;
-      case 'anthropic':
-        apiKey = env.ANTHROPIC_API_KEY;
-        break;
-      case 'groq':
-        apiKey = env.GROQ_API_KEY;
-        baseUrl = 'https://api.groq.com/openai/v1';
-        break;
-    }
-
-    if (!apiKey) {
-      return null;
-    }
-
-    // Create an in-memory provider configuration
-    // Note: API key is kept in memory only for immediate use and not logged
-    return {
-      id: `env-${type}`,
-      name: `Environment ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-      type,
-      apiKey, // This is used immediately by createClient and not stored/logged
-      baseUrl: baseUrl || null,
-      models: null,
-      settings: null,
-      isActive: true,
-      isDefault: env.DEFAULT_AI_PROVIDER === type,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
-  /**
-   * Create a fallback provider when no configuration is available
-   */
-  private static createFallbackProvider(): AiProvider | null {
-    // Try each provider type in order of preference
-    const preferredOrder: AIProviderType[] = ['anthropic', 'openai', 'groq'];
-
-    for (const type of preferredOrder) {
-      const provider = this.createProviderFromEnv(type);
-      if (provider) {
-        return provider;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Get all active providers from environment variables
-   */
-  static async getActiveProviders(): Promise<AiProvider[]> {
-    try {
-      const providers: AiProvider[] = [];
-      const providerTypes: AIProviderType[] = ['anthropic', 'openai', 'groq'];
-
-      for (const type of providerTypes) {
-        const provider = this.createProviderFromEnv(type);
-        if (provider) {
-          providers.push(provider);
-        }
-      }
-
-      return providers;
-    } catch (error) {
-      console.error('Failed to get active providers:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Create an AI SDK client for a provider
-   */
-  static createClient(provider: AiProvider) {
+  static async createClient(provider: AiProvider) {
     // Validate provider type at runtime
     const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq'];
     if (!validTypes.includes(provider.type as AIProviderType)) {
@@ -200,11 +153,21 @@ export class ProviderManager {
       parsedSettings = { ...parsedSettings, baseUrl: provider.baseUrl };
     }
 
-    const providerConfig = {
+    const providerConfig: EnhancedProviderConfig = {
       id: provider.id,
       name: provider.name,
       type: provider.type as AIProviderType, // Safe after validation above
-      apiKey: provider.apiKey,
+      authType: provider.authType,
+      // For OAuth providers, we'll let ProviderFactory handle token refresh
+      apiKey: provider.authType === 'api_key' ? provider.apiKey : undefined,
+      // OAuth fields
+      oauthAccessToken: provider.oauthAccessToken,
+      oauthRefreshToken: provider.oauthRefreshToken,
+      oauthTokenExpiresAt: provider.oauthTokenExpiresAt,
+      oauthScope: provider.oauthScope,
+      oauthClientId: provider.oauthClientId,
+      // Include API key as fallback for OAuth providers
+      fallbackApiKey: provider.apiKey,
       models: parsedModels,
       settings: parsedSettings,
       isActive: provider.isActive,
@@ -213,15 +176,35 @@ export class ProviderManager {
       updatedAt: provider.updatedAt,
     };
 
-    return ProviderFactory.createProvider(providerConfig);
+    return ProviderFactory.createProviderWithRefresh(providerConfig);
   }
 
   /**
-   * Test provider connectivity
+   * Test provider connectivity with OAuth token refresh
    */
   static async testProvider(provider: AiProvider): Promise<{ success: boolean; error?: string }> {
     try {
-      const client = this.createClient(provider);
+      // For OAuth providers, validate token status first
+      if (provider.authType === 'oauth') {
+        try {
+          const hasValidTokens = await TokenManager.hasValidTokens(provider.id);
+          if (!hasValidTokens) {
+            return {
+              success: false,
+              error: 'OAuth tokens are invalid or expired. Please re-authenticate.',
+            };
+          }
+        } catch (error) {
+          return {
+            success: false,
+            error: `OAuth token validation failed: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+          };
+        }
+      }
+
+      const client = await this.createClient(provider);
 
       // For now, just test that we can create the client
       // In a full implementation, you might make a simple API call to test connectivity
@@ -235,6 +218,27 @@ export class ProviderManager {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  /**
+   * Get provider with fresh OAuth tokens if needed
+   */
+  static async getProviderWithFreshTokens(providerId: string): Promise<AiProvider | null> {
+    try {
+      // This would typically fetch from database
+      // For now, we'll use the TokenManager's interface conversion
+      const { AiProvider: AiProviderModel } = await import('../db/models/AiProvider');
+      const providerModel = await AiProviderModel.findByPk(providerId);
+
+      if (!providerModel) {
+        return null;
+      }
+
+      return TokenManager.toAiProviderInterface(providerModel);
+    } catch (error) {
+      console.error('Failed to get provider with fresh tokens:', error);
+      return null;
     }
   }
 

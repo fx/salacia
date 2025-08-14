@@ -1,5 +1,6 @@
 import { AiProvider as AiProviderModel } from '../db/models/AiProvider';
 import { ProviderManager } from '../ai/provider-manager';
+import { TokenManager } from '../auth/token-manager';
 import {
   createProviderSchema,
   updateProviderSchema,
@@ -27,6 +28,10 @@ export class ProviderService {
 
     if (params.type !== undefined) {
       where.type = params.type;
+    }
+
+    if (params.authType !== undefined) {
+      where.authType = params.authType;
     }
 
     if (params.isActive !== undefined) {
@@ -76,12 +81,18 @@ export class ProviderService {
     const createData = {
       name: validatedData.name,
       type: validatedData.type,
+      authType: validatedData.authType,
       apiKey: validatedData.apiKey,
       baseUrl: validatedData.baseUrl,
       models: validatedData.models || undefined,
       settings: validatedData.settings || undefined,
       isActive: validatedData.isActive,
       isDefault: validatedData.isDefault,
+      // Set OAuth client ID automatically for OAuth providers
+      oauthClientId:
+        validatedData.authType === 'oauth'
+          ? '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
+          : validatedData.oauthClientId,
     };
 
     return await AiProviderModel.create(createData);
@@ -108,16 +119,19 @@ export class ProviderService {
     const updateData: Partial<{
       name: string;
       type: string;
-      apiKey: string;
+      authType: 'api_key' | 'oauth';
+      apiKey: string | undefined;
       baseUrl: string | undefined;
       models: string[] | undefined;
       settings: Record<string, unknown> | undefined;
       isActive: boolean;
       isDefault: boolean;
+      oauthClientId: string | undefined;
     }> = {};
 
     if (validatedData.name !== undefined) updateData.name = validatedData.name;
     if (validatedData.type !== undefined) updateData.type = validatedData.type;
+    if (validatedData.authType !== undefined) updateData.authType = validatedData.authType;
     if (validatedData.apiKey !== undefined) updateData.apiKey = validatedData.apiKey;
     if (validatedData.baseUrl !== undefined) updateData.baseUrl = validatedData.baseUrl;
     if (validatedData.models !== undefined) updateData.models = validatedData.models;
@@ -125,6 +139,8 @@ export class ProviderService {
       updateData.settings = validatedData.settings as Record<string, unknown> | undefined;
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive;
     if (validatedData.isDefault !== undefined) updateData.isDefault = validatedData.isDefault;
+    if (validatedData.oauthClientId !== undefined)
+      updateData.oauthClientId = validatedData.oauthClientId;
 
     await provider.update(updateData);
     return provider;
@@ -158,20 +174,8 @@ export class ProviderService {
       return { success: false, error: 'Provider not found' };
     }
 
-    // Convert Sequelize model to plain object for ProviderManager
-    const providerData = {
-      id: provider.id,
-      name: provider.name,
-      type: provider.type,
-      apiKey: provider.apiKey,
-      baseUrl: provider.baseUrl || null,
-      models: provider.models,
-      settings: provider.settings,
-      isActive: provider.isActive,
-      isDefault: provider.isDefault,
-      createdAt: provider.createdAt,
-      updatedAt: provider.updatedAt,
-    };
+    // Convert Sequelize model to AiProvider interface with token handling
+    const providerData = await TokenManager.toAiProviderInterface(provider);
 
     try {
       return await ProviderManager.testProvider(providerData);
@@ -216,6 +220,7 @@ export class ProviderService {
     const envData = {
       name: envProvider.name,
       type: envProvider.type,
+      authType: envProvider.authType,
       apiKey: envProvider.apiKey,
       baseUrl: envProvider.baseUrl || undefined,
       models: envProvider.models as string[] | undefined,
@@ -264,8 +269,8 @@ export class ProviderService {
       return dbProviders;
     }
 
-    // Fall back to environment providers
-    const envProviders = await ProviderManager.getActiveProviders();
+    // No environment providers since we removed env var support
+    const envProviders: any[] = [];
 
     // Create database entries for environment providers
     const createdProviders: AiProviderModel[] = [];
@@ -278,6 +283,7 @@ export class ProviderService {
         const createdData = {
           name: envProvider.name,
           type: envProvider.type,
+          authType: envProvider.authType,
           apiKey: envProvider.apiKey,
           baseUrl: envProvider.baseUrl || undefined,
           models: envProvider.models as string[] | undefined,

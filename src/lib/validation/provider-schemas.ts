@@ -7,6 +7,12 @@ import { z } from 'zod';
 export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq']);
 
 /**
+ * Authentication type enumeration for validation.
+ * Must match the AuthType from types.ts
+ */
+export const authTypeSchema = z.enum(['api_key', 'oauth']);
+
+/**
  * Base URL schema - allows valid URL or empty string, normalized to undefined
  */
 const baseUrlSchema = z
@@ -19,21 +25,42 @@ const baseUrlSchema = z
 /**
  * Schema for provider creation data.
  * Validates all required fields for creating a new AI provider.
+ * Supports both API key and OAuth authentication methods.
  */
-export const createProviderSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
-  type: providerTypeSchema,
-  apiKey: z.string().min(1, 'API key is required'),
-  baseUrl: baseUrlSchema,
-  models: z.array(z.string()).optional(),
-  settings: z.record(z.unknown()).optional(),
-  isActive: z.boolean().default(true),
-  isDefault: z.boolean().default(false),
-});
+export const createProviderSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
+    type: providerTypeSchema,
+    authType: authTypeSchema.default('api_key'),
+    apiKey: z.string().optional(),
+    baseUrl: baseUrlSchema,
+    models: z.array(z.string()).optional(),
+    settings: z.record(z.unknown()).optional(),
+    isActive: z.boolean().default(true),
+    isDefault: z.boolean().default(false),
+    // OAuth-specific fields
+    oauthClientId: z.string().optional(),
+    oauthScopes: z.array(z.string()).optional(),
+  })
+  .refine(
+    data => {
+      // For API key providers, API key is required
+      if (data.authType === 'api_key') {
+        return data.apiKey && data.apiKey.length > 0;
+      }
+      // OAuth providers don't need validation here - client ID is set automatically
+      return true;
+    },
+    {
+      message: 'API key is required for API key authentication',
+      path: ['apiKey'],
+    }
+  );
 
 /**
  * Schema for provider update data.
  * All fields optional except type validation when provided.
+ * Supports both API key and OAuth authentication methods.
  */
 export const updateProviderSchema = z.object({
   name: z
@@ -42,12 +69,16 @@ export const updateProviderSchema = z.object({
     .max(100, 'Name must be 100 characters or less')
     .optional(),
   type: providerTypeSchema.optional(),
-  apiKey: z.string().min(1, 'API key is required').optional(),
+  authType: authTypeSchema.optional(),
+  apiKey: z.string().optional(),
   baseUrl: baseUrlSchema.optional(),
   models: z.array(z.string()).optional(),
   settings: z.record(z.unknown()).optional(),
   isActive: z.boolean().optional(),
   isDefault: z.boolean().optional(),
+  // OAuth-specific fields
+  oauthClientId: z.string().optional(),
+  oauthScopes: z.array(z.string()).optional(),
 });
 
 /**
@@ -56,6 +87,7 @@ export const updateProviderSchema = z.object({
  */
 export const providerQuerySchema = z.object({
   type: providerTypeSchema.optional(),
+  authType: authTypeSchema.optional(),
   isActive: z.coerce.boolean().optional(),
   isDefault: z.coerce.boolean().optional(),
   limit: z.coerce.number().min(1).max(100).default(50),

@@ -58,10 +58,17 @@ export class AiProvider extends Model<
   declare type: string;
 
   /**
+   * Authentication method for the provider.
+   * 'api_key' for traditional API key authentication, 'oauth' for OAuth 2.0.
+   */
+  declare authType: 'api_key' | 'oauth';
+
+  /**
    * API key for authenticating with the provider.
    * Stored as encrypted text for security.
+   * Nullable for OAuth providers.
    */
-  declare apiKey: string;
+  declare apiKey?: string;
 
   /**
    * Base URL for the provider's API endpoint.
@@ -95,6 +102,36 @@ export class AiProvider extends Model<
    * Only one provider should be marked as default at a time.
    */
   declare isDefault: CreationOptional<boolean>;
+
+  /**
+   * OAuth access token for Claude Max authentication.
+   * Stored as encrypted text for security.
+   */
+  declare oauthAccessToken?: string;
+
+  /**
+   * OAuth refresh token for Claude Max authentication.
+   * Stored as encrypted text for security.
+   */
+  declare oauthRefreshToken?: string;
+
+  /**
+   * OAuth access token expiration timestamp.
+   * Used to determine when to refresh the token.
+   */
+  declare oauthTokenExpiresAt?: Date;
+
+  /**
+   * OAuth scope granted for the access token.
+   * Defines what permissions the token has.
+   */
+  declare oauthScope?: string;
+
+  /**
+   * OAuth client ID for this provider.
+   * Used for OAuth authentication flow.
+   */
+  declare oauthClientId?: string;
 
   /**
    * Timestamp indicating when the provider was created.
@@ -133,11 +170,18 @@ AiProvider.init(
       allowNull: false,
       comment: 'Provider type identifier (openai, anthropic, groq, etc.)',
     },
+    authType: {
+      type: DataTypes.ENUM('api_key', 'oauth'),
+      allowNull: false,
+      defaultValue: 'api_key',
+      field: 'auth_type',
+      comment: 'Authentication method for the provider',
+    },
     apiKey: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
       field: 'api_key',
-      comment: 'API key for authenticating with the provider',
+      comment: 'API key for authenticating with the provider (nullable for OAuth)',
     },
     baseUrl: {
       type: DataTypes.STRING(500),
@@ -183,6 +227,36 @@ AiProvider.init(
       field: 'updated_at',
       comment: 'Timestamp when the provider was last updated',
     },
+    oauthAccessToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'oauth_access_token',
+      comment: 'OAuth access token (encrypted)',
+    },
+    oauthRefreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'oauth_refresh_token',
+      comment: 'OAuth refresh token (encrypted)',
+    },
+    oauthTokenExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'oauth_token_expires_at',
+      comment: 'OAuth access token expiration timestamp',
+    },
+    oauthScope: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: 'oauth_scope',
+      comment: 'OAuth scope granted for the access token',
+    },
+    oauthClientId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'oauth_client_id',
+      comment: 'OAuth client ID for this provider',
+    },
   },
   {
     sequelize,
@@ -206,6 +280,14 @@ AiProvider.init(
       {
         fields: ['is_default'],
         name: 'ai_providers_is_default_idx',
+      },
+      {
+        fields: ['auth_type'],
+        name: 'ai_providers_auth_type_idx',
+      },
+      {
+        fields: ['oauth_token_expires_at'],
+        name: 'ai_providers_oauth_token_expires_at_idx',
       },
     ],
     comment: 'AI provider configurations table for managing LLM provider settings',
