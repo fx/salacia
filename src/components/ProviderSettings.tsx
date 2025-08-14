@@ -104,23 +104,30 @@ export function ProviderSettings() {
 
   /**
    * Test provider connectivity.
-   * Test endpoint returns { success: true, data: { success: boolean, error?: string } }
+   * Test endpoint returns { success: boolean, error?: string } directly.
    */
   const handleTest = async (id: string) => {
     try {
       const response = await fetch(`/api/providers/${id}/test`, {
         method: 'POST',
       });
-      const result: { success: boolean; data?: { success: boolean; error?: string } } =
-        await response.json();
 
-      if (result?.data?.success) {
-        setTestMessage({ type: 'success', message: 'Provider test successful!' });
+      const result: { success?: boolean; error?: string } | null = await response
+        .json()
+        .catch(() => null);
+
+      if (response.ok) {
+        if (result?.success) {
+          setTestMessage({ type: 'success', message: 'Provider test successful!' });
+        } else {
+          setTestMessage({
+            type: 'error',
+            message: `Provider test failed: ${result?.error || 'Unknown error'}`,
+          });
+        }
       } else {
-        setTestMessage({
-          type: 'error',
-          message: `Provider test failed: ${result?.data?.error || 'Unknown error'}`,
-        });
+        const msg = result?.error || `HTTP ${response.status}`;
+        setTestMessage({ type: 'error', message: `Provider test failed: ${msg}` });
       }
     } catch (err) {
       setTestMessage({
