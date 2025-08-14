@@ -139,12 +139,15 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         type: formData.type,
         apiKey: formData.apiKey.trim(),
         baseUrl: formData.baseUrl.trim(),
-        models: formData.models.trim()
-          ? formData.models
-              .split(',')
-              .map(model => model.trim())
-              .filter(model => model)
-          : undefined,
+        models: (() => {
+          const trimmedModels = formData.models.trim();
+          return trimmedModels
+            ? trimmedModels
+                .split(',')
+                .map(model => model.trim())
+                .filter(model => model)
+            : undefined;
+        })(),
         isActive: formData.isActive,
         isDefault: formData.isDefault,
       };

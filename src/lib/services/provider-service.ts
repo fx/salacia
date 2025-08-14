@@ -79,7 +79,7 @@ export class ProviderService {
       apiKey: validatedData.apiKey,
       baseUrl: validatedData.baseUrl,
       models: validatedData.models || undefined,
-      settings: (validatedData.settings || undefined) as Record<string, unknown> | undefined,
+      settings: validatedData.settings || undefined,
       isActive: validatedData.isActive,
       isDefault: validatedData.isDefault,
     };

@@ -420,6 +420,7 @@
 /* Compact variants - extend WebTUI components */
 @layer components {
   /* Compact button variant - badge-like spacing */
+  /* NOTE: The selector syntax [size-="compact"] is WebTUI's semantic attribute selector syntax */
   button[size-="compact"],
   input[type="button"][size-="compact"],
   input[type="submit"][size-="compact"],

@@ -52,8 +52,13 @@ export function ProviderSettings() {
         setProviders(result);
         setError(null);
       } else {
-        // Only parse JSON for error responses
-        const err = await response.json().catch(() => ({ error: 'Failed to fetch providers' }));
+        // Parse error response consistently
+        let err;
+        try {
+          err = await response.json();
+        } catch {
+          err = { error: 'Failed to fetch providers' };
+        }
         setError(err?.error || 'Failed to fetch providers');
       }
     } catch (err) {

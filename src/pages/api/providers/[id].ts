@@ -2,6 +2,19 @@ import type { APIRoute } from 'astro';
 import { ProviderService } from '../../../lib/services/provider-service';
 
 /**
+ * Determines appropriate HTTP status code for different error types
+ */
+function getErrorStatusCode(error: unknown): number {
+  if (error instanceof SyntaxError) {
+    return 400; // Malformed JSON
+  }
+  if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
+    return 422; // Validation error
+  }
+  return 500; // Internal server error
+}
+
+/**
  * API endpoint for individual provider management.
  * Handles GET, PUT, and DELETE operations for specific providers.
  */
@@ -120,18 +133,8 @@ export const PUT: APIRoute = async ({ params, request }) => {
   } catch (error) {
     console.error('Error updating provider:', error);
 
-    // Return 400 for malformed JSON, 422 for validation errors, 500 for others
-    let status = 500;
-    if (error instanceof SyntaxError) {
-      status = 400;
-    } else if (
-      error &&
-      typeof error === 'object' &&
-      'name' in error &&
-      error.name === 'ValidationError' // typical validation error
-    ) {
-      status = 422;
-    }
+    // Use helper to determine status code
+    const status = getErrorStatusCode(error);
     return new Response(
       JSON.stringify({
         success: false,
