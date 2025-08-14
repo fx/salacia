@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { ProviderService } from '../../lib/services/provider-service';
+import { createErrorResponse, createSuccessResponse } from '../../lib/utils/api-response';
 
 /**
  * API endpoint for provider management.
@@ -17,27 +18,10 @@ export const GET: APIRoute = async ({ request }) => {
 
     const result = await ProviderService.getProviders(queryParams);
 
-    return new Response(JSON.stringify(result.providers), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(result.providers);
   } catch (error) {
     console.error('Error fetching providers:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };
 
@@ -51,26 +35,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const provider = await ProviderService.createProvider(body);
 
-    return new Response(JSON.stringify(provider), {
-      status: 201,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(provider, 201);
   } catch (error) {
     console.error('Error creating provider:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error, 400);
   }
 };

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { ProviderService } from '../../../../lib/services/provider-service';
+import { createErrorResponse, createSuccessResponse } from '../../../../lib/utils/api-response';
 
 /**
  * API endpoint for testing provider connectivity.
@@ -18,49 +19,18 @@ export const POST: APIRoute = async ({ params }) => {
     const { id } = params;
 
     if (!id || typeof id !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider ID is required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider ID is required'), 400);
     }
 
     const testResult = await ProviderService.testProvider(id);
 
     if (!testResult.success && testResult.error === 'Provider not found') {
-      return new Response(JSON.stringify({ error: 'Provider not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return createErrorResponse(new Error('Provider not found'), 404);
     }
 
-    return new Response(JSON.stringify(testResult), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(testResult);
   } catch (error) {
     console.error('Error testing provider:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };

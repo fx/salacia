@@ -1,18 +1,10 @@
 import type { APIRoute } from 'astro';
 import { ProviderService } from '../../../lib/services/provider-service';
-
-/**
- * Determines appropriate HTTP status code for different error types
- */
-function getErrorStatusCode(error: unknown): number {
-  if (error instanceof SyntaxError) {
-    return 400; // Malformed JSON
-  }
-  if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
-    return 422; // Validation error
-  }
-  return 500; // Internal server error
-}
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  createNoContentResponse,
+} from '../../../lib/utils/api-response';
 
 /**
  * API endpoint for individual provider management.
@@ -28,58 +20,19 @@ export const GET: APIRoute = async ({ params }) => {
     const { id } = params;
 
     if (!id || typeof id !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider ID is required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider ID is required'), 400);
     }
 
     const provider = await ProviderService.getProvider(id);
 
     if (!provider) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider not found',
-        }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider not found'), 404);
     }
 
-    return new Response(JSON.stringify(provider), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(provider);
   } catch (error) {
     console.error('Error fetching provider:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };
 
@@ -92,61 +45,20 @@ export const PUT: APIRoute = async ({ params, request }) => {
     const { id } = params;
 
     if (!id || typeof id !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider ID is required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider ID is required'), 400);
     }
 
     const body = await request.json();
     const provider = await ProviderService.updateProvider(id, body);
 
     if (!provider) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider not found',
-        }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider not found'), 404);
     }
 
-    return new Response(JSON.stringify(provider), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(provider);
   } catch (error) {
     console.error('Error updating provider:', error);
-
-    // Use helper to determine status code
-    const status = getErrorStatusCode(error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };
 
@@ -159,69 +71,27 @@ export const DELETE: APIRoute = async ({ params }) => {
     const { id } = params;
 
     if (!id || typeof id !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider ID is required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider ID is required'), 400);
     }
 
     const deleted = await ProviderService.deleteProvider(id);
 
     if (!deleted) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider not found',
-        }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider not found'), 404);
     }
 
-    return new Response(null, {
-      status: 204,
-    });
+    return createNoContentResponse();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
 
     if (message === 'Cannot delete default provider') {
-      return new Response(JSON.stringify({ error: message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return createErrorResponse(error, 400);
     }
     if (message === 'Provider not found') {
-      return new Response(JSON.stringify({ error: message }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return createErrorResponse(error, 404);
     }
 
     console.error('Error deleting provider:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: message,
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };

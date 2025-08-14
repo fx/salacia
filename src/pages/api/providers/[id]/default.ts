@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { ProviderService } from '../../../../lib/services/provider-service';
+import { createErrorResponse, createSuccessResponse } from '../../../../lib/utils/api-response';
 
 /**
  * API endpoint for setting a provider as default.
@@ -18,57 +19,18 @@ export const POST: APIRoute = async ({ params }) => {
     const { id } = params;
 
     if (!id || typeof id !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider ID is required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider ID is required'), 400);
     }
 
     const provider = await ProviderService.setDefaultProvider(id);
 
     if (!provider) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Provider not found',
-        }),
-        {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      return createErrorResponse(new Error('Provider not found'), 404);
     }
 
-    return new Response(JSON.stringify(provider), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return createSuccessResponse(provider);
   } catch (error) {
     console.error('Error setting default provider:', error);
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return createErrorResponse(error);
   }
 };
