@@ -138,7 +138,7 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **NO Tailwind**: This project does not use Tailwind CSS classes
 - **NO Inline Styles**: Do not use style attributes - use data attributes instead
 - **WebTUI Data Attributes**: Use data attributes like `data-box`, `data-is`, `data-align`, `data-gap`, etc.
-- **Compact Variants**: Use `data-compact="true"` for compact tables and buttons to match the CSS selectors in global.css
+- **Compact Variants**: Use `size-="compact"` for compact tables and buttons to match the CSS selectors in global.css
 - **Reference VerticalBarChart.tsx**: This component is the PERFECT example - it uses ONLY:
   - WebTUI data attributes (`data-box="square"`, `data-is="separator"`, etc.)
   - Simple CSS classes for layout (`chart-row`, `chart-column`)
@@ -346,6 +346,6 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 
 ### WebTUI Attribute Syntax Guidelines
 
-- Use `data-compact="true"` for compact styling, not `size-="compact"` - the CSS selectors target `[data-compact="true"]`
-- Do not suggest using `size-=` attributes for compact variants - these don't match the current CSS implementation
-- Compact tables and buttons require the data-compact attribute to apply minimal padding and spacing
+- Use `size-="compact"` for compact styling, not `data-compact="true"` - the CSS selectors target `[size-="compact"]`
+- Compact variants should use the size- attribute format for consistency with WebTUI semantic attributes
+- Compact tables and buttons require the size-="compact" attribute to apply minimal padding and spacing
