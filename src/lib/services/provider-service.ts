@@ -1,6 +1,5 @@
 import { AiProvider as AiProviderModel } from '../db/models/AiProvider';
 import { ProviderManager } from '../ai/provider-manager';
-import type { CreationAttributes } from 'sequelize';
 import {
   createProviderSchema,
   updateProviderSchema,
@@ -85,7 +84,7 @@ export class ProviderService {
       isDefault: validatedData.isDefault,
     };
 
-    return await AiProviderModel.create(createData as CreationAttributes<AiProviderModel>);
+    return await AiProviderModel.create(createData);
   }
 
   /**
@@ -224,7 +223,7 @@ export class ProviderService {
       isActive: envProvider.isActive,
       isDefault: true,
     };
-    return await AiProviderModel.create(envData as CreationAttributes<AiProviderModel>);
+    return await AiProviderModel.create(envData);
   }
 
   /**
@@ -286,9 +285,7 @@ export class ProviderService {
           isActive: envProvider.isActive,
           isDefault: envProvider.isDefault,
         };
-        const created = await AiProviderModel.create(
-          createdData as CreationAttributes<AiProviderModel>
-        );
+        const created = await AiProviderModel.create(createdData);
         createdProviders.push(created);
       } else {
         createdProviders.push(existing);
