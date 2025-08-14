@@ -17,18 +17,12 @@ export const GET: APIRoute = async ({ request }) => {
 
     const result = await ProviderService.getProviders(queryParams);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: result,
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(result.providers), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error fetching providers:', error);
 
@@ -57,18 +51,12 @@ export const POST: APIRoute = async ({ request }) => {
 
     const provider = await ProviderService.createProvider(body);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: provider,
-      }),
-      {
-        status: 201,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(provider), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error creating provider:', error);
 

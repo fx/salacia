@@ -46,18 +46,12 @@ export const GET: APIRoute = async ({ params }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: provider,
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(provider), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error fetching provider:', error);
 
@@ -117,18 +111,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: provider,
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(provider), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error updating provider:', error);
 

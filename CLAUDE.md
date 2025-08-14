@@ -330,11 +330,21 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 
 ### API Response Structure Guidelines
 
-- All API endpoints should follow consistent response patterns: `{ success: boolean, data?: any, error?: string }`
-- Test endpoints specifically return: `{ success: true, data: { success: boolean, error?: string } }`
-- Provider list endpoints return: `{ success: true, data: { providers: Provider[], total: number, limit: number, offset: number } }`
-- Single provider endpoints return: `{ success: true, data: Provider }`
-- Set-default endpoints should NOT include message fields - use only `{ success: true, data: Provider }`
+**CRITICAL: Provider API endpoints return data directly without wrapper objects:**
+
+- **Provider list endpoints** (GET /api/providers): Return `Provider[]` directly, NOT wrapped in success/data objects
+- **Single provider endpoints** (GET /api/providers/:id): Return `Provider` directly, NOT wrapped in success/data objects
+- **Create provider endpoints** (POST /api/providers): Return `Provider` directly, NOT wrapped in success/data objects
+- **Update provider endpoints** (PUT /api/providers/:id): Return `Provider` directly, NOT wrapped in success/data objects
+- **Delete provider endpoints** (DELETE /api/providers/:id): Return HTTP 204 No Content with empty body
+- **Test endpoints specifically** (POST /api/providers/:id/test): Return `{ success: true, data: { success: boolean, error?: string } }`
+
+**Error responses only** use wrapper format: `{ success: false, error: string }`
+
+**Validation schemas for provider endpoints:**
+
+- `updateProviderSchema.baseUrl` must be marked as `.optional()` to prevent unintended overwrites during updates
+- `baseUrlSchema` already handles empty string transformation to undefined - do not flag this as incorrect
 
 ### Error Handling Patterns
 

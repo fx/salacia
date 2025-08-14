@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ params }) => {
 
     const testResult = await ProviderService.testProvider(id);
 
-    return new Response(JSON.stringify(testResult), {
+    return new Response(JSON.stringify({ success: true, data: testResult }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

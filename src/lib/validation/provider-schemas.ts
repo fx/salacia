@@ -45,7 +45,7 @@ export const updateProviderSchema = z.object({
     .optional(),
   type: providerTypeSchema.optional(),
   apiKey: z.string().min(1, 'API key is required').optional(),
-  baseUrl: baseUrlSchema,
+  baseUrl: baseUrlSchema.optional(),
   models: z.array(z.string()).optional(),
   settings: z.record(z.unknown()).optional(),
   isActive: z.boolean().optional(),
