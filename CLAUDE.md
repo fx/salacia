@@ -319,3 +319,23 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - Global CSS imports should be handled at layout level, not in individual page components
 - API response structures should be consistent - test endpoints return `{ success: boolean, data: TestResult }` where TestResult also has success field
 - WebTUI attribute syntax requires proper naming: `data-variant` not `data-variant-`, `is` not `is-`
+
+### Test Infrastructure and Global Setup
+
+- `globalThis.TestUtils.mockServer` is properly configured in `src/test/setup.ts` - do not flag as missing
+- Test files can safely access `globalThis.TestUtils` for MSW mock server functionality
+- The TestUtils global is initialized during test setup and is available throughout test execution
+
+### API Response Structure Guidelines
+
+- All API endpoints should follow consistent response patterns: `{ success: boolean, data?: any, error?: string }`
+- Test endpoints specifically return: `{ success: true, data: { success: boolean, error?: string } }`
+- Provider list endpoints return: `{ success: true, data: { providers: Provider[], total: number, limit: number, offset: number } }`
+- Single provider endpoints return: `{ success: true, data: Provider }`
+- Set-default endpoints should NOT include message fields - use only `{ success: true, data: Provider }`
+
+### Error Handling Patterns
+
+- ProviderManager.testProvider already returns proper `{ success: boolean, error?: string }` format
+- ProviderService methods have comprehensive try-catch error handling - do not suggest additional validation
+- Service methods that call ProviderManager methods can trust the return format consistency

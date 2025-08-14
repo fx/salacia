@@ -50,7 +50,6 @@ export const POST: APIRoute = async ({ params }) => {
       JSON.stringify({
         success: true,
         data: provider,
-        message: 'Provider set as default successfully',
       }),
       {
         status: 200,
