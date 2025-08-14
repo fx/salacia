@@ -8,8 +8,20 @@ import { TokenManager } from '../auth/token-manager';
  */
 export class ProviderFactory {
   /**
-   * Create a provider client based on configuration
-   * Supports both API key and OAuth authentication
+   * Create a provider client based on configuration.
+   *
+   * @async
+   * @param {EnhancedProviderConfig} config - Provider configuration including authentication settings.
+   * @returns {Promise<any>} A Promise that resolves to the provider client instance.
+   *
+   * @description
+   * BREAKING CHANGE: This method is now asynchronous and returns a Promise. Update all usages to use `await` or handle the returned Promise.
+   *
+   * Authentication credentials are retrieved based on the configuration. For OAuth authentication, the method will obtain and use the appropriate OAuth token via TokenManager.
+   * If the token is expired or missing, TokenManager will attempt to refresh or acquire a new token as needed.
+   * For API key authentication, the API key is used directly.
+   *
+   * Supports both API key and OAuth authentication methods across multiple provider types (OpenAI, Anthropic, Groq).
    */
   static async createProvider(config: EnhancedProviderConfig) {
     // Get authentication credentials based on auth type
@@ -99,7 +111,10 @@ export class ProviderFactory {
     if (config.authType === 'oauth') {
       try {
         if (!config.id) {
-          throw new Error('Provider ID required for OAuth authentication');
+          throw new Error(
+            `Provider ID required for OAuth authentication for provider "${config.name}". ` +
+              `Ensure the provider configuration includes a valid ID for OAuth authentication.`
+          );
         }
 
         // Get valid OAuth token (automatically refreshes if needed)

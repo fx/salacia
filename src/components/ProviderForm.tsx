@@ -148,13 +148,17 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       const result = await response.json();
 
       if (result.success && result.data.authorizationUrl) {
-        // Open OAuth authorization URL in new tab
-        window.open(result.data.authorizationUrl, '_blank');
-        // Show callback code input field
-        setShowCallbackInput(true);
-        setSuccessMessage(
-          'Authorization page opened in new tab. After authorizing, paste the callback code below.'
-        );
+        // Validate the OAuth authorization URL before opening
+        if (validateOAuthUrl(result.data.authorizationUrl, activeProvider)) {
+          window.open(result.data.authorizationUrl, '_blank');
+          // Show callback code input field
+          setShowCallbackInput(true);
+          setSuccessMessage(
+            'Authorization page opened in new tab. After authorizing, paste the callback code below.'
+          );
+        } else {
+          setError('Received invalid OAuth authorization URL.');
+        }
       } else {
         setError(result.error || 'Failed to initialize OAuth');
       }
@@ -253,6 +257,37 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     try {
       new URL(string);
       return true;
+    } catch {
+      return false;
+    }
+  };
+
+  /**
+   * Validate OAuth authorization URL matches expected endpoints
+   */
+  const validateOAuthUrl = (url: string, provider: Provider): boolean => {
+    if (!isValidUrl(url)) {
+      return false;
+    }
+
+    try {
+      const urlObj = new URL(url);
+
+      // Allow Claude/Anthropic OAuth endpoints
+      if (provider.type === 'anthropic') {
+        const allowedHosts = [
+          'claude.ai',
+          'console.anthropic.com',
+          'localhost', // Development
+        ];
+        return allowedHosts.some(
+          host => urlObj.hostname === host || urlObj.hostname.endsWith(`.${host}`)
+        );
+      }
+
+      // For other providers, allow their respective OAuth endpoints
+      // This can be expanded as more OAuth providers are added
+      return false;
     } catch {
       return false;
     }

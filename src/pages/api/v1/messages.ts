@@ -37,6 +37,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const authHeader = request.headers.get('authorization');
     if (authHeader?.startsWith('Bearer ')) {
+      // TODO: Replace global variable with proper state management solution
+      // This temporary solution stores Claude Code tokens globally for provider access
+      // In production, consider using a request context or dependency injection pattern
       (globalThis as any).__claudeCodeToken = authHeader.substring(7);
 
       const freshToken = authHeader.substring(7);

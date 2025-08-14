@@ -13,6 +13,16 @@ const OAuthCallbackRequestSchema = z.object({
 });
 
 /**
+ * Allowed callback URL prefixes for security validation
+ */
+const ALLOWED_CALLBACK_URL_PREFIXES = [
+  'https://console.anthropic.com/oauth/code/callback',
+  'https://claude.ai/oauth/callback',
+  'http://localhost:', // Allow localhost for development
+  'https://localhost:', // Allow localhost HTTPS for development
+];
+
+/**
  * POST /api/providers/:id/oauth-callback
  *
  * Process OAuth callback code and exchange for tokens
@@ -73,6 +83,21 @@ export const POST: APIRoute = async ({ params, request }) => {
 
     // Check if it's a full URL
     if (input.startsWith('http://') || input.startsWith('https://')) {
+      // Validate against whitelist
+      const isAllowed = ALLOWED_CALLBACK_URL_PREFIXES.some(prefix => input.startsWith(prefix));
+      if (!isAllowed) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Callback URL is not allowed',
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
       try {
         const url = new globalThis.URL(input);
         code = url.searchParams.get('code') || '';

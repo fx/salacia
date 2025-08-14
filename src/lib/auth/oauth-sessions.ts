@@ -13,7 +13,15 @@ export interface OAuthSession {
 
 /**
  * Shared OAuth session storage
- * In production, this should use Redis or database with proper cleanup
+ *
+ * @warning DEVELOPMENT ONLY: This in-memory storage is not suitable for production.
+ * In production, this should use Redis or database-backed session store with:
+ * - Persistence across server restarts
+ * - Scalability across multiple server instances
+ * - Automatic session cleanup and expiration
+ * - Enhanced security with encrypted session data
+ *
+ * @todo Replace with Redis or database storage before production deployment
  */
 export const oauthSessions = new Map<string, OAuthSession>();
 

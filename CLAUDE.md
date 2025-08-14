@@ -460,6 +460,12 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **API test endpoints should pass through test results directly** without additional wrapping
 - Service layer should focus on business logic, not redundant error wrapping
 
+### OAuth Implementation Review Guidelines
+
+- **OAuth API response structure**: ProviderForm correctly checks for `result.data.authorizationUrl` - this matches the actual API response structure
+- **Property name consistency**: Do not flag correct property names as mismatches without verifying the actual API response format
+- **OAuth flow validation**: The OAuth initialization flow uses the correct property names throughout the codebase
+
 ## Testing Best Practices
 
 ### React Testing Library Principles

@@ -90,7 +90,7 @@ export const GET: APIRoute = async ({ request, redirect }) => {
         tokenResponse.scope
       );
 
-      console.warn('OAuth authentication successful for provider:', sessionData.providerId);
+      console.info('OAuth authentication successful for provider:', sessionData.providerId);
 
       // Redirect to provider settings with success message
       return redirect(

@@ -30,8 +30,8 @@ export class TokenManager {
       oauthTokenExpiresAt: expiresAt,
       oauthScope: scope || tokenResponse.scope,
       oauthClientId: clientId,
-      // Clear API key since we're using OAuth
-      apiKey: undefined,
+      // Preserve existing API key as fallback when switching to OAuth
+      // apiKey remains unchanged to allow fallback authentication
     });
 
     return provider.reload();

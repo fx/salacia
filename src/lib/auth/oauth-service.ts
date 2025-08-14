@@ -7,12 +7,28 @@ import { z } from 'zod';
 
 /**
  * Generate cryptographically secure random string for PKCE
+ * Uses rejection sampling to avoid modulo bias
  */
 function generateRandomString(length: number): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  const array = new Uint8Array(length);
-  globalThis.crypto.getRandomValues(array);
-  return Array.from(array, byte => charset[byte % charset.length]).join('');
+  const charsetLength = charset.length;
+  const randomChars: string[] = [];
+
+  while (randomChars.length < length) {
+    // Draw more random bytes than needed, to account for possible rejections
+    const array = new Uint8Array(length - randomChars.length);
+    globalThis.crypto.getRandomValues(array);
+
+    for (let i = 0; i < array.length && randomChars.length < length; i++) {
+      const byte = array[i];
+      // Accept only bytes that can be mapped without bias
+      if (byte < charsetLength * Math.floor(256 / charsetLength)) {
+        randomChars.push(charset[byte % charsetLength]);
+      }
+    }
+  }
+
+  return randomChars.join('');
 }
 
 /**
@@ -76,13 +92,31 @@ export interface ClaudeMaxOAuthConfig {
  */
 export class OAuthService {
   private static readonly DEFAULT_CONFIG: ClaudeMaxOAuthConfig = {
-    // Using OpenCode's Claude Max client ID and redirect URI
-    clientId: '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
-    redirectUri: 'https://console.anthropic.com/oauth/code/callback',
+    // Load client ID and redirect URI from environment variables for security
+    clientId: process.env.CLAUDE_MAX_OAUTH_CLIENT_ID ?? '9d1c250a-e61b-44d9-88ed-5944d1962f5e',
+    redirectUri:
+      process.env.CLAUDE_MAX_OAUTH_REDIRECT_URI ??
+      'https://console.anthropic.com/oauth/code/callback',
     scopes: ['org:create_api_key', 'user:profile', 'user:inference'],
     authorizationEndpoint: 'https://claude.ai/oauth/authorize',
     tokenEndpoint: 'https://console.anthropic.com/v1/oauth/token',
   };
+
+  /**
+   * Validate OAuth configuration is properly set up
+   *
+   * @throws {Error} If required environment variables are missing for production
+   */
+  private static validateOAuthConfig(): void {
+    if (process.env.NODE_ENV === 'production') {
+      if (!process.env.CLAUDE_MAX_OAUTH_CLIENT_ID) {
+        throw new Error('Missing required environment variable: CLAUDE_MAX_OAUTH_CLIENT_ID');
+      }
+      if (!process.env.CLAUDE_MAX_OAUTH_REDIRECT_URI) {
+        throw new Error('Missing required environment variable: CLAUDE_MAX_OAUTH_REDIRECT_URI');
+      }
+    }
+  }
 
   /**
    * Generate PKCE parameters for secure OAuth flow
@@ -106,6 +140,9 @@ export class OAuthService {
     pkceParams: PKCEParams,
     config: Partial<ClaudeMaxOAuthConfig> = {}
   ): string {
+    // Validate OAuth configuration
+    this.validateOAuthConfig();
+
     // Filter out undefined values from config to avoid overriding defaults
     const cleanConfig = Object.fromEntries(
       Object.entries(config).filter(([_, v]) => v !== undefined)
@@ -139,6 +176,9 @@ export class OAuthService {
     config: Partial<ClaudeMaxOAuthConfig> = {},
     state?: string
   ): Promise<OAuthTokenResponse> {
+    // Validate OAuth configuration
+    this.validateOAuthConfig();
+
     // Filter out undefined values from config to avoid overriding defaults
     const cleanConfig = Object.fromEntries(
       Object.entries(config).filter(([_, v]) => v !== undefined)
