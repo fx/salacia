@@ -138,7 +138,7 @@ This project uses WebTUI as the primary design system and CSS framework with Cat
 - **NO Tailwind**: This project does not use Tailwind CSS classes
 - **NO Inline Styles**: Do not use style attributes - use data attributes instead
 - **WebTUI Data Attributes**: Use data attributes like `data-box`, `data-is`, `data-align`, `data-gap`, etc.
-- **NEVER use data-compact**: Use `size-="compact"` instead - this is the proper WebTUI semantic attribute for compact variants
+- **Compact Variants**: Use `data-compact="true"` for compact tables and buttons to match the CSS selectors in global.css
 - **Reference VerticalBarChart.tsx**: This component is the PERFECT example - it uses ONLY:
   - WebTUI data attributes (`data-box="square"`, `data-is="separator"`, etc.)
   - Simple CSS classes for layout (`chart-row`, `chart-column`)
@@ -341,3 +341,11 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - ProviderManager.testProvider already returns proper `{ success: boolean, error?: string }` format
 - ProviderService methods have comprehensive try-catch error handling - do not suggest additional validation
 - Service methods that call ProviderManager methods can trust the return format consistency
+- Do not suggest redundant try-catch blocks around ProviderManager calls that already handle errors
+- API test endpoints should return the test result directly without wrapping in additional success/data objects
+
+### WebTUI Attribute Syntax Guidelines
+
+- Use `data-compact="true"` for compact styling, not `size-="compact"` - the CSS selectors target `[data-compact="true"]`
+- Do not suggest using `size-=` attributes for compact variants - these don't match the current CSS implementation
+- Compact tables and buttons require the data-compact attribute to apply minimal padding and spacing

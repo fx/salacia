@@ -50,7 +50,7 @@ export function ProviderList({
 
   return (
     <div data-box="square">
-      <table size-="compact">
+      <table data-compact="true">
         <thead>
           <tr>
             <th>Name</th>
@@ -90,7 +90,7 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onSetDefault(provider.id)}
-                    size-="compact"
+                    data-compact="true"
                     disabled={!provider.isActive}
                   >
                     Set Default
@@ -102,7 +102,7 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onTest(provider.id)}
-                    size-="compact"
+                    data-compact="true"
                     disabled={!provider.isActive}
                     title="Test provider connectivity"
                   >
@@ -111,7 +111,7 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onEdit(provider)}
-                    size-="compact"
+                    data-compact="true"
                     title="Edit provider settings"
                   >
                     Edit
@@ -119,7 +119,7 @@ export function ProviderList({
                   <button
                     type="button"
                     onClick={() => onDelete(provider.id)}
-                    size-="compact"
+                    data-compact="true"
                     title="Delete provider"
                     disabled={provider.isDefault}
                   >

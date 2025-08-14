@@ -169,15 +169,7 @@ export class ProviderService {
       updatedAt: provider.updatedAt,
     };
 
-    try {
-      return await ProviderManager.testProvider(providerData);
-    } catch (error) {
-      // Return a structured error object
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    return await ProviderManager.testProvider(providerData);
   }
 
   /**

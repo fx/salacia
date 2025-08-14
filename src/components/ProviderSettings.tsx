@@ -123,12 +123,12 @@ export function ProviderSettings() {
       });
       const result = await response.json();
 
-      if (result.success && result.data.success) {
+      if (result.success) {
         setTestMessage({ type: 'success', message: 'Provider test successful!' });
       } else {
         setTestMessage({
           type: 'error',
-          message: `Provider test failed: ${result.data.error || result.error || 'Unknown error'}`,
+          message: `Provider test failed: ${result.error || 'Unknown error'}`,
         });
       }
     } catch (err) {
