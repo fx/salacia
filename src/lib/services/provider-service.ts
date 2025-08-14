@@ -132,12 +132,16 @@ export class ProviderService {
 
   /**
    * Delete a provider by ID.
-   * Returns true if deleted, false if not found.
+   * Throws an error when deleting default provider or when not found.
    */
   static async deleteProvider(id: string): Promise<boolean> {
     const provider = await AiProviderModel.findByPk(id);
     if (!provider) {
-      return false;
+      throw new Error('Provider not found');
+    }
+
+    if (provider.isDefault) {
+      throw new Error('Cannot delete default provider');
     }
 
     await provider.destroy();

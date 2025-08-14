@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request }) => {
         error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        status: 400,
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
         },

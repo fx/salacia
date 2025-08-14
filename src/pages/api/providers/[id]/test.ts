@@ -9,6 +9,9 @@ import { ProviderService } from '../../../../lib/services/provider-service';
 /**
  * POST /api/providers/:id/test
  * Tests connectivity for a specific provider.
+ *
+ * Success: returns the test result directly { success: boolean, error?: string }
+ * Not found: returns 404 with { error: 'Provider not found' }
  */
 export const POST: APIRoute = async ({ params }) => {
   try {
@@ -31,21 +34,19 @@ export const POST: APIRoute = async ({ params }) => {
 
     const testResult = await ProviderService.testProvider(id);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          success: testResult.success,
-          ...(testResult.error ? { error: testResult.error } : {}),
-        },
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    if (!testResult.success && testResult.error === 'Provider not found') {
+      return new Response(JSON.stringify({ error: 'Provider not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(testResult), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error testing provider:', error);
 

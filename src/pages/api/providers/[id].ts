@@ -191,12 +191,27 @@ export const DELETE: APIRoute = async ({ params }) => {
       status: 204,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    if (message === 'Cannot delete default provider') {
+      return new Response(JSON.stringify({ error: message }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (message === 'Provider not found') {
+      return new Response(JSON.stringify({ error: message }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     console.error('Error deleting provider:', error);
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: message,
       }),
       {
         status: 500,
