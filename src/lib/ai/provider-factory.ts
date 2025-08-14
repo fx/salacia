@@ -10,6 +10,11 @@ export class ProviderFactory {
    * Create a provider client based on configuration
    */
   static createProvider(config: ProviderConfig) {
+    // Ensure we have authentication credentials
+    if (!config.apiKey) {
+      throw new Error(`Missing authentication credentials for provider ${config.name}`);
+    }
+
     switch (config.type) {
       case 'openai':
         return createOpenAI({

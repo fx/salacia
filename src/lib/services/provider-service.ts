@@ -76,6 +76,7 @@ export class ProviderService {
     const createData = {
       name: validatedData.name,
       type: validatedData.type,
+      authType: 'api_key' as const,
       apiKey: validatedData.apiKey,
       baseUrl: validatedData.baseUrl,
       models: validatedData.models || undefined,
@@ -163,12 +164,18 @@ export class ProviderService {
       id: provider.id,
       name: provider.name,
       type: provider.type,
+      authType: provider.authType,
       apiKey: provider.apiKey,
       baseUrl: provider.baseUrl || null,
       models: provider.models,
       settings: provider.settings,
       isActive: provider.isActive,
       isDefault: provider.isDefault,
+      oauthAccessToken: provider.oauthAccessToken,
+      oauthRefreshToken: provider.oauthRefreshToken,
+      oauthTokenExpiresAt: provider.oauthTokenExpiresAt,
+      oauthScope: provider.oauthScope,
+      oauthClientId: provider.oauthClientId,
       createdAt: provider.createdAt,
       updatedAt: provider.updatedAt,
     };
@@ -216,6 +223,7 @@ export class ProviderService {
     const envData = {
       name: envProvider.name,
       type: envProvider.type,
+      authType: envProvider.authType,
       apiKey: envProvider.apiKey,
       baseUrl: envProvider.baseUrl || undefined,
       models: envProvider.models as string[] | undefined,
@@ -278,6 +286,7 @@ export class ProviderService {
         const createdData = {
           name: envProvider.name,
           type: envProvider.type,
+          authType: envProvider.authType,
           apiKey: envProvider.apiKey,
           baseUrl: envProvider.baseUrl || undefined,
           models: envProvider.models as string[] | undefined,

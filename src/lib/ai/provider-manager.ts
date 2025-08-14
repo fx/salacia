@@ -7,12 +7,18 @@ export interface AiProvider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl: string | null;
   models: unknown;
   settings: unknown;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: Date;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,6 +105,7 @@ export class ProviderManager {
       id: `env-${type}`,
       name: `Environment ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       type,
+      authType: 'api_key' as const,
       apiKey, // This is used immediately by createClient and not stored/logged
       baseUrl: baseUrl || null,
       models: null,
@@ -159,6 +166,22 @@ export class ProviderManager {
       throw new Error(`Invalid provider type: ${provider.type}`);
     }
 
+    // For OAuth providers, check if we have a valid access token
+    if (provider.authType === 'oauth') {
+      if (!provider.oauthAccessToken) {
+        throw new Error('OAuth provider missing access token');
+      }
+
+      // Check if token is expired
+      if (provider.oauthTokenExpiresAt && provider.oauthTokenExpiresAt <= new Date()) {
+        throw new Error('OAuth access token has expired');
+      }
+    } else if (provider.authType === 'api_key') {
+      if (!provider.apiKey) {
+        throw new Error('API key provider missing API key');
+      }
+    }
+
     // Safely handle models and settings with proper type checking
     const models = provider.models as unknown;
     const settings = provider.settings as unknown;
@@ -204,7 +227,9 @@ export class ProviderManager {
       id: provider.id,
       name: provider.name,
       type: provider.type as AIProviderType, // Safe after validation above
-      apiKey: provider.apiKey,
+      authType: provider.authType,
+      // Use OAuth token or API key based on auth type
+      apiKey: provider.authType === 'oauth' ? provider.oauthAccessToken : provider.apiKey,
       models: parsedModels,
       settings: parsedSettings,
       isActive: provider.isActive,
