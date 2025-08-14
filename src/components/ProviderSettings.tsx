@@ -3,7 +3,7 @@ import { ProviderList } from './ProviderList';
 import { ProviderForm } from './ProviderForm';
 
 /**
- * Provider management interface data structures
+ * Provider entity as used by the settings UI and API.
  */
 interface Provider {
   id: string;
@@ -19,26 +19,12 @@ interface Provider {
   updatedAt: string;
 }
 
-interface ProviderResponse {
-  success: boolean;
-  data?: {
-    providers: Provider[];
-    total: number;
-    limit: number;
-    offset: number;
-  };
-  error?: string;
-}
-
-interface SingleProviderResponse {
-  success: boolean;
-  data?: Provider;
-  error?: string;
-}
-
 /**
  * Main provider settings management component.
- * Provides interface for viewing, creating, editing, and deleting AI providers.
+ * - Lists providers
+ * - Creates/edits providers
+ * - Deletes providers
+ * - Tests and sets default providers
  */
 export function ProviderSettings() {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -53,19 +39,22 @@ export function ProviderSettings() {
   } | null>(null);
 
   /**
-   * Fetch providers from API
+   * Fetch providers from API.
+   * Provider collection endpoints return an array directly.
    */
   const fetchProviders = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/providers');
-      const result: ProviderResponse = await response.json();
 
-      if (result.success && result.data) {
-        setProviders(result.data.providers);
+      if (response.ok) {
+        const result: Provider[] = await response.json();
+        setProviders(result);
         setError(null);
       } else {
-        setError(result.error || 'Failed to fetch providers');
+        // Only parse JSON for error responses
+        const err = await response.json().catch(() => ({ error: 'Failed to fetch providers' }));
+        setError(err?.error || 'Failed to fetch providers');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
@@ -75,14 +64,14 @@ export function ProviderSettings() {
   };
 
   /**
-   * Initiate delete confirmation
+   * Initiate delete confirmation for a provider.
    */
   const handleDelete = (id: string) => {
     setConfirmDeleteId(id);
   };
 
   /**
-   * Confirm and execute provider deletion
+   * Confirm and execute provider deletion (expects HTTP 204 on success).
    */
   const confirmDelete = async () => {
     if (!confirmDeleteId) return;
@@ -93,10 +82,10 @@ export function ProviderSettings() {
       });
 
       if (response.status === 204) {
-        await fetchProviders(); // Refresh the list
+        await fetchProviders();
         setError(null);
       } else {
-        const result = await response.json();
+        const result = await response.json().catch(() => ({ error: 'Failed to delete provider' }));
         setError(result.error || 'Failed to delete provider');
       }
     } catch (err) {
@@ -107,28 +96,30 @@ export function ProviderSettings() {
   };
 
   /**
-   * Cancel delete confirmation
+   * Cancel delete confirmation dialog.
    */
   const cancelDelete = () => {
     setConfirmDeleteId(null);
   };
 
   /**
-   * Test provider connectivity
+   * Test provider connectivity.
+   * Test endpoint returns { success: true, data: { success: boolean, error?: string } }
    */
   const handleTest = async (id: string) => {
     try {
       const response = await fetch(`/api/providers/${id}/test`, {
         method: 'POST',
       });
-      const result = await response.json();
+      const result: { success: boolean; data?: { success: boolean; error?: string } } =
+        await response.json();
 
-      if (result.success) {
+      if (result?.data?.success) {
         setTestMessage({ type: 'success', message: 'Provider test successful!' });
       } else {
         setTestMessage({
           type: 'error',
-          message: `Provider test failed: ${result.error || 'Unknown error'}`,
+          message: `Provider test failed: ${result?.data?.error || 'Unknown error'}`,
         });
       }
     } catch (err) {
@@ -143,18 +134,18 @@ export function ProviderSettings() {
   };
 
   /**
-   * Set provider as default
+   * Set provider as default. Endpoint returns Provider directly on success.
    */
   const handleSetDefault = async (id: string) => {
     try {
       const response = await fetch(`/api/providers/${id}/default`, {
         method: 'POST',
       });
-      const result = await response.json();
 
-      if (result.success) {
-        await fetchProviders(); // Refresh the list
+      if (response.ok) {
+        await fetchProviders();
       } else {
+        const result = await response.json().catch(() => ({ error: 'Failed to set default' }));
         setError(result.error || 'Failed to set default provider');
       }
     } catch (err) {
@@ -163,16 +154,16 @@ export function ProviderSettings() {
   };
 
   /**
-   * Handle form submission (create or update)
+   * Handle form submission (create or update) and refresh list.
    */
   const handleFormSubmit = async () => {
-    await fetchProviders(); // Refresh the list
+    await fetchProviders();
     setShowForm(false);
     setEditingProvider(null);
   };
 
   /**
-   * Start editing a provider
+   * Start editing a provider.
    */
   const handleEdit = (provider: Provider) => {
     setEditingProvider(provider);
@@ -180,7 +171,7 @@ export function ProviderSettings() {
   };
 
   /**
-   * Start creating a new provider
+   * Start creating a new provider.
    */
   const handleCreate = () => {
     setEditingProvider(null);
@@ -188,7 +179,7 @@ export function ProviderSettings() {
   };
 
   /**
-   * Cancel form
+   * Cancel provider form.
    */
   const handleCancel = () => {
     setShowForm(false);
@@ -213,7 +204,7 @@ export function ProviderSettings() {
       <div data-gap="2">
         <div data-align="space-between">
           <h2>{editingProvider ? 'Edit Provider' : 'Create Provider'}</h2>
-          <button type="button" onClick={handleCancel}>
+          <button type="button" onClick={handleCancel} size-="compact">
             Back to List
           </button>
         </div>
@@ -231,7 +222,7 @@ export function ProviderSettings() {
     <div data-gap="2">
       <div data-align="space-between">
         <h2>AI Providers</h2>
-        <button type="button" onClick={handleCreate}>
+        <button type="button" onClick={handleCreate} size-="compact">
           Add Provider
         </button>
       </div>
@@ -258,26 +249,15 @@ export function ProviderSettings() {
       />
 
       {confirmDeleteId && (
-        <dialog
-          open
-          data-box="square"
-          data-align="center"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1000,
-          }}
-        >
+        <dialog open data-box="square" position-="center" size-="default">
           <div data-gap="2">
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete this provider?</p>
             <div data-align="space-between" data-gap="1">
-              <button type="button" onClick={cancelDelete}>
+              <button type="button" onClick={cancelDelete} size-="compact">
                 Cancel
               </button>
-              <button type="button" onClick={confirmDelete} data-variant="red">
+              <button type="button" onClick={confirmDelete} data-variant="red" size-="compact">
                 Delete
               </button>
             </div>

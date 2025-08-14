@@ -9,6 +9,9 @@ import { ProviderService } from '../../../../lib/services/provider-service';
 /**
  * POST /api/providers/:id/default
  * Sets a provider as the default provider.
+ *
+ * Success: returns the updated Provider object directly (no wrapper)
+ * Errors: return { success: false, error: string } with appropriate status code
  */
 export const POST: APIRoute = async ({ params }) => {
   try {
@@ -46,18 +49,12 @@ export const POST: APIRoute = async ({ params }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: provider,
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    return new Response(JSON.stringify(provider), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Error setting default provider:', error);
 

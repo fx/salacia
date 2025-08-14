@@ -169,7 +169,14 @@ export class ProviderService {
       updatedAt: provider.updatedAt,
     };
 
-    return await ProviderManager.testProvider(providerData);
+    try {
+      return await ProviderManager.testProvider(providerData);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
