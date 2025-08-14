@@ -3,18 +3,24 @@ import { ProviderList } from './ProviderList';
 import { ProviderForm } from './ProviderForm';
 
 /**
- * Provider entity as used by the settings UI and API.
+ * Provider entity as used by the settings UI and API with OAuth support.
  */
 interface Provider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl?: string;
   models?: string[];
   settings?: Record<string, unknown>;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: string;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +40,10 @@ export function ProviderSettings() {
   const [showForm, setShowForm] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [testMessage, setTestMessage] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [oauthMessage, setOauthMessage] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
@@ -198,9 +208,24 @@ export function ProviderSettings() {
     setEditingProvider(null);
   };
 
-  // Fetch providers on component mount
+  // Fetch providers on component mount and handle OAuth callback messages
   useEffect(() => {
     fetchProviders();
+
+    // Check for OAuth callback messages in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+
+    if (success) {
+      setOauthMessage({ type: 'success', message: success });
+      // Clear URL params after showing message
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (error) {
+      setOauthMessage({ type: 'error', message: error });
+      // Clear URL params after showing message
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   if (loading) {
@@ -249,6 +274,21 @@ export function ProviderSettings() {
         <div data-box="square" data-variant={testMessage.type === 'success' ? 'green' : 'red'}>
           <strong>{testMessage.type === 'success' ? 'Success:' : 'Error:'}</strong>{' '}
           {testMessage.message}
+        </div>
+      )}
+
+      {oauthMessage && (
+        <div data-box="square" data-variant={oauthMessage.type === 'success' ? 'green' : 'red'}>
+          <strong>{oauthMessage.type === 'success' ? 'OAuth Success:' : 'OAuth Error:'}</strong>{' '}
+          {oauthMessage.message}
+          <button
+            type="button"
+            onClick={() => setOauthMessage(null)}
+            size-="compact"
+            style={{ float: 'right' }}
+          >
+            ×
+          </button>
         </div>
       )}
 

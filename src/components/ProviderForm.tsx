@@ -1,28 +1,35 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * Provider data interface
+ * Provider data interface with OAuth support
  */
 interface Provider {
   id: string;
   name: string;
   type: string;
-  apiKey: string;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
   baseUrl?: string;
   models?: string[];
   settings?: Record<string, unknown>;
   isActive: boolean;
   isDefault: boolean;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthTokenExpiresAt?: string;
+  oauthScope?: string;
+  oauthClientId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * Form data interface
+ * Form data interface with OAuth support
  */
 interface FormData {
   name: string;
   type: string;
+  authType: 'api_key' | 'oauth';
   apiKey: string;
   baseUrl: string;
   models: string;
@@ -47,6 +54,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
   const [formData, setFormData] = useState<FormData>({
     name: '',
     type: 'openai',
+    authType: 'api_key',
     apiKey: '',
     baseUrl: '',
     models: '',
@@ -55,6 +63,12 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [oauthStatus, setOauthStatus] = useState<{
+    hasValidTokens: boolean;
+    isTokenExpired: boolean;
+    expiresAt?: string;
+    supportsOAuth: boolean;
+  } | null>(null);
 
   // Provider type options
   const providerTypes = [
@@ -69,12 +83,18 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       setFormData({
         name: provider.name,
         type: provider.type,
-        apiKey: provider.apiKey,
+        authType: provider.authType || 'api_key',
+        apiKey: provider.apiKey || '',
         baseUrl: provider.baseUrl || '',
         models: Array.isArray(provider.models) ? provider.models.join(', ') : '',
         isActive: provider.isActive,
         isDefault: provider.isDefault,
       });
+
+      // Fetch OAuth status for existing providers
+      if (provider.id) {
+        fetchOAuthStatus(provider.id);
+      }
     }
   }, [provider]);
 
@@ -87,6 +107,74 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
   };
 
   /**
+   * Fetch OAuth status for a provider
+   */
+  const fetchOAuthStatus = async (providerId: string) => {
+    try {
+      const response = await fetch(`/api/providers/${providerId}/oauth-status`);
+      const result = await response.json();
+      if (result.success) {
+        setOauthStatus(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch OAuth status:', error);
+    }
+  };
+
+  /**
+   * Initialize OAuth flow
+   */
+  const handleOAuthInit = async () => {
+    if (!provider?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/providers/${provider.id}/oauth-init`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.success && result.data.authUrl) {
+        // Redirect to OAuth authorization URL
+        window.location.href = result.data.authUrl;
+      } else {
+        setError(result.error || 'Failed to initialize OAuth');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Revoke OAuth tokens
+   */
+  const handleOAuthRevoke = async () => {
+    if (!provider?.id) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/providers/${provider.id}/oauth-revoke`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setOauthStatus(null);
+        // Update form to show API key mode
+        setFormData(prev => ({ ...prev, authType: 'api_key' }));
+      } else {
+        setError(result.error || 'Failed to revoke OAuth tokens');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Validate form data
    */
   const validateForm = (): string | null => {
@@ -96,8 +184,8 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     if (!formData.type) {
       return 'Provider type is required';
     }
-    if (!formData.apiKey.trim()) {
-      return 'API key is required';
+    if (formData.authType === 'api_key' && !formData.apiKey.trim()) {
+      return 'API key is required for API key authentication';
     }
     if (formData.baseUrl && !isValidUrl(formData.baseUrl)) {
       return 'Base URL must be a valid URL';
@@ -137,7 +225,8 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       const submitData = {
         name: formData.name.trim(),
         type: formData.type,
-        apiKey: formData.apiKey.trim(),
+        authType: formData.authType,
+        ...(formData.authType === 'api_key' && { apiKey: formData.apiKey.trim() }),
         baseUrl: formData.baseUrl.trim(),
         models: (() => {
           const trimmedModels = formData.models.trim();
@@ -207,7 +296,11 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <select
             id="type"
             value={formData.type}
-            onChange={e => handleChange('type', e.target.value)}
+            onChange={e => {
+              handleChange('type', e.target.value);
+              // Reset auth type when provider changes
+              handleChange('authType', 'api_key');
+            }}
             required
           >
             {providerTypes.map(type => (
@@ -219,20 +312,105 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
           <small>Select the AI provider service type</small>
         </div>
 
-        <div data-gap="1">
-          <label htmlFor="apiKey">
-            <strong>API Key *</strong>
-          </label>
-          <input
-            id="apiKey"
-            type="password"
-            value={formData.apiKey}
-            onChange={e => handleChange('apiKey', e.target.value)}
-            placeholder="Enter your API key"
-            required
-          />
-          <small>Your authentication key for this provider</small>
-        </div>
+        {formData.type === 'anthropic' && (
+          <div data-gap="1">
+            <label>
+              <strong>Authentication Method *</strong>
+            </label>
+            <div data-gap="1">
+              <label>
+                <input
+                  type="radio"
+                  name="authType"
+                  value="api_key"
+                  checked={formData.authType === 'api_key'}
+                  onChange={e => handleChange('authType', e.target.value as 'api_key' | 'oauth')}
+                />
+                <strong> API Key</strong>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="authType"
+                  value="oauth"
+                  checked={formData.authType === 'oauth'}
+                  onChange={e => handleChange('authType', e.target.value as 'api_key' | 'oauth')}
+                />
+                <strong> OAuth (Claude Max)</strong>
+              </label>
+            </div>
+            <small>Choose authentication method for Anthropic Claude</small>
+          </div>
+        )}
+
+        {formData.authType === 'api_key' && (
+          <div data-gap="1">
+            <label htmlFor="apiKey">
+              <strong>API Key *</strong>
+            </label>
+            <input
+              id="apiKey"
+              type="password"
+              value={formData.apiKey}
+              onChange={e => handleChange('apiKey', e.target.value)}
+              placeholder="Enter your API key"
+              required
+            />
+            <small>Your authentication key for this provider</small>
+          </div>
+        )}
+
+        {formData.authType === 'oauth' && provider && (
+          <div data-gap="1">
+            <label>
+              <strong>OAuth Authentication</strong>
+            </label>
+
+            {oauthStatus?.hasValidTokens ? (
+              <div data-box="square" data-variant="green" data-gap="1">
+                <div>
+                  <strong>✓ OAuth Connected</strong>
+                </div>
+                <div>
+                  <small>
+                    {oauthStatus.expiresAt && (
+                      <>
+                        Expires: {new Date(oauthStatus.expiresAt).toLocaleString()}
+                        {oauthStatus.isTokenExpired && ' (Expired)'}
+                      </>
+                    )}
+                  </small>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOAuthRevoke}
+                  disabled={loading}
+                  size-="compact"
+                >
+                  {loading ? 'Revoking...' : 'Revoke Access'}
+                </button>
+              </div>
+            ) : (
+              <div data-box="square" data-gap="1">
+                <div>
+                  <strong>OAuth Setup Required</strong>
+                </div>
+                <small>Connect to Claude Max to use OAuth authentication</small>
+                <button
+                  type="button"
+                  onClick={handleOAuthInit}
+                  disabled={loading}
+                  box-="square"
+                  variant-="blue"
+                >
+                  {loading ? 'Connecting...' : 'Connect to Claude Max'}
+                </button>
+              </div>
+            )}
+
+            <small>OAuth provides secure authentication without storing API keys</small>
+          </div>
+        )}
 
         <div data-gap="1">
           <label htmlFor="baseUrl">
