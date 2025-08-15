@@ -25,10 +25,8 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
-          package-name: salacia
-          bump-minor-pre-major: ${{ github.event.inputs.release-type == 'major' }}
-          bump-patch-for-minor-pre-major: ${{ github.event.inputs.release-type == 'major' }}
           
       # Optional: Build and test before release
       - uses: actions/checkout@v4
