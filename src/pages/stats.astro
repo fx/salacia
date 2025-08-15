@@ -1,6 +1,5 @@
 ---
-import { Layout } from '../components/Layout';
-import '../styles/global.css';
+import MainLayout from '../layouts/MainLayout.astro';
 import { sequelize } from '../lib/db/sequelize-connection.js';
 import { MessagesService } from '../lib/services/messages.js';
 import { StatsDisplay } from '../components/StatsDisplay';
@@ -82,23 +81,16 @@ try {
 }
 ---
 
-<html lang="en" data-webtui-theme="catppuccin">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Salacia - Stats</title>
-    <meta name="description" content="Usage analytics and performance statistics" />
-  </head>
-  <body>
-    <Layout client:idle>
-      <StatsDisplay
-        client:load
-        initialOverall={overall}
-        initialSeries={series}
-        initialTopModels={topModels}
-        initialError={errorMsg}
-      />
-    </Layout>
-  </body>
-</html>
+<MainLayout
+  title="Salacia - Stats"
+  description="Usage analytics and performance statistics"
+  useRealtimeProvider={true}
+>
+  <StatsDisplay
+    client:load
+    initialOverall={overall}
+    initialSeries={series}
+    initialTopModels={topModels}
+    initialError={errorMsg}
+  />
+</MainLayout>

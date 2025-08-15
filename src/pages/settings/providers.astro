@@ -1,25 +1,16 @@
 ---
-import { LayoutSimple } from '../../components/LayoutSimple.tsx';
+import MainLayout from '../../layouts/MainLayout.astro';
 import { ProviderSettings } from '../../components/ProviderSettings.tsx';
 ---
 
-<html lang="en" data-webtui-theme="catppuccin">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Salacia - Provider Settings</title>
-    <meta name="description" content="Configure AI provider settings and credentials" />
-  </head>
-  <body>
-    <LayoutSimple client:idle>
-      <main>
-        <div data-box="square" data-align="center">
-          <h1>Provider Settings</h1>
-        </div>
+<MainLayout
+  title="Salacia - Provider Settings"
+  description="Configure AI provider settings and credentials"
+  useRealtimeProvider={false}
+>
+  <div box-="square">
+    <h1>Provider Settings</h1>
+  </div>
 
-        <ProviderSettings client:load />
-      </main>
-    </LayoutSimple>
-  </body>
-</html>
+  <ProviderSettings client:load />
+</MainLayout>

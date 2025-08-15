@@ -14,9 +14,8 @@
  * - Accessibility support
  */
 
-import { Layout } from '../components/Layout';
+import MainLayout from '../layouts/MainLayout.astro';
 import { MessagesPage } from '../components/MessagesPage';
-import '../styles/global.css';
 
 // Import the messages service for server-side data fetching
 import { MessagesService } from '../lib/services/messages.js';
@@ -62,33 +61,23 @@ try {
 }
 ---
 
-<html lang="en" data-webtui-theme="catppuccin">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Salacia - Messages</title>
-    <meta
-      name="description"
-      content="View and manage AI interaction messages with advanced filtering and search capabilities"
-    />
-  </head>
-  <body>
-    <Layout client:idle>
-      {
-        initialError ? (
-          <div box-="square" variant-="red" role="alert">
-            <strong>Error:</strong> {initialError}
-          </div>
-        ) : (
-          <MessagesPage
-            client:load
-            initialMessages={initialMessages}
-            initialFilters={defaultFilters}
-            initialSort={defaultSort}
-          />
-        )
-      }
-    </Layout>
-  </body>
-</html>
+<MainLayout
+  title="Salacia - Messages"
+  description="View and manage AI interaction messages with advanced filtering and search capabilities"
+  useRealtimeProvider={true}
+>
+  {
+    initialError ? (
+      <div box-="square" variant-="red" role="alert">
+        <strong>Error:</strong> {initialError}
+      </div>
+    ) : (
+      <MessagesPage
+        client:load
+        initialMessages={initialMessages}
+        initialFilters={defaultFilters}
+        initialSort={defaultSort}
+      />
+    )
+  }
+</MainLayout>

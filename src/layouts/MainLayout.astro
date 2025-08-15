@@ -1,0 +1,61 @@
+---
+import { Layout } from '../components/Layout';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  useRealtimeProvider?: boolean;
+}
+
+const { title, description, useRealtimeProvider = true } = Astro.props as Props;
+---
+
+<html lang="en" data-webtui-theme="catppuccin">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body>
+    {
+      useRealtimeProvider ? (
+        <Layout client:idle>
+          <slot />
+        </Layout>
+      ) : (
+        <div box-="square" shear-="top">
+          <nav>
+            <span>
+              <a href="/">
+                <span is-="badge">HOME</span>
+              </a>
+              <a href="/messages">
+                <span is-="badge">MESSAGES</span>
+              </a>
+              <a href="/stats">
+                <span is-="badge">STATS</span>
+              </a>
+              <a href="/settings">
+                <span is-="badge">SETTINGS</span>
+              </a>
+            </span>
+            <span>
+              <span is-="badge" variant-="yellow">
+                SALACIA
+              </span>
+              <span is-="badge" variant-="background1">
+                v0.0.1
+              </span>
+            </span>
+          </nav>
+          <main>
+            <slot />
+          </main>
+        </div>
+      )
+    }
+  </body>
+</html>
