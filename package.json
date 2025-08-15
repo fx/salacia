@@ -10,7 +10,7 @@
     "astro": "astro",
     "sequelize:migrate:up": "sequelize-cli db:migrate",
     "sequelize:migrate:down": "sequelize-cli db:migrate:undo",
-    "migrate": "sequelize-cli db:migrate --migrations-path ./migrations --config ./sequelize-config.cjs",
+    "migrate": "sequelize-cli db:migrate --migrations-path src/lib/db/sequelize-migrations --config ./sequelize-config.cjs",
     "sequelize:sync": "node scripts/sync-database.mjs",
     "sequelize:seed": "sequelize-cli db:seed:all",
     "type-check": "astro check",
