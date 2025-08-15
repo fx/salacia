@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/fx/salacia/compare/v1.0.1...v1.0.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* **sse:** prevent heartbeat crashes on closed streams ([#122](https://github.com/fx/salacia/issues/122)) ([9704554](https://github.com/fx/salacia/commit/9704554079c2b0eac957ad6a7bdbd9506070218f))
+
 ## [1.0.1](https://github.com/fx/salacia/compare/v1.0.0...v1.0.1) (2025-08-15)
 
 
