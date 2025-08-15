@@ -1,0 +1,31 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "salacia",
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance Improvements" },
+        { "type": "deps", "section": "Dependencies" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "test", "section": "Tests" },
+        { "type": "build", "section": "Build System" },
+        { "type": "ci", "section": "Continuous Integration" },
+        { "type": "refactor", "section": "Code Refactoring", "hidden": false },
+        { "type": "style", "section": "Styles", "hidden": true },
+        { "type": "chore", "section": "Miscellaneous Chores", "hidden": true }
+      ],
+      "release-notes-config": {
+        "title": "Release Notes"
+      },
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "separate-pull-requests": false,
+      "skip-github-release": false,
+      "draft": false,
+      "prerelease": false
+    }
+  },
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}
