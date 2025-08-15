@@ -471,6 +471,12 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **Property name consistency**: Do not flag correct property names as mismatches without verifying the actual API response format
 - **OAuth flow validation**: The OAuth initialization flow uses the correct property names throughout the codebase
 
+### SSE Stream Validation Patterns
+
+- **Stream state checking**: `controller.desiredSize === null` is the CORRECT way to check for closed streams
+- **Do not suggest changing from `=== null` to `!controller.desiredSize`** - null check distinguishes closed streams from full queues (desiredSize: 0)
+- **SSE heartbeat error handling**: Stream validation with try-catch and cleanup is the established pattern for preventing crashes on client disconnect
+
 ## Testing Best Practices
 
 ### React Testing Library Principles
