@@ -146,7 +146,7 @@ export const GET: APIRoute = async ({ request }) => {
 
         try {
           // Check if controller is closed before writing
-          if (!controller.desiredSize || controller.desiredSize <= 0) {
+          if (controller.desiredSize === null) {
             cleanup();
             return;
           }
