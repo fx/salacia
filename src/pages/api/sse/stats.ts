@@ -253,8 +253,21 @@ export const GET: APIRoute = async ({ request }) => {
       heartbeatInterval = globalThis.setInterval(() => {
         if (!isConnected) return;
 
-        const heartbeat = createHeartbeatMessage();
-        controller.enqueue(new TextEncoder().encode(heartbeat));
+        try {
+          // Check if controller is closed before writing
+          if (controller.desiredSize === null) {
+            cleanup();
+            return;
+          }
+
+          const heartbeat = createHeartbeatMessage();
+          controller.enqueue(new TextEncoder().encode(heartbeat));
+        } catch (error) {
+          if (config.debugMode) {
+            console.error('Stats heartbeat error:', error);
+          }
+          cleanup();
+        }
       }, config.heartbeatInterval);
 
       // Set up connection timeout
