@@ -10,6 +10,7 @@
     "astro": "astro",
     "sequelize:migrate:up": "sequelize-cli db:migrate",
     "sequelize:migrate:down": "sequelize-cli db:migrate:undo",
+    "migrate": "sequelize-cli db:migrate --migrations-path src/lib/db/sequelize-migrations --config ./sequelize-config.cjs",
     "sequelize:sync": "node scripts/sync-database.mjs",
     "sequelize:seed": "sequelize-cli db:seed:all",
     "type-check": "astro check",
@@ -39,6 +40,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.3",
     "zod": "^3.24.1"
   },
   "lint-staged": {
@@ -74,7 +76,6 @@
     "msw": "^2.8.2",
     "prettier": "^3.4.2",
     "prettier-plugin-astro": "^0.14.1",
-    "sequelize-cli": "^6.6.3",
     "typescript": "^5.8.3",
     "vitest": "^2.1.9"
   }

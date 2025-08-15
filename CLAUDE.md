@@ -2,6 +2,11 @@
 
 **IMPORTANT: DO NOT USE ASCII BOX DRAWING CHARACTERS! WebTUI simulates the terminal look through CSS. Never use characters like └, ─, │, ░, █, etc. Use WebTUI's box attributes and CSS classes instead.**
 
+**Note: This file (CLAUDE.md) is the single source of truth for all AI development instructions. The following files symlink to this document:**
+
+- `docs/AGENTS.md` - OpenCode agent instructions
+- `.github/copilot-instructions.md` - GitHub Copilot instructions
+
 ## Getting Started
 
 ### Running the Development Environment
@@ -38,7 +43,7 @@
 - **Start database**: `docker compose up -d`
 - **Stop database**: `docker compose down`
 - **View database logs**: `docker compose logs -f postgres`
-- **Run migrations**: `npm run sequelize:migrate:up`
+- **Run migrations**: `npm run sequelize:migrate:up` (see [docs/MIGRATIONS.md](docs/MIGRATIONS.md))
 - **Development server**: `npm run dev` (run in background)
 - **Type checking**: `npm run type-check`
 - **Linting**: `npm run lint`
@@ -493,3 +498,12 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - Use `@testing-library/user-event` over `fireEvent` for realistic interactions
 - Query elements how users perceive them (visible text, labels, roles)
 - Write tests that give confidence the app works for real users
+
+## Documentation Reference
+
+For detailed documentation on specific topics:
+
+- **[docs/MIGRATIONS.md](docs/MIGRATIONS.md)** - Complete database migration guide (Sequelize, Docker, production deployment)
+- **[docs/PROVIDER_CONFIGURATION.md](docs/PROVIDER_CONFIGURATION.md)** - AI provider setup and configuration
+- **[docs/AGENTS.md](docs/AGENTS.md)** - Development workflow agents and automation
+- **[README.md](README.md)** - Project setup and installation instructions
