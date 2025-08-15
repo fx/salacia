@@ -33,6 +33,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/sequelize-config.cjs ./
+COPY --from=builder --chown=nodejs:nodejs /app/src/lib/db/sequelize-migrations ./migrations
 
 USER nodejs
 
