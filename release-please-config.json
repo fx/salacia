@@ -21,7 +21,6 @@
       },
       "include-component-in-tag": false,
       "include-v-in-tag": true,
-      "tag-separator": "@",
       "separate-pull-requests": false,
       "skip-github-release": false,
       "draft": false,

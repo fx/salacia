@@ -27,8 +27,8 @@ jobs:
         with:
           release-type: node
           package-name: salacia
-          bump-minor-pre-major: ${{ github.event.inputs.release-type == 'minor' }}
-          bump-patch-for-minor-pre-major: ${{ github.event.inputs.release-type == 'patch' }}
+          bump-minor-pre-major: ${{ github.event.inputs.release-type == 'major' }}
+          bump-patch-for-minor-pre-major: ${{ github.event.inputs.release-type == 'major' }}
           
       # Optional: Build and test before release
       - uses: actions/checkout@v4
