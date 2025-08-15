@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/fx/salacia/compare/v1.0.0...v1.0.1) (2025-08-15)
+
+
+### Bug Fixes
+
+* **docker:** include migrations in production image ([#119](https://github.com/fx/salacia/issues/119)) ([210475e](https://github.com/fx/salacia/commit/210475e3e37a4240f085d45c32b20d5e3e83d5d7))
+
 ## 1.0.0 (2025-08-15)
 
 
