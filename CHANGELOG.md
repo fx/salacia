@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/fx/salacia/compare/v1.0.3...v1.1.0) (2025-08-16)
+
+
+### Features
+
+* **messages:** add message data inspector dialog ([#135](https://github.com/fx/salacia/issues/135)) ([0c98e6a](https://github.com/fx/salacia/commit/0c98e6a64fb32be56708dac54a50984810a40893))
+* **MessagesTable:** optimize table display for better density ([#133](https://github.com/fx/salacia/issues/133)) ([626cc40](https://github.com/fx/salacia/commit/626cc400a651b362e682cfaef8c3d460d359727f))
+
+
+### Bug Fixes
+
+* **ci:** add issues:write permission for release-please labels ([#132](https://github.com/fx/salacia/issues/132)) ([da9876b](https://github.com/fx/salacia/commit/da9876bf22478c6dcbd8156985647c4fec57220b))
+* **navigation:** display dynamic version from package.json ([#136](https://github.com/fx/salacia/issues/136)) ([603f863](https://github.com/fx/salacia/commit/603f863ee0f009e7846886f9a9c3e5ced21c7d4c))
+* **sse:** resolve streaming UI updates and provider tracking ([#127](https://github.com/fx/salacia/issues/127)) ([58f2b73](https://github.com/fx/salacia/commit/58f2b73196b56424ce0261efa122e6df4a10f68b))
+
 ## [1.0.3](https://github.com/fx/salacia/compare/v1.0.2...v1.0.3) (2025-08-16)
 
 
