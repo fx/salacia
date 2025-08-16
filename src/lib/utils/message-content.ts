@@ -94,6 +94,23 @@ function extractFromParsedData(data: unknown): string {
     if (firstContent && typeof firstContent === 'object' && firstContent !== null) {
       const contentObj = firstContent as Record<string, unknown>;
       if (typeof contentObj.text === 'string') {
+        // Try to parse the text as JSON to check for Claude Code format
+        try {
+          const parsedText = JSON.parse(contentObj.text);
+          if (
+            parsedText &&
+            typeof parsedText === 'object' &&
+            'isNewTopic' in parsedText &&
+            typeof parsedText.isNewTopic === 'boolean' &&
+            'title' in parsedText &&
+            typeof parsedText.title === 'string'
+          ) {
+            const icon = parsedText.isNewTopic ? '🆕' : '📄';
+            return `${icon} ${parsedText.title}`;
+          }
+        } catch {
+          // Not JSON or not Claude Code format, return the text as-is
+        }
         return contentObj.text;
       }
     }

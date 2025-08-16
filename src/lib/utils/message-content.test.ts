@@ -29,6 +29,29 @@ describe('extractTextContent', () => {
     expect(extractTextContent(existingTopicResponse)).toBe('📄 Continuing discussion');
   });
 
+  it('formats Claude Code responses nested in Anthropic format', () => {
+    const anthropicResponse = {
+      id: 'msg_123',
+      content: [
+        {
+          text: '{\n    "isNewTopic": true,\n    "title": "Math Calculation"\n}',
+          type: 'text',
+        },
+      ],
+    };
+    expect(extractTextContent(anthropicResponse)).toBe('🆕 Math Calculation');
+
+    const existingTopicNested = {
+      content: [
+        {
+          text: '{"isNewTopic": false, "title": "Code Review"}',
+          type: 'text',
+        },
+      ],
+    };
+    expect(extractTextContent(existingTopicNested)).toBe('📄 Code Review');
+  });
+
   it('extracts content from object with content field', () => {
     const data = { content: 'Test content' };
     expect(extractTextContent(data)).toBe('Test content');
