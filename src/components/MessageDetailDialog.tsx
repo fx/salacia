@@ -19,6 +19,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { JsonView, darkStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import type { MessageDisplay } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
 
