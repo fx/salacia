@@ -40,7 +40,6 @@ export function createTrackingStream(
   stream: ReadableStream,
   interactionId: string
 ): ReadableStream {
-  const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   // State to track the complete response
@@ -175,7 +174,7 @@ async function updateDatabaseWithCompleteResponse(
       role: 'assistant',
       content: state.content,
       model: state.model || 'unknown',
-      stop_reason: (state.stop_reason as any) || 'end_turn',
+      stop_reason: (state.stop_reason as 'end_turn' | 'max_tokens' | 'stop_sequence') || 'end_turn',
       stop_sequence: state.stop_sequence || null,
       usage: {
         input_tokens: state.usage.input_tokens || 0,

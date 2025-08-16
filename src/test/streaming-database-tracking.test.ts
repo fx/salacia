@@ -109,7 +109,7 @@ describe('Streaming Database Tracking', () => {
     const dbInteraction = await AiInteraction.findByPk(interactionId);
     expect(dbInteraction).toBeTruthy();
     expect(dbInteraction?.response).toBeTruthy();
-    expect((dbInteraction?.response as any)?.content?.[0]?.text).toContain(
+    expect((dbInteraction?.response as { content?: Array<{ text?: string }> })?.content?.[0]?.text).toContain(
       "Hello! I'm doing well"
     );
     expect(dbInteraction?.promptTokens).toBe(12);
@@ -185,7 +185,7 @@ describe('Streaming Database Tracking', () => {
     // Verify database was updated
     const updatedInteraction = await AiInteraction.findByPk(interaction!.id);
     expect(updatedInteraction?.response).toBeTruthy();
-    expect((updatedInteraction?.response as any)?.content?.[0]?.text).toBe('Hello there!');
+    expect((updatedInteraction?.response as { content?: Array<{ text?: string }> })?.content?.[0]?.text).toBe('Hello there!');
     expect(updatedInteraction?.promptTokens).toBe(10);
     expect(updatedInteraction?.completionTokens).toBe(5);
     expect(updatedInteraction?.totalTokens).toBe(15);
