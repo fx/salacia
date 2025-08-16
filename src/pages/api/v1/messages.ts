@@ -11,6 +11,7 @@ import {
 } from '../../../lib/ai/api-utils';
 import { createLogger } from '../../../lib/utils/logger';
 import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
+import { createTrackingStream } from '../../../lib/ai/streaming-tracker';
 
 const logger = createLogger('API/Messages');
 
@@ -40,7 +41,8 @@ export const POST: APIRoute = async ({ request }) => {
       // TODO: Replace global variable with proper state management solution
       // This temporary solution stores Claude Code tokens globally for provider access
       // In production, consider using a request context or dependency injection pattern
-      (globalThis as any).__claudeCodeToken = authHeader.substring(7);
+      (globalThis as unknown as { __claudeCodeToken?: string }).__claudeCodeToken =
+        authHeader.substring(7);
 
       const freshToken = authHeader.substring(7);
       if (freshToken.startsWith('sk-ant-oat')) {
@@ -100,15 +102,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (isStreaming) {
       // Generate streaming response using AI service
-      const stream = await AIService.generateStreamingCompletion(requestData!);
+      const { stream, providerId } = await AIService.generateStreamingCompletion(requestData!);
       const responseTime = Date.now() - startTime;
 
-      // Log streaming request (we can't log the full response for streams)
-      await logAiInteraction({
+      // Log streaming request - create initial database record
+      const interaction = await logAiInteraction({
         request: requestData!,
-        response: undefined, // Response will be streamed
+        response: undefined, // Response will be updated when stream completes
         responseTime,
         statusCode: 200,
+        providerId,
       });
 
       // Log API request
@@ -118,7 +121,15 @@ export const POST: APIRoute = async ({ request }) => {
         responseTime,
       });
 
-      return new Response(stream, {
+      // Wrap stream with tracking to update database when complete
+      let trackingStream;
+      if (interaction) {
+        trackingStream = createTrackingStream(stream, interaction.id);
+      } else {
+        trackingStream = stream;
+      }
+
+      return new Response(trackingStream, {
         status: 200,
         headers: {
           'Content-Type': 'text/event-stream',
@@ -130,7 +141,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     } else {
       // Generate standard response using AI service
-      const response = await AIService.generateCompletion(requestData!);
+      const { response, providerId } = await AIService.generateCompletion(requestData!);
       const responseTime = Date.now() - startTime;
 
       // Log successful interaction to database
@@ -139,6 +150,7 @@ export const POST: APIRoute = async ({ request }) => {
         response,
         responseTime,
         statusCode: 200,
+        providerId,
       });
 
       // Log API request
@@ -197,11 +209,22 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Log failed interaction to database (if we have request data)
     if (requestData) {
+      // Try to get provider ID for error logging - use default provider if available
+      let errorProviderId: string | undefined;
+      try {
+        const { ProviderManager } = await import('../../../lib/ai/provider-manager');
+        const defaultProvider = await ProviderManager.getDefaultProvider();
+        errorProviderId = defaultProvider?.id;
+      } catch {
+        // Ignore errors getting provider for error logging
+      }
+
       await logAiInteraction({
         request: requestData,
         error: error instanceof Error ? error.message : String(error),
         responseTime,
         statusCode,
+        providerId: errorProviderId,
       });
     }
 

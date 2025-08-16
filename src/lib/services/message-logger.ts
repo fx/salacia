@@ -63,12 +63,14 @@ export async function logAiInteraction({
   error,
   responseTime,
   statusCode,
+  providerId,
 }: {
   request: AnthropicRequest;
   response?: AnthropicResponse;
   error?: Error | string;
   responseTime: number;
   statusCode: number;
+  providerId?: string;
 }) {
   try {
     // Extract token counts from response
@@ -87,6 +89,7 @@ export async function logAiInteraction({
 
     // Prepare the interaction data
     const interactionData: InteractionCreationData = {
+      providerId,
       model: request.model,
       request: request as Record<string, unknown>,
       response: response as Record<string, unknown> | undefined,
@@ -176,6 +179,71 @@ export async function logApiRequest({
   } catch (logError) {
     // Don't let logging errors break the API
     logger.error('Failed to log API request:', logError);
+    return null;
+  }
+}
+
+/**
+ * Update an existing AI interaction with response data.
+ * Used for streaming responses where we need to update the record after completion.
+ *
+ * @param interactionId - The ID of the interaction to update
+ * @param response - The complete response data
+ * @param additionalTokens - Additional token usage if available
+ * @returns The updated AiInteraction record
+ */
+export async function updateAiInteraction({
+  interactionId,
+  response,
+  additionalTokens,
+}: {
+  interactionId: string;
+  response: AnthropicResponse;
+  additionalTokens?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+  };
+}) {
+  try {
+    const interaction = await AiInteraction.findByPk(interactionId);
+    if (!interaction) {
+      logger.error('Interaction not found for update:', { interactionId });
+      return null;
+    }
+
+    // Extract token counts from response
+    const promptTokens = additionalTokens?.promptTokens ?? response?.usage?.input_tokens;
+    const completionTokens = additionalTokens?.completionTokens ?? response?.usage?.output_tokens;
+
+    // Calculate total tokens as sum of prompt and completion tokens
+    let totalTokens: number | undefined;
+    if (promptTokens !== undefined && completionTokens !== undefined) {
+      totalTokens = promptTokens + completionTokens;
+    } else if (promptTokens !== undefined) {
+      totalTokens = promptTokens;
+    } else if (completionTokens !== undefined) {
+      totalTokens = completionTokens;
+    }
+
+    // Update the interaction
+    await interaction.update({
+      response: response as Record<string, unknown>,
+      promptTokens: promptTokens,
+      completionTokens: completionTokens,
+      totalTokens: totalTokens,
+    });
+
+    logger.debug('Updated AI interaction:', {
+      id: interaction.id,
+      model: interaction.model,
+      hasResponse: !!response,
+    });
+
+    return interaction;
+  } catch (logError) {
+    // Don't let logging errors break the API
+    logger.error('Failed to update AI interaction:', logError);
     return null;
   }
 }

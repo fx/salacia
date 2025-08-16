@@ -477,6 +477,49 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **Do not suggest changing from `=== null` to `!controller.desiredSize`** - null check distinguishes closed streams from full queues (desiredSize: 0)
 - **SSE heartbeat error handling**: Stream validation with try-catch and cleanup is the established pattern for preventing crashes on client disconnect
 
+### SSE Event Type Registration
+
+**CRITICAL: When adding new SSE event types, ALL of these locations MUST be updated:**
+
+1. **Server-Side Event Emission**:
+   - `src/lib/realtime/broker.ts` - Add emission method (e.g., `emitMessageUpdated`)
+   - `src/lib/realtime/types.ts` - Add event type to `RealtimeEventType` union and create data interface
+
+2. **Server-Side SSE Endpoint**:
+   - `src/pages/api/sse/messages.ts` - Add subscription in event listeners (line ~141-142)
+
+3. **Client-Side SSE Connection**:
+   - `src/hooks/useSSE.ts` - Add event type to `eventTypes` array (line ~264)
+
+4. **Client-Side Event Handlers**:
+   - `src/context/realtime.tsx` - Add event handler and register in useEffect
+   - `src/hooks/useRealtimeMessages.ts` - Add event handler and register in useEffect (if used)
+
+**Example of `message:updated` event additions:**
+
+```typescript
+// 1. broker.ts - emission method
+emitMessageUpdated(data: MessageUpdatedEventData): void { ... }
+
+// 2. types.ts - event type and interface
+export type RealtimeEventType = 'message:created' | 'message:updated';
+export interface MessageUpdatedEventData extends MessageCreatedEventData { ... }
+
+// 3. sse/messages.ts - subscription
+const unsubscribeUpdated = broker.subscribe('message:updated', handleRealtimeEvent);
+
+// 4. useSSE.ts - client event type registration
+const eventTypes = ['connected', 'heartbeat', 'message:created', 'message:updated', 'stats:updated'];
+
+// 5. realtime.tsx - event handler registration
+const offUpdated = addEventListener('message:updated', handleMessageUpdated);
+
+// 6. useRealtimeMessages.ts - event handler registration (if applicable)
+const unsubscribeUpdated = addEventListener('message:updated', handleMessageUpdated);
+```
+
+**Failure to update ALL locations will result in events being emitted server-side but not received client-side.**
+
 ## Testing Best Practices
 
 ### React Testing Library Principles

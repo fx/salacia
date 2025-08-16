@@ -224,11 +224,33 @@ AiInteraction.init(
        * Emits a realtime event after the transaction commits (if present).
        */
       afterCreate: async (instance: AiInteraction, options: Record<string, unknown>) => {
-        const emit = () =>
+        const emit = async () => {
+          // Fetch provider data if provider ID exists
+          let provider = null;
+          if (instance.providerId) {
+            try {
+              const { AiProvider } = await import('../models/index.js');
+              const providerRecord = await AiProvider.findByPk(instance.providerId, {
+                attributes: ['id', 'name', 'type'],
+              });
+              if (providerRecord) {
+                provider = {
+                  id: providerRecord.id,
+                  name: providerRecord.name,
+                  type: providerRecord.type,
+                };
+              }
+            } catch (error) {
+              // If provider lookup fails, continue without provider data
+              console.warn('Failed to fetch provider for SSE event:', error);
+            }
+          }
+
           broker.emitMessageCreated({
             id: instance.id,
             createdAt: instance.createdAt,
             model: instance.model,
+            provider,
             promptTokens: instance.promptTokens ?? null,
             completionTokens: instance.completionTokens ?? null,
             totalTokens: instance.totalTokens ?? null,
@@ -238,6 +260,7 @@ AiInteraction.init(
             request: instance.request,
             response: instance.response,
           });
+        };
 
         const tx = options?.transaction as { afterCommit?: (_fn: () => void) => void } | undefined;
         if (tx?.afterCommit) {
@@ -257,10 +280,53 @@ AiInteraction.init(
 
       /**
        * Hook executed after updating an AiInteraction record.
-       * Logs the new state after changes have been applied.
+       * Emits realtime event when streaming status or response changes.
        */
-      afterUpdate: async (instance: AiInteraction) => {
-        void instance; // Prevent unused parameter warning
+      afterUpdate: async (instance: AiInteraction, options: Record<string, unknown>) => {
+        const emit = async () => {
+          // Fetch provider data if provider ID exists
+          let provider = null;
+          if (instance.providerId) {
+            try {
+              const { AiProvider } = await import('../models/index.js');
+              const providerRecord = await AiProvider.findByPk(instance.providerId, {
+                attributes: ['id', 'name', 'type'],
+              });
+              if (providerRecord) {
+                provider = {
+                  id: providerRecord.id,
+                  name: providerRecord.name,
+                  type: providerRecord.type,
+                };
+              }
+            } catch (error) {
+              // If provider lookup fails, continue without provider data
+              console.warn('Failed to fetch provider for SSE event:', error);
+            }
+          }
+
+          broker.emitMessageUpdated({
+            id: instance.id,
+            createdAt: instance.createdAt,
+            model: instance.model,
+            provider,
+            promptTokens: instance.promptTokens ?? null,
+            completionTokens: instance.completionTokens ?? null,
+            totalTokens: instance.totalTokens ?? null,
+            responseTimeMs: instance.responseTimeMs ?? null,
+            statusCode: instance.statusCode ?? null,
+            error: instance.error ?? null,
+            request: instance.request,
+            response: instance.response,
+          });
+        };
+
+        const tx = options?.transaction as { afterCommit?: (_fn: () => void) => void } | undefined;
+        if (tx?.afterCommit) {
+          tx.afterCommit(() => emit());
+        } else {
+          emit();
+        }
       },
     },
   }
