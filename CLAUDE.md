@@ -82,6 +82,36 @@ See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pat
 
 ## Development Standards
 
+### Temporary Files and Debugging
+
+**🚨 CRITICAL: NEVER COMMIT TEMPORARY TEST FILES OR DEBUG CODE! 🚨**
+
+- **NEVER create temporary test files** like `test-extraction.js`, `debug-*.js`, `temp-*.ts`, etc.
+- **NEVER commit temporary API endpoints** like `/api/test-*` or `/api/debug-*`
+- **NEVER commit console.log statements** or debug logging code
+- **NEVER commit experimental/throwaway code** meant for quick testing
+- **ALWAYS clean up** any temporary files before committing
+- **Use .gitignore** for any persistent local testing files
+
+**Examples of files that should NEVER be committed:**
+
+```
+test-extraction.js
+debug-extraction.js
+src/pages/api/test-*.ts
+src/pages/api/debug-*.ts
+temp-*.js
+scratch-*.ts
+console.log('debug:', ...)  // Debug statements
+```
+
+**If you need to test something:**
+
+1. Use the existing test framework (`npm test`)
+2. Create proper unit tests in `*.test.ts` files
+3. Use the browser dev tools for debugging
+4. Test via the actual application interface
+
 ### Pull Request Requirements
 
 **PR Review Requirements**:
@@ -338,7 +368,7 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 ### UI/UX Design Decisions
 
 - WebTUI confirmation dialogs and inline messaging components are preferred over browser `confirm()` and `alert()`
-- WebTUI error boxes using `data-variant="red"` are used for inline error display
+- WebTUI error boxes using `variant-="red"` are used for inline error display
 - UI-level validation (disabled buttons) prevents business rule violations, making server-side checks optional
 - Delete actions that remove resources should return HTTP 204 (No Content) for successful operations
 
@@ -347,7 +377,7 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - Provider models field should store data directly as arrays, not wrapped in objects (e.g., `models: string[]` not `models: { models: string[] }`)
 - Global CSS imports should be handled at layout level, not in individual page components
 - API response structures should be consistent - test endpoints return `{ success: boolean, data: TestResult }` where TestResult also has success field
-- WebTUI attribute syntax requires proper naming: `data-variant` not `data-variant-`, `is` not `is-`
+- WebTUI attribute syntax requires proper naming: `variant-="red"` not `data-variant="red"`, `is-="button"` not `is="button"`
 
 ### Test Infrastructure and Global Setup
 
@@ -417,6 +447,10 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 
 **DO NOT CONFUSE THESE! The `-=` syntax is INTENTIONAL and REQUIRED for WebTUI semantic attributes.**
 
+- **CRITICAL: WebTUI NEVER uses `data-` prefixes for semantic attributes** - always use `variant-="red"` format
+- `variant-="red"` is the ONLY correct format for WebTUI error styling in error boxes and alert components
+- `data-variant="red"` is INCORRECT and should never be used
+
 ### TypeScript Type Safety Guidelines
 
 - **NEVER use `as any`** in service layers or database operations
@@ -431,9 +465,9 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **NEVER use browser `alert()`, `confirm()`, or `prompt()`** - they break WebTUI design consistency
 - **Use WebTUI components instead:**
   - Confirmation dialogs: Use HTML `<dialog>` with WebTUI attributes
-  - Error display: Use `<div data-box="square" variant="red">`
-  - Success messages: Use `<div data-box="square" variant="green">`
-  - Status badges: Use `<span is="badge" variant="blue">`
+  - Error display: Use `<div box-="square" variant-="red">`
+  - Success messages: Use `<div box-="square" variant-="green">`
+  - Status badges: Use `<span is-="badge" variant-="blue">`
 
 ### API Validation Schema Consistency
 
