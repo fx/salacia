@@ -589,6 +589,39 @@ const unsubscribeUpdated = addEventListener('message:updated', handleMessageUpda
 - Query elements how users perceive them (visible text, labels, roles)
 - Write tests that give confidence the app works for real users
 
+### Playwright Browser Testing Guidelines
+
+**Visual Validation Requirements**:
+
+- **NEVER trust accessibility tree alone** - Elements can exist in the DOM but be visually invisible
+- **ALWAYS take screenshots** when validating UI functionality, especially for sizing and positioning issues
+- **Use screenshots to verify actual visual appearance** - `browser_take_screenshot()` shows what users actually see
+- **Dialog and modal validation**: Check both accessibility tree AND screenshot to ensure proper sizing and visibility
+
+**Dialog Size Validation Pattern**:
+
+```typescript
+// WRONG: Only checking accessibility tree
+const dialog = await page.locator('dialog');
+await expect(dialog).toBeVisible(); // Can pass even if dialog is 1px wide
+
+// CORRECT: Visual validation with screenshot
+await page.click('[data-testid="open-dialog"]');
+await page.screenshot({ path: 'dialog-validation.png' }); // Verify actual appearance
+```
+
+**WebTUI Dialog Common Issues**:
+
+- Using invalid `size-="large"` (WebTUI only supports `full`, `default`, `small`)
+- Missing explicit width/height styles for proper visibility
+- Solution: Use `size-="full"` with explicit style constraints:
+  ```html
+  <dialog 
+    size-="full" 
+    style={{ width: '80vw', height: '80vh', maxWidth: '1200px', maxHeight: '800px' }}
+  >
+  ```
+
 ## Documentation Reference
 
 For detailed documentation on specific topics:

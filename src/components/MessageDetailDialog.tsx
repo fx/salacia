@@ -18,7 +18,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { JsonView } from 'react-json-view-lite';
+import { JsonView, darkStyles } from 'react-json-view-lite';
 import type { MessageDisplay } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
 
@@ -65,7 +65,13 @@ export function MessageDetailDialog({
     if (!data || typeof data !== 'object' || data === null) {
       return null;
     }
-    return <JsonView data={data as Record<string, unknown>} shouldExpandNode={(level: number) => level < 2} />;
+    return (
+      <JsonView 
+        data={data as Record<string, unknown>} 
+        shouldExpandNode={(level: number) => level < 3} 
+        style={darkStyles} 
+      />
+    );
   };
 
   /**
@@ -132,10 +138,17 @@ export function MessageDetailDialog({
         onClose={handleDialogClose}
         onClick={handleBackdropClick}
         position-="center"
-        size-="large"
+        size-="default"
         box-="square"
+        className="message-detail-dialog"
+        style={{ 
+          width: '80vw', 
+          height: '80vh',
+          maxWidth: '1200px',
+          maxHeight: '800px'
+        }}
       >
-        <div onClick={e => e.stopPropagation()}>
+        <div onClick={e => e.stopPropagation()} style={{ height: '100%', overflow: 'auto', padding: '1rem' }}>
         <h2>Message Details</h2>
 
         {/* Metadata Section */}
@@ -143,7 +156,7 @@ export function MessageDetailDialog({
           <h3>Metadata</h3>
           <dl>
             <dt><strong>ID</strong></dt>
-            <dd><code>{message.id}</code></dd>
+            <dd>{message.id}</dd>
 
             <dt><strong>Created</strong></dt>
             <dd>
@@ -225,7 +238,7 @@ export function MessageDetailDialog({
             </button>
           </div>
           <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-{renderJsonData(message.request)}
+            {renderJsonData(message.request)}
           </div>
         </div>
 
@@ -243,7 +256,7 @@ export function MessageDetailDialog({
               </button>
             </div>
             <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-{renderJsonData(message.response)}
+              {renderJsonData(message.response)}
             </div>
           </div>
         )}
