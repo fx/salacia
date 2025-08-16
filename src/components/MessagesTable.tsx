@@ -15,7 +15,7 @@
  * @module MessagesTable
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,6 +27,7 @@ import {
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
 import { extractTextContent } from '../lib/utils/message-content.js';
+import { MessageDetailDialog } from './MessageDetailDialog.js';
 
 /**
  * Props for the MessagesTable component.
@@ -85,6 +86,25 @@ export function MessagesTable({
   sort,
   onSortChange,
 }: MessagesTableProps): React.ReactElement {
+  // State for message detail dialog
+  const [selectedMessage, setSelectedMessage] = useState<MessageDisplay | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  /**
+   * Handle clicking on a table row to open message details.
+   */
+  const handleRowClick = (message: MessageDisplay) => {
+    setSelectedMessage(message);
+    setIsDialogOpen(true);
+  };
+
+  /**
+   * Handle closing the message detail dialog.
+   */
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedMessage(null);
+  };
   /**
    * Column definitions for the messages table.
    * Memoized to prevent unnecessary re-renders.
@@ -241,64 +261,86 @@ export function MessagesTable({
   }
 
   return (
-    <div role="region" aria-label="Messages table">
-      <table size-="compact">
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id} role="row">
-              {headerGroup.headers.map(header => (
-                <th
-                  key={header.id}
-                  role="columnheader"
-                  style={{
-                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                  }}
-                  onClick={header.column.getToggleSortingHandler()}
-                  tabIndex={header.column.getCanSort() ? 0 : -1}
-                  onKeyDown={e => {
-                    if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault();
-                      header.column.getToggleSortingHandler()?.(e);
+    <>
+      <div role="region" aria-label="Messages table">
+        <table size-="compact">
+          <thead>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id} role="row">
+                {headerGroup.headers.map(header => (
+                  <th
+                    key={header.id}
+                    role="columnheader"
+                    style={{
+                      cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                    }}
+                    onClick={header.column.getToggleSortingHandler()}
+                    tabIndex={header.column.getCanSort() ? 0 : -1}
+                    onKeyDown={e => {
+                      if (header.column.getCanSort() && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        header.column.getToggleSortingHandler()?.(e);
+                      }
+                    }}
+                    aria-sort={
+                      header.column.getIsSorted()
+                        ? header.column.getIsSorted() === 'desc'
+                          ? 'descending'
+                          : 'ascending'
+                        : header.column.getCanSort()
+                          ? 'none'
+                          : undefined
                     }
-                  }}
-                  aria-sort={
-                    header.column.getIsSorted()
-                      ? header.column.getIsSorted() === 'desc'
-                        ? 'descending'
-                        : 'ascending'
-                      : header.column.getCanSort()
-                        ? 'none'
-                        : undefined
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getCanSort() && (
+                      <span aria-hidden="true">
+                        {header.column.getIsSorted() === 'desc'
+                          ? '↓'
+                          : header.column.getIsSorted() === 'asc'
+                            ? '↑'
+                            : '↕'}
+                      </span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <tr 
+                key={row.id} 
+                role="row"
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleRowClick(row.original)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleRowClick(row.original);
                   }
-                >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                  {header.column.getCanSort() && (
-                    <span aria-hidden="true">
-                      {header.column.getIsSorted() === 'desc'
-                        ? '↓'
-                        : header.column.getIsSorted() === 'asc'
-                          ? '↑'
-                          : '↕'}
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id} role="row">
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id} role="gridcell">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                }}
+                tabIndex={0}
+                title="Click to view message details"
+              >
+                {row.getVisibleCells().map(cell => (
+                  <td key={cell.id} role="gridcell">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Message Detail Dialog */}
+      <MessageDetailDialog
+        isOpen={isDialogOpen}
+        onClose={handleDialogClose}
+        message={selectedMessage}
+      />
+    </>
   );
 }
 

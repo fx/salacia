@@ -25,6 +25,9 @@
 @import '@webtui/theme-catppuccin';
 @import '@webtui/plugin-nf';
 
+/* Import react-json-view-lite styles */
+@import 'react-json-view-lite/dist/index.css';
+
 /* Custom font configuration for terminal theme */
 @layer base {
   :root {
@@ -525,4 +528,5 @@
   table[size-="compact"] tr td:after {
     display: none;
   }
+
 }
