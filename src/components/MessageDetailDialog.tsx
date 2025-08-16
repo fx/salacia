@@ -59,6 +59,16 @@ export function MessageDetailDialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   /**
+   * Helper function to render JSON data safely.
+   */
+  const renderJsonData = (data: unknown): React.ReactElement | null => {
+    if (!data || typeof data !== 'object' || data === null) {
+      return null;
+    }
+    return <JsonView data={data as Record<string, unknown>} shouldExpandNode={(level: number) => level < 2} />;
+  };
+
+  /**
    * Handle dialog open/close based on isOpen prop.
    */
   useEffect(() => {
@@ -202,7 +212,6 @@ export function MessageDetailDialog({
           </dl>
         </div>
 
-        {/* @ts-ignore - TypeScript issue with unknown type in JSX conditional */}
         <div box-="square" style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h3>Request Data</h3>
@@ -215,9 +224,7 @@ export function MessageDetailDialog({
             </button>
           </div>
           <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-{message.request && typeof message.request === 'object' && message.request !== null ? (
-              <JsonView data={message.request as Record<string, unknown>} shouldExpandNode={(level: number) => level < 2} />
-            ) : null}
+{renderJsonData(message.request)}
           </div>
         </div>
 
@@ -235,9 +242,7 @@ export function MessageDetailDialog({
               </button>
             </div>
             <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-{message.response && typeof message.response === 'object' && message.response !== null ? (
-                <JsonView data={message.response as Record<string, unknown>} shouldExpandNode={(level: number) => level < 2} />
-              ) : null}
+{renderJsonData(message.response)}
             </div>
           </div>
         )}
