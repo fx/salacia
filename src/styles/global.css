@@ -471,6 +471,8 @@
     border-spacing: 0;
     /* Add bottom margin to prevent overlap with following content in box */
     margin-bottom: 1lh;
+    /* Fill full width */
+    width: 100%;
   }
 
   table[size-="compact"]:before {
@@ -488,6 +490,13 @@
   table[size-="compact"] tr th,
   table[size-="compact"] tr td {
     padding: 0;
+  }
+
+  /* Add 1ch spacing left/right to interior columns only */
+  table[size-="compact"] tr th:not(:first-child):not(:last-child),
+  table[size-="compact"] tr td:not(:first-child):not(:last-child) {
+    padding-left: 1ch;
+    padding-right: 1ch;
   }
 
   /* 

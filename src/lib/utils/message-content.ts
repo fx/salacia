@@ -56,13 +56,34 @@ function extractFromParsedData(data: unknown): string {
     }
   }
 
-  // Check for arrays of messages
-  if (Array.isArray(dataObj.messages)) {
+  // Check for Anthropic format: messages array with content
+  if (Array.isArray(dataObj.messages) && dataObj.messages.length > 0) {
     const lastMessage = dataObj.messages[dataObj.messages.length - 1];
     if (lastMessage && typeof lastMessage === 'object' && lastMessage !== null) {
       const messageObj = lastMessage as Record<string, unknown>;
       if (typeof messageObj.content === 'string') {
         return messageObj.content;
+      }
+      // Handle content arrays (Anthropic format)
+      if (Array.isArray(messageObj.content) && messageObj.content.length > 0) {
+        const firstContent = messageObj.content[0];
+        if (firstContent && typeof firstContent === 'object' && firstContent !== null) {
+          const contentObj = firstContent as Record<string, unknown>;
+          if (typeof contentObj.text === 'string') {
+            return contentObj.text;
+          }
+        }
+      }
+    }
+  }
+
+  // Check for Claude API response format: content array
+  if (Array.isArray(dataObj.content) && dataObj.content.length > 0) {
+    const firstContent = dataObj.content[0];
+    if (firstContent && typeof firstContent === 'object' && firstContent !== null) {
+      const contentObj = firstContent as Record<string, unknown>;
+      if (typeof contentObj.text === 'string') {
+        return contentObj.text;
       }
     }
   }
