@@ -21,6 +21,14 @@ describe('extractTextContent', () => {
     expect(extractTextContent(jsonString)).toBe('Extracted text');
   });
 
+  it('formats Claude Code isNewTopic responses with icons', () => {
+    const newTopicResponse = { isNewTopic: true, title: 'New conversation started' };
+    expect(extractTextContent(newTopicResponse)).toBe('🆕 New conversation started');
+
+    const existingTopicResponse = { isNewTopic: false, title: 'Continuing discussion' };
+    expect(extractTextContent(existingTopicResponse)).toBe('📄 Continuing discussion');
+  });
+
   it('extracts content from object with content field', () => {
     const data = { content: 'Test content' };
     expect(extractTextContent(data)).toBe('Test content');

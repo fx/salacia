@@ -77,6 +77,17 @@ function extractFromParsedData(data: unknown): string {
     }
   }
 
+  // Check for Claude Code specific response format: { "isNewTopic": boolean, "title": string, ... }
+  if (
+    'isNewTopic' in dataObj &&
+    typeof dataObj.isNewTopic === 'boolean' &&
+    'title' in dataObj &&
+    typeof dataObj.title === 'string'
+  ) {
+    const icon = dataObj.isNewTopic ? '🆕' : '📄';
+    return `${icon} ${dataObj.title}`;
+  }
+
   // Check for Claude API response format: content array
   if (Array.isArray(dataObj.content) && dataObj.content.length > 0) {
     const firstContent = dataObj.content[0];
