@@ -23,7 +23,7 @@ export class AIService {
   static async generateCompletion(
     request: AnthropicRequest,
     provider?: AiProvider
-  ): Promise<AnthropicResponse> {
+  ): Promise<{ response: AnthropicResponse; providerId: string }> {
     const startTime = Date.now();
     let selectedProvider = provider;
 
@@ -51,7 +51,8 @@ export class AIService {
           selectedProvider.baseUrl || 'https://api.anthropic.com/v1'
         );
 
-        return await anthropicClient.createMessage(request);
+        const response = await anthropicClient.createMessage(request);
+        return { response, providerId: selectedProvider.id };
       }
 
       const client = await ProviderManager.createClient(selectedProvider);
@@ -96,7 +97,7 @@ export class AIService {
         },
       };
 
-      return response;
+      return { response, providerId: selectedProvider.id };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -114,7 +115,7 @@ export class AIService {
   static async generateStreamingCompletion(
     request: AnthropicRequest,
     provider?: AiProvider
-  ): Promise<ReadableStream> {
+  ): Promise<{ stream: ReadableStream; providerId: string }> {
     // Get provider if not provided
     let selectedProvider = provider;
     if (!selectedProvider) {
@@ -139,13 +140,15 @@ export class AIService {
         selectedProvider.baseUrl || 'https://api.anthropic.com/v1'
       );
 
-      return await anthropicClient.createStreamingMessage(request);
+      const stream = await anthropicClient.createStreamingMessage(request);
+      return { stream, providerId: selectedProvider.id };
     }
 
-    const response = await this.generateCompletion(request, provider);
+    const { response } = await this.generateCompletion(request, selectedProvider);
 
     // Create a streaming response that chunks the text
-    return this.createSimulatedStream(response);
+    const stream = this.createSimulatedStream(response);
+    return { stream, providerId: selectedProvider.id };
   }
 
   /**
