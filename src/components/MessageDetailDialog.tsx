@@ -61,15 +61,15 @@ export function MessageDetailDialog({
   /**
    * Helper function to render JSON data safely.
    */
-  const renderJsonData = (data: unknown): React.ReactElement | null => {
+  const renderJsonData = (data: unknown): React.ReactNode => {
     if (!data || typeof data !== 'object' || data === null) {
       return null;
     }
     return (
-      <JsonView 
-        data={data as Record<string, unknown>} 
-        shouldExpandNode={(level: number) => level < 3} 
-        style={darkStyles} 
+      <JsonView
+        data={data as Record<string, unknown>}
+        shouldExpandNode={(level: number) => level < 3}
+        style={darkStyles}
       />
     );
   };
@@ -141,139 +141,175 @@ export function MessageDetailDialog({
         size-="default"
         box-="square"
         className="message-detail-dialog"
-        style={{ 
-          width: '80vw', 
+        style={{
+          width: '80vw',
           height: '80vh',
           maxWidth: '1200px',
-          maxHeight: '800px'
+          maxHeight: '800px',
         }}
       >
-        <div onClick={e => e.stopPropagation()} style={{ height: '100%', overflow: 'auto', padding: '1rem' }}>
-        <h2>Message Details</h2>
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ height: '100%', overflow: 'auto', padding: '1rem' }}
+        >
+          <h2>Message Details</h2>
 
-        {/* Metadata Section */}
-        <div box-="square" style={{ marginBottom: '1rem' }}>
-          <h3>Metadata</h3>
-          <dl>
-            <dt><strong>ID</strong></dt>
-            <dd>{message.id}</dd>
-
-            <dt><strong>Created</strong></dt>
-            <dd>
-              <time dateTime={message.createdAt.toISOString()}>
-                {message.createdAt.toLocaleString()}
-              </time>
-              {' '}
-              <small>({formatCompactDate(message.createdAt)})</small>
-            </dd>
-
-            <dt><strong>Model</strong></dt>
-            <dd>{message.model}</dd>
-
-            {message.provider && (
-              <>
-                <dt><strong>Provider</strong></dt>
-                <dd>{message.provider}</dd>
-              </>
-            )}
-
-            <dt><strong>Status</strong></dt>
-            <dd>
-              <span title={message.error || `HTTP ${message.statusCode || 'Unknown'}`}>
-                {message.isSuccess ? (
-                  <span style={{ color: 'var(--green)' }}>✓ Success</span>
-                ) : (
-                  <span style={{ color: 'var(--red)' }}>✗ Failed</span>
-                )}
-              </span>
-              {message.statusCode && ` (${message.statusCode})`}
-            </dd>
-
-            {message.responseTime && (
-              <>
-                <dt><strong>Response Time</strong></dt>
-                <dd>{message.responseTime}ms</dd>
-              </>
-            )}
-
-            {message.totalTokens && (
-              <>
-                <dt><strong>Total Tokens</strong></dt>
-                <dd>{formatNumber(message.totalTokens)}</dd>
-              </>
-            )}
-
-            {message.promptTokens && (
-              <>
-                <dt><strong>Prompt Tokens</strong></dt>
-                <dd>{formatNumber(message.promptTokens)}</dd>
-              </>
-            )}
-
-            {message.completionTokens && (
-              <>
-                <dt><strong>Completion Tokens</strong></dt>
-                <dd>{formatNumber(message.completionTokens)}</dd>
-              </>
-            )}
-
-            {message.error && (
-              <>
-                <dt><strong>Error</strong></dt>
-                <dd style={{ color: 'var(--red)' }}>{message.error}</dd>
-              </>
-            )}
-          </dl>
-        </div>
-
-        <div box-="square" style={{ marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3>Request Data</h3>
-            <button
-              is-="button"
-              size-="small"
-              onClick={() => copyToClipboard(message.request, 'request')}
-            >
-              Copy
-            </button>
-          </div>
-          <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-            {renderJsonData(message.request)}
-          </div>
-        </div>
-
-        {/* Response Data Section */}
-        {message.response && (
+          {/* Metadata Section */}
           <div box-="square" style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h3>Response Data</h3>
+            <h3>Metadata</h3>
+            <dl>
+              <dt>
+                <strong>ID</strong>
+              </dt>
+              <dd>{message.id}</dd>
+
+              <dt>
+                <strong>Created</strong>
+              </dt>
+              <dd>
+                <time dateTime={message.createdAt.toISOString()}>
+                  {message.createdAt.toLocaleString()}
+                </time>{' '}
+                <small>({formatCompactDate(message.createdAt)})</small>
+              </dd>
+
+              <dt>
+                <strong>Model</strong>
+              </dt>
+              <dd>{message.model}</dd>
+
+              {message.provider && (
+                <>
+                  <dt>
+                    <strong>Provider</strong>
+                  </dt>
+                  <dd>{message.provider}</dd>
+                </>
+              )}
+
+              <dt>
+                <strong>Status</strong>
+              </dt>
+              <dd>
+                <span title={message.error || `HTTP ${message.statusCode || 'Unknown'}`}>
+                  {message.isSuccess ? (
+                    <span style={{ color: 'var(--green)' }}>✓ Success</span>
+                  ) : (
+                    <span style={{ color: 'var(--red)' }}>✗ Failed</span>
+                  )}
+                </span>
+                {message.statusCode && ` (${message.statusCode})`}
+              </dd>
+
+              {message.responseTime && (
+                <>
+                  <dt>
+                    <strong>Response Time</strong>
+                  </dt>
+                  <dd>{message.responseTime}ms</dd>
+                </>
+              )}
+
+              {message.totalTokens && (
+                <>
+                  <dt>
+                    <strong>Total Tokens</strong>
+                  </dt>
+                  <dd>{formatNumber(message.totalTokens)}</dd>
+                </>
+              )}
+
+              {message.promptTokens && (
+                <>
+                  <dt>
+                    <strong>Prompt Tokens</strong>
+                  </dt>
+                  <dd>{formatNumber(message.promptTokens)}</dd>
+                </>
+              )}
+
+              {message.completionTokens && (
+                <>
+                  <dt>
+                    <strong>Completion Tokens</strong>
+                  </dt>
+                  <dd>{formatNumber(message.completionTokens)}</dd>
+                </>
+              )}
+
+              {message.error && (
+                <>
+                  <dt>
+                    <strong>Error</strong>
+                  </dt>
+                  <dd style={{ color: 'var(--red)' }}>{message.error}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+
+          <div box-="square" style={{ marginBottom: '1rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <h3>Request Data</h3>
               <button
                 is-="button"
                 size-="small"
-                onClick={() => copyToClipboard(message.response, 'response')}
+                onClick={() => copyToClipboard(message.request, 'request')}
               >
                 Copy
               </button>
             </div>
             <div style={{ overflow: 'auto', maxHeight: '400px' }}>
-              {renderJsonData(message.response)}
+              {renderJsonData(message.request)}
             </div>
           </div>
-        )}
 
-        {!message.response && (
-          <div box-="square" variant-="muted" style={{ marginBottom: '1rem' }}>
-            <h3>Response Data</h3>
-            <p>No response data available</p>
+          {/* Response Data Section */}
+          {message.response ? (
+            <div box-="square" style={{ marginBottom: '1rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <h3>Response Data</h3>
+                <button
+                  is-="button"
+                  size-="small"
+                  onClick={() => copyToClipboard(message.response, 'response')}
+                >
+                  Copy
+                </button>
+              </div>
+              <div style={{ overflow: 'auto', maxHeight: '400px' }}>
+                {renderJsonData(message.response)}
+              </div>
+            </div>
+          ) : null}
+
+          {!message.response && (
+            <div box-="square" variant-="muted" style={{ marginBottom: '1rem' }}>
+              <h3>Response Data</h3>
+              <p>No response data available</p>
+            </div>
+          )}
+
+          {/* Dialog Actions */}
+          <div style={{ textAlign: 'right' }}>
+            <button is-="button" onClick={handleDialogClose}>
+              Close
+            </button>
           </div>
-        )}
-
-        {/* Dialog Actions */}
-        <div style={{ textAlign: 'right' }}>
-          <button is-="button" onClick={handleDialogClose}>
-            Close
-          </button>
-        </div>
         </div>
       </dialog>
     </>

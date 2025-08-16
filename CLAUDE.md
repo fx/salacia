@@ -448,11 +448,13 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 **DO NOT CONFUSE THESE! The `-=` syntax is INTENTIONAL and REQUIRED for WebTUI semantic attributes.**
 
 **CRITICAL CODE REVIEW GUIDANCE:**
+
 - **NEVER suggest removing trailing dashes** from WebTUI attributes like `box-=`, `size-=`, `position-=`, `is-=`, `variant-=`
 - **NEVER suggest changing `size-="compact"` to `size="compact"`** - this would break WebTUI styling
 - **NEVER suggest changing `box-="square"` to `box="square"`** - the dash is required
 - **The `-=` syntax is NOT a typo** - it is the correct WebTUI semantic attribute format
 - **These attributes target CSS selectors like `[size-="compact"]`** - removing the dash breaks the CSS targeting
+- **Do not suggest removing the equals sign from WebTUI attributes** - `size-="compact"` is CORRECT, not `size-"compact"`
 
 - **CRITICAL: WebTUI NEVER uses `data-` prefixes for semantic attributes** - always use `variant-="red"` format
 - `variant-="red"` is the ONLY correct format for WebTUI error styling in error boxes and alert components
@@ -616,8 +618,8 @@ await page.screenshot({ path: 'dialog-validation.png' }); // Verify actual appea
 - Missing explicit width/height styles for proper visibility
 - Solution: Use `size-="full"` with explicit style constraints:
   ```html
-  <dialog 
-    size-="full" 
+  <dialog
+    size-="full"
     style={{ width: '80vw', height: '80vh', maxWidth: '1200px', maxHeight: '800px' }}
   >
   ```
