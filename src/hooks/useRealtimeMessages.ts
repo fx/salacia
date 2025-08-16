@@ -25,7 +25,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSSE, type SSEEvent } from './useSSE.js';
 import { MESSAGES_CONSTANTS, type MessageDisplay } from '../lib/types/messages.js';
-import type { MessageCreatedEventData } from '../lib/realtime/types.js';
+import type { MessageCreatedEventData, MessageUpdatedEventData } from '../lib/realtime/types.js';
 
 /**
  * Configuration options for the realtime messages hook.
@@ -67,7 +67,9 @@ export interface RealtimeMessagesOptions {
    * Custom message transformation function.
    * Allows customization of how SSE event data is converted to MessageDisplay.
    */
-  transformMessage?: (_eventData: MessageCreatedEventData) => MessageDisplay;
+  transformMessage?: (
+    _eventData: MessageCreatedEventData | MessageUpdatedEventData
+  ) => MessageDisplay;
 }
 
 /**
@@ -85,7 +87,9 @@ const DEFAULT_OPTIONS: Required<Omit<RealtimeMessagesOptions, 'transformMessage'
  * Default message transformation function.
  * Converts SSE event data to MessageDisplay format.
  */
-export const defaultTransformMessage = (eventData: MessageCreatedEventData): MessageDisplay => {
+export const defaultTransformMessage = (
+  eventData: MessageCreatedEventData | MessageUpdatedEventData
+): MessageDisplay => {
   // Build a MessageDisplay consistent with DB transformation
   // Reuse preview extraction rules similar to transformAiInteractionToDisplay
   let requestPreview = 'No request data';
@@ -246,6 +250,42 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
   );
 
   /**
+   * Handle incoming message:updated events.
+   */
+  const handleMessageUpdated = useCallback(
+    (event: SSEEvent) => {
+      try {
+        const eventData = event.data as MessageUpdatedEventData;
+        const updatedMessage = transformMessage(eventData);
+
+        setMessages(prevMessages => {
+          const existingIndex = prevMessages.findIndex(msg => msg.id === updatedMessage.id);
+          if (existingIndex !== -1) {
+            const updatedMessages = [...prevMessages];
+            updatedMessages[existingIndex] = updatedMessage;
+            return updatedMessages;
+          }
+          // If message doesn't exist, add it (shouldn't happen but defensive programming)
+          return [updatedMessage, ...prevMessages].slice(
+            0,
+            mergedOptions.maxMessages > 0 ? mergedOptions.maxMessages : prevMessages.length + 1
+          );
+        });
+
+        // Update statistics for last event time
+        setStats(prevStats => ({
+          ...prevStats,
+          connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
+          lastEventTime: new Date(),
+        }));
+      } catch (error) {
+        console.error('Failed to process message:updated event:', error);
+      }
+    },
+    [transformMessage, mergedOptions.maxMessages, connectionStartTime]
+  );
+
+  /**
    * Handle connection established events.
    */
   const handleConnected = useCallback((_event: SSEEvent) => {
@@ -280,12 +320,14 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
   // Set up event listeners
   useEffect(() => {
     const unsubscribeCreated = addEventListener('message:created', handleMessageCreated);
+    const unsubscribeUpdated = addEventListener('message:updated', handleMessageUpdated);
     const unsubscribeConnected = addEventListener('connected', handleConnected);
     const unsubscribeHeartbeat = addEventListener('heartbeat', handleHeartbeat);
     const unsubscribeError = addErrorListener(handleSSEError);
 
     return () => {
       unsubscribeCreated();
+      unsubscribeUpdated();
       unsubscribeConnected();
       unsubscribeHeartbeat();
       unsubscribeError();
@@ -294,6 +336,7 @@ export function useRealtimeMessages(options: RealtimeMessagesOptions = {}) {
     addEventListener,
     addErrorListener,
     handleMessageCreated,
+    handleMessageUpdated,
     handleConnected,
     handleHeartbeat,
     handleSSEError,

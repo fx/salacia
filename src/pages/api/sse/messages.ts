@@ -138,7 +138,13 @@ export const GET: APIRoute = async ({ request }) => {
       }
 
       // Subscribe to future realtime events
-      const unsubscribe = broker.subscribe('message:created', handleRealtimeEvent);
+      const unsubscribeCreated = broker.subscribe('message:created', handleRealtimeEvent);
+      const unsubscribeUpdated = broker.subscribe('message:updated', handleRealtimeEvent);
+
+      const unsubscribe = () => {
+        unsubscribeCreated();
+        unsubscribeUpdated();
+      };
 
       // Set up heartbeat to detect stale connections
       heartbeatInterval = globalThis.setInterval(() => {

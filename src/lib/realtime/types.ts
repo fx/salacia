@@ -9,7 +9,7 @@
 /**
  * Supported realtime event kinds.
  */
-export type RealtimeEventType = 'message:created';
+export type RealtimeEventType = 'message:created' | 'message:updated';
 
 /**
  * Minimal payload for a newly created message.
@@ -64,6 +64,12 @@ export interface MessageCreatedEventData {
    */
   response?: unknown;
 }
+
+/**
+ * Payload for message updated events.
+ * Reuses the same structure as MessageCreatedEventData for simplicity.
+ */
+export interface MessageUpdatedEventData extends MessageCreatedEventData {}
 
 /**
  * Generic envelope for all realtime events.

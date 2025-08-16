@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useSSE, type SSEEvent, type SSEConnectionState } from '../hooks/useSSE.js';
 import { type MessageDisplay, type MessageStats } from '../lib/types/messages.js';
-import type { MessageCreatedEventData } from '../lib/realtime/types.js';
+import type { MessageCreatedEventData, MessageUpdatedEventData } from '../lib/realtime/types.js';
 import { defaultTransformMessage } from '../hooks/useRealtimeMessages.js';
 import { useStatsSSE } from '../hooks/useStatsSSE.js';
 
@@ -154,6 +154,36 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     [connectionStartTime]
   );
 
+  const handleMessageUpdated = useCallback(
+    (event: SSEEvent) => {
+      try {
+        const eventData = event.data as MessageUpdatedEventData;
+        const updatedMessage = defaultTransformMessage(eventData);
+
+        setMessages(prev => {
+          const existingIndex = prev.findIndex(m => m.id === updatedMessage.id);
+          if (existingIndex !== -1) {
+            const updated = [...prev];
+            updated[existingIndex] = updatedMessage;
+            return updated;
+          }
+          // If message doesn't exist, add it (shouldn't happen but defensive programming)
+          return [updatedMessage, ...prev].slice(0, maxMessages);
+        });
+
+        // Update stats for last event time
+        setStats(prev => ({
+          ...prev,
+          connectionUptime: connectionStartTime ? Date.now() - connectionStartTime.getTime() : 0,
+          lastEventTime: new Date(),
+        }));
+      } catch {
+        /* noop */
+      }
+    },
+    [connectionStartTime]
+  );
+
   const handleConnected = useCallback((_event: SSEEvent) => {
     setConnectionStartTime(new Date());
   }, []);
@@ -170,14 +200,22 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const offCreated = addEventListener('message:created', handleMessageCreated);
+    const offUpdated = addEventListener('message:updated', handleMessageUpdated);
     const offConnected = addEventListener('connected', handleConnected);
     const offHeartbeat = addEventListener('heartbeat', handleHeartbeat);
     return () => {
       offCreated();
+      offUpdated();
       offConnected();
       offHeartbeat();
     };
-  }, [addEventListener, handleMessageCreated, handleConnected, handleHeartbeat]);
+  }, [
+    addEventListener,
+    handleMessageCreated,
+    handleMessageUpdated,
+    handleConnected,
+    handleHeartbeat,
+  ]);
 
   useEffect(() => {
     if (connectionState === 'connected') {

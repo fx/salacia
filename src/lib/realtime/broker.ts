@@ -1,5 +1,10 @@
 import { EventEmitter } from 'node:events';
-import type { MessageCreatedEventData, RealtimeEvent, RealtimeEventType } from './types.js';
+import type {
+  MessageCreatedEventData,
+  MessageUpdatedEventData,
+  RealtimeEvent,
+  RealtimeEventType,
+} from './types.js';
 
 /**
  * In-process realtime broker for server-side event propagation.
@@ -33,6 +38,23 @@ class RealtimeBroker extends EventEmitter {
       id: data.id,
       createdAt: data.createdAt,
       type: 'message:created',
+      data,
+    };
+
+    this.pushToBuffer(evt);
+    this.emit(evt.type, evt);
+  }
+
+  /**
+   * Emit a message:updated event with normalized payload.
+   *
+   * @param data - Minimal payload describing the updated message
+   */
+  emitMessageUpdated(data: MessageUpdatedEventData): void {
+    const evt: RealtimeEvent<MessageUpdatedEventData> = {
+      id: data.id,
+      createdAt: new Date(), // Use current time for update event
+      type: 'message:updated',
       data,
     };
 

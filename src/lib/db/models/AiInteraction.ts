@@ -257,10 +257,30 @@ AiInteraction.init(
 
       /**
        * Hook executed after updating an AiInteraction record.
-       * Logs the new state after changes have been applied.
+       * Emits realtime event when streaming status or response changes.
        */
-      afterUpdate: async (instance: AiInteraction) => {
-        void instance; // Prevent unused parameter warning
+      afterUpdate: async (instance: AiInteraction, options: Record<string, unknown>) => {
+        const emit = () =>
+          broker.emitMessageUpdated({
+            id: instance.id,
+            createdAt: instance.createdAt,
+            model: instance.model,
+            promptTokens: instance.promptTokens ?? null,
+            completionTokens: instance.completionTokens ?? null,
+            totalTokens: instance.totalTokens ?? null,
+            responseTimeMs: instance.responseTimeMs ?? null,
+            statusCode: instance.statusCode ?? null,
+            error: instance.error ?? null,
+            request: instance.request,
+            response: instance.response,
+          });
+
+        const tx = options?.transaction as { afterCommit?: (_fn: () => void) => void } | undefined;
+        if (tx?.afterCommit) {
+          tx.afterCommit(() => emit());
+        } else {
+          emit();
+        }
       },
     },
   }
