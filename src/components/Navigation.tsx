@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRealtime } from '../context/realtime.js';
+import packageJson from '../../package.json';
 
 /** Flash duration for +N badge animation */
 const PLUS_FLASH_DURATION_MS = 280;
@@ -228,7 +229,7 @@ export function Navigation() {
           SALACIA
         </span>
         <span is-="badge" variant-="background1">
-          v0.0.1
+          v{packageJson.version}
         </span>
       </span>
     </nav>
