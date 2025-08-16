@@ -213,7 +213,7 @@ export function MessagesTable({
   if (error) {
     return (
       <div role="alert" aria-live="polite">
-        <div variant-="error" box-="square">
+        <div data-variant="red" box-="square">
           <h3>Error Loading Messages</h3>
           <p>{error}</p>
         </div>

@@ -38,10 +38,12 @@ export function extractTextContent(data: unknown): string {
  * @param data - Parsed JSON object
  * @returns Extracted text content
  */
-function extractFromParsedData(data: any): string {
+function extractFromParsedData(data: unknown): string {
   if (!data || typeof data !== 'object') {
     return String(data || 'No content');
   }
+
+  const dataObj = data as Record<string, unknown>;
 
   // Common patterns for AI request/response content
   const textFields = ['content', 'message', 'text', 'prompt', 'response'];
@@ -55,21 +57,34 @@ function extractFromParsedData(data: any): string {
   }
 
   // Check for arrays of messages
-  if (Array.isArray(data.messages)) {
-    const lastMessage = data.messages[data.messages.length - 1];
-    if (lastMessage && typeof lastMessage.content === 'string') {
-      return lastMessage.content;
+  if (Array.isArray(dataObj.messages)) {
+    const lastMessage = dataObj.messages[dataObj.messages.length - 1];
+    if (lastMessage && typeof lastMessage === 'object' && lastMessage !== null) {
+      const messageObj = lastMessage as Record<string, unknown>;
+      if (typeof messageObj.content === 'string') {
+        return messageObj.content;
+      }
     }
   }
 
   // Check for choices array (OpenAI format)
-  if (Array.isArray(data.choices) && data.choices[0]) {
-    const choice = data.choices[0];
-    if (choice.message && typeof choice.message.content === 'string') {
-      return choice.message.content;
-    }
-    if (choice.text && typeof choice.text === 'string') {
-      return choice.text;
+  if (Array.isArray(dataObj.choices) && dataObj.choices[0]) {
+    const choice = dataObj.choices[0];
+    if (choice && typeof choice === 'object' && choice !== null) {
+      const choiceObj = choice as Record<string, unknown>;
+      if (
+        choiceObj.message &&
+        typeof choiceObj.message === 'object' &&
+        choiceObj.message !== null
+      ) {
+        const messageObj = choiceObj.message as Record<string, unknown>;
+        if (typeof messageObj.content === 'string') {
+          return messageObj.content;
+        }
+      }
+      if (typeof choiceObj.text === 'string') {
+        return choiceObj.text;
+      }
     }
   }
 
@@ -85,8 +100,8 @@ function extractFromParsedData(data: any): string {
  * @param path - Dot-notation path (e.g., 'choices.0.message.content')
  * @returns Found value or undefined
  */
-function getNestedValue(obj: any, path: string): any {
-  return path.split('.').reduce((current, key) => {
+function getNestedValue(obj: unknown, path: string): unknown {
+  return path.split('.').reduce((current: any, key: string) => {
     if (current === null || current === undefined) return undefined;
     return current[key];
   }, obj);
