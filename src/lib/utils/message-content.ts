@@ -77,15 +77,16 @@ function extractFromParsedData(data: unknown): string {
     }
   }
 
-  // Check for Claude Code specific response format: { "isNewTopic": boolean, "title": string, ... }
+  // Check for Claude Code specific response format: { "isNewTopic": boolean, "title": string | null, ... }
   if (
     'isNewTopic' in dataObj &&
     typeof dataObj.isNewTopic === 'boolean' &&
     'title' in dataObj &&
-    typeof dataObj.title === 'string'
+    (typeof dataObj.title === 'string' || dataObj.title === null)
   ) {
     const icon = dataObj.isNewTopic ? '🆕' : '📄';
-    return `${icon} ${dataObj.title}`;
+    const title = dataObj.title || 'Untitled';
+    return `${icon} ${title}`;
   }
 
   // Check for Claude API response format: content array
@@ -103,10 +104,11 @@ function extractFromParsedData(data: unknown): string {
             'isNewTopic' in parsedText &&
             typeof parsedText.isNewTopic === 'boolean' &&
             'title' in parsedText &&
-            typeof parsedText.title === 'string'
+            (typeof parsedText.title === 'string' || parsedText.title === null)
           ) {
             const icon = parsedText.isNewTopic ? '🆕' : '📄';
-            return `${icon} ${parsedText.title}`;
+            const title = parsedText.title || 'Untitled';
+            return `${icon} ${title}`;
           }
         } catch {
           // Not JSON or not Claude Code format, return the text as-is

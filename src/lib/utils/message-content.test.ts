@@ -27,6 +27,10 @@ describe('extractTextContent', () => {
 
     const existingTopicResponse = { isNewTopic: false, title: 'Continuing discussion' };
     expect(extractTextContent(existingTopicResponse)).toBe('📄 Continuing discussion');
+
+    // Handle null title case
+    const nullTitleResponse = { isNewTopic: false, title: null };
+    expect(extractTextContent(nullTitleResponse)).toBe('📄 Untitled');
   });
 
   it('formats Claude Code responses nested in Anthropic format', () => {
@@ -50,6 +54,37 @@ describe('extractTextContent', () => {
       ],
     };
     expect(extractTextContent(existingTopicNested)).toBe('📄 Code Review');
+
+    // Test null title in nested format
+    const nullTitleNested = {
+      content: [
+        {
+          text: '{"isNewTopic": false, "title": null}',
+          type: 'text',
+        },
+      ],
+    };
+    expect(extractTextContent(nullTitleNested)).toBe('📄 Untitled');
+  });
+
+  it('handles real database format with extra fields', () => {
+    // Real format from database query
+    const realAnthropicResponse = {
+      id: 'msg_01WHN4iTWMHGTg3ctVSBYs1b',
+      role: 'assistant',
+      type: 'message',
+      model: 'claude-3-5-haiku-20241022',
+      usage: { input_tokens: 107, output_tokens: 26 },
+      content: [
+        {
+          text: '{\n    "isNewTopic": true,\n    "title": "Math Calculation"\n}',
+          type: 'text',
+        },
+      ],
+      stop_reason: 'end_turn',
+      stop_sequence: null,
+    };
+    expect(extractTextContent(realAnthropicResponse)).toBe('🆕 Math Calculation');
   });
 
   it('extracts content from object with content field', () => {
