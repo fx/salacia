@@ -25,6 +25,8 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
+import { formatCompactDate } from '../lib/utils/date.js';
+import { extractTextContent } from '../lib/utils/message-content.js';
 
 /**
  * Props for the MessagesTable component.
@@ -40,30 +42,12 @@ export interface MessagesTableProps {
   sort: MessageSort;
   /** Callback for sort changes */
   onSortChange: (sort: MessageSort) => void;
-  /** Optional CSS class name */
-  className?: string;
 }
 
 /**
  * Column helper for type-safe column definitions.
  */
 const columnHelper = createColumnHelper<MessageDisplay>();
-
-/**
- * Formats a date to a human-readable string.
- *
- * @param date - Date to format
- * @returns Formatted date string
- */
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
 
 /**
  * Formats a number with proper thousands separators.
@@ -100,7 +84,6 @@ export function MessagesTable({
   error = null,
   sort,
   onSortChange,
-  className = '',
 }: MessagesTableProps): React.ReactElement {
   /**
    * Column definitions for the messages table.
@@ -111,8 +94,8 @@ export function MessagesTable({
       columnHelper.accessor('createdAt', {
         header: 'Created',
         cell: info => (
-          <time dateTime={info.getValue().toISOString()} title={formatDate(info.getValue())}>
-            <small>{formatDate(info.getValue())}</small>
+          <time dateTime={info.getValue().toISOString()} title={info.getValue().toLocaleString()}>
+            {formatCompactDate(info.getValue())}
           </time>
         ),
         sortingFn: 'datetime',
@@ -120,14 +103,14 @@ export function MessagesTable({
       }),
       columnHelper.accessor('model', {
         header: 'Model',
-        cell: info => <strong title={info.getValue()}>{info.getValue()}</strong>,
+        cell: info => info.getValue(),
         enableSorting: true,
       }),
       columnHelper.accessor('provider', {
         header: 'Provider',
         cell: info => {
           const provider = info.getValue();
-          return provider ? <small title={provider}>{provider}</small> : <small>—</small>;
+          return provider || '—';
         },
         enableSorting: false,
       }),
@@ -137,18 +120,14 @@ export function MessagesTable({
           const isSuccess = info.getValue();
           const statusCode = info.row.original.statusCode;
           const error = info.row.original.error;
+          const isLoading = statusCode === undefined && !error;
+
+          if (isLoading) {
+            return <span title="Loading...">⟳</span>;
+          }
 
           return (
-            <span>
-              <span
-                is-="badge"
-                variant-={isSuccess ? 'success' : 'error'}
-                title={error || `HTTP ${statusCode}`}
-              >
-                <small>{isSuccess ? '✓ Success' : '✗ Failed'}</small>
-              </span>
-              {statusCode && <small title={`HTTP Status: ${statusCode}`}>{statusCode}</small>}
-            </span>
+            <span title={error || `HTTP ${statusCode || 'Unknown'}`}>{isSuccess ? '✓' : '✗'}</span>
           );
         },
         enableSorting: false,
@@ -157,40 +136,34 @@ export function MessagesTable({
         header: 'Tokens',
         cell: info => {
           const tokens = info.getValue();
-          return tokens ? (
-            <small title={`Total tokens: ${formatNumber(tokens)}`}>{formatNumber(tokens)}</small>
-          ) : (
-            <small>—</small>
-          );
+          return tokens ? formatNumber(tokens) : '—';
         },
         enableSorting: true,
       }),
       columnHelper.accessor('responseTime', {
-        header: 'Response Time',
+        header: 'Time',
         cell: info => {
           const responseTime = info.getValue();
-          return responseTime ? (
-            <small title={`Response time: ${responseTime}ms`}>{responseTime}ms</small>
-          ) : (
-            <small>—</small>
-          );
+          return responseTime ? `${responseTime}ms` : '—';
         },
         enableSorting: true,
       }),
-      columnHelper.accessor('requestPreview', {
-        header: 'Request Preview',
-        cell: info => <code title={info.getValue()}>{truncateText(info.getValue(), 40)}</code>,
+      columnHelper.accessor('request', {
+        header: 'Request',
+        cell: info => {
+          const request = info.getValue();
+          const textContent = extractTextContent(request);
+          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
+        },
         enableSorting: false,
       }),
-      columnHelper.accessor('responsePreview', {
-        header: 'Response Preview',
+      columnHelper.accessor('response', {
+        header: 'Response',
         cell: info => {
-          const preview = info.getValue();
-          return preview ? (
-            <code title={preview}>{truncateText(preview, 40)}</code>
-          ) : (
-            <small>—</small>
-          );
+          const response = info.getValue();
+          if (!response) return '—';
+          const textContent = extractTextContent(response);
+          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
         },
         enableSorting: false,
       }),
@@ -240,11 +213,9 @@ export function MessagesTable({
   if (error) {
     return (
       <div role="alert" aria-live="polite">
-        <div variant-="error" box-="square" style={{ textAlign: 'center' }}>
+        <div variant-="error" box-="square">
           <h3>Error Loading Messages</h3>
-          <p>
-            <small>{error}</small>
-          </p>
+          <p>{error}</p>
         </div>
       </div>
     );
@@ -254,12 +225,7 @@ export function MessagesTable({
   if (isLoading) {
     return (
       <div aria-busy="true" aria-live="polite">
-        <div style={{ textAlign: 'center' }}>
-          <div>⟳</div>
-          <p>
-            <small>Loading messages...</small>
-          </p>
-        </div>
+        <div>⟳ Loading messages...</div>
       </div>
     );
   }
@@ -268,19 +234,15 @@ export function MessagesTable({
   if (messages.length === 0) {
     return (
       <div role="status" aria-live="polite">
-        <div style={{ textAlign: 'center' }}>
-          <h3>No Messages Found</h3>
-          <p>
-            <small>There are no messages matching your current filters.</small>
-          </p>
-        </div>
+        <h3>No Messages Found</h3>
+        <p>There are no messages matching your current filters.</p>
       </div>
     );
   }
 
   return (
     <div role="region" aria-label="Messages table">
-      <table is-="table" role="table" style={{ width: '100%' }}>
+      <table size-="compact" role="table">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} role="row">
@@ -290,7 +252,6 @@ export function MessagesTable({
                   role="columnheader"
                   style={{
                     cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                    userSelect: 'none',
                   }}
                   onClick={header.column.getToggleSortingHandler()}
                   tabIndex={header.column.getCanSort() ? 0 : -1}
@@ -310,20 +271,16 @@ export function MessagesTable({
                         : undefined
                   }
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1ch' }}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getCanSort() && (
-                      <span aria-hidden="true">
-                        <small>
-                          {header.column.getIsSorted() === 'desc'
-                            ? '↓'
-                            : header.column.getIsSorted() === 'asc'
-                              ? '↑'
-                              : '↕'}
-                        </small>
-                      </span>
-                    )}
-                  </div>
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {header.column.getCanSort() && (
+                    <span aria-hidden="true">
+                      {header.column.getIsSorted() === 'desc'
+                        ? '↓'
+                        : header.column.getIsSorted() === 'asc'
+                          ? '↑'
+                          : '↕'}
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
