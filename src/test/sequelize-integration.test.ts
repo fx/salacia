@@ -229,7 +229,7 @@ describe('Sequelize Integration Tests', () => {
   describe('Service Layer Integration', () => {
     const testInteractions = [
       {
-        id: `${testUtils.generateTestId()}-1`,
+        id: testUtils.generateTestId(),
         model: 'gpt-4',
         request: { messages: [{ role: 'user', content: 'Test 1' }] },
         response: { content: 'Response 1' },
@@ -240,7 +240,7 @@ describe('Sequelize Integration Tests', () => {
         statusCode: 200,
       },
       {
-        id: `${testUtils.generateTestId()}-2`,
+        id: testUtils.generateTestId(),
         model: 'claude-3-opus',
         request: { messages: [{ role: 'user', content: 'Test 2' }] },
         response: { content: 'Response 2' },

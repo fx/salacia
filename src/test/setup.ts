@@ -18,10 +18,15 @@ export const server = setupServer();
 // Test utilities
 export const testUtils = {
   /**
-   * Generate a unique test ID
+   * Generate a unique test ID (UUID format)
    */
   generateTestId: (): string => {
-    return `test_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    // Generate a v4 UUID for test data
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      const v = c == 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   },
 
   /**

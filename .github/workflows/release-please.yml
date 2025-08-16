@@ -32,24 +32,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
           
-      # Optional: Build and test before release
-      - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created }}
-        
-      - uses: actions/setup-node@v4
-        if: ${{ steps.release.outputs.release_created }}
-        with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - run: npm ci
-        if: ${{ steps.release.outputs.release_created }}
-        
-      - run: npm run type-check
-        if: ${{ steps.release.outputs.release_created }}
-        
-      - run: npm run lint
-        if: ${{ steps.release.outputs.release_created }}
-        
-      - run: npm run test:run
-        if: ${{ steps.release.outputs.release_created }}
+      # Note: Tests run in CI workflow, not here to avoid blocking releases

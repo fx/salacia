@@ -15,8 +15,8 @@ describe('Test Infrastructure', () => {
     const id1 = testUtils.generateTestId();
     const id2 = testUtils.generateTestId();
 
-    expect(id1).toMatch(/^test_\d+_[a-z0-9]+$/);
-    expect(id2).toMatch(/^test_\d+_[a-z0-9]+$/);
+    expect(id1).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(id2).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     expect(id1).not.toBe(id2);
   });
 

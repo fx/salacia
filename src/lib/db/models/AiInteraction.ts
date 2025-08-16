@@ -275,6 +275,7 @@ AiInteraction.init(
        * Captures the original state before changes are applied.
        */
       beforeUpdate: async (instance: AiInteraction) => {
+        console.log(`[Hook] Before update for interaction ${instance.id}`);
         void instance; // Prevent unused parameter warning
       },
 
@@ -283,6 +284,7 @@ AiInteraction.init(
        * Emits realtime event when streaming status or response changes.
        */
       afterUpdate: async (instance: AiInteraction, options: Record<string, unknown>) => {
+        console.log(`[Hook] After update for interaction ${instance.id}`);
         const emit = async () => {
           // Fetch provider data if provider ID exists
           let provider = null;
