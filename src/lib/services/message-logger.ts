@@ -25,9 +25,9 @@ interface InteractionCreationData {
   error?: string;
   statusCode?: number;
   responseTimeMs?: number;
-  totalTokens?: number;
-  promptTokens?: number;
-  completionTokens?: number;
+  totalTokens?: number | null;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
 }
 
 /**
@@ -93,9 +93,9 @@ export async function logAiInteraction({
       error: error ? (typeof error === 'string' ? error : error.message) : undefined,
       statusCode,
       responseTimeMs: responseTime,
-      totalTokens,
-      promptTokens,
-      completionTokens,
+      totalTokens: totalTokens ?? null,
+      promptTokens: promptTokens ?? null,
+      completionTokens: completionTokens ?? null,
     };
 
     // Create the database record
