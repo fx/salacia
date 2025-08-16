@@ -34,7 +34,8 @@ export class AIService {
       }
 
       if (selectedProvider.authType === 'oauth' && selectedProvider.type === 'anthropic') {
-        const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string }).__claudeCodeToken;
+        const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string })
+          .__claudeCodeToken;
         const tokenToUse = claudeCodeToken || selectedProvider.oauthAccessToken;
 
         if (!tokenToUse) {
@@ -123,7 +124,8 @@ export class AIService {
     }
 
     if (selectedProvider.authType === 'oauth' && selectedProvider.type === 'anthropic') {
-      const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string }).__claudeCodeToken;
+      const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string })
+        .__claudeCodeToken;
       const tokenToUse = claudeCodeToken || selectedProvider.oauthAccessToken;
 
       if (!tokenToUse) {

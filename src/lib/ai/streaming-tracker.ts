@@ -19,8 +19,8 @@ interface StreamingState {
   type?: string;
   role?: string;
   model?: string;
-  content: Array<{ type: string; text: string }>;
-  stop_reason?: string;
+  content: Array<{ type: 'text'; text: string }>;
+  stop_reason?: 'end_turn' | 'max_tokens' | 'stop_sequence';
   stop_sequence?: string | null;
   usage: {
     input_tokens?: number;
@@ -80,11 +80,14 @@ export function createTrackingStream(
       }
     },
 
-    cancel() {
+    async cancel() {
       // If stream is cancelled, still try to update what we have
-      updateDatabaseWithCompleteResponse(interactionId, state).catch(error => {
+      try {
+        await updateDatabaseWithCompleteResponse(interactionId, state);
+      } catch (error) {
         logger.error('Failed to update database on stream cancel:', error);
-      });
+        throw error;
+      }
     },
   });
 }
@@ -174,7 +177,7 @@ async function updateDatabaseWithCompleteResponse(
       role: 'assistant',
       content: state.content,
       model: state.model || 'unknown',
-      stop_reason: (state.stop_reason as 'end_turn' | 'max_tokens' | 'stop_sequence') || 'end_turn',
+      stop_reason: state.stop_reason || 'end_turn',
       stop_sequence: state.stop_sequence || null,
       usage: {
         input_tokens: state.usage.input_tokens || 0,

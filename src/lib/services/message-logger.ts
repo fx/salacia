@@ -229,9 +229,9 @@ export async function updateAiInteraction({
     // Update the interaction
     await interaction.update({
       response: response as Record<string, unknown>,
-      promptTokens: promptTokens ?? null,
-      completionTokens: completionTokens ?? null,
-      totalTokens: totalTokens ?? null,
+      promptTokens: promptTokens,
+      completionTokens: completionTokens,
+      totalTokens: totalTokens,
     });
 
     logger.debug('Updated AI interaction:', {

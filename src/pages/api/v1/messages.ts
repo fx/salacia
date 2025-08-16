@@ -41,7 +41,8 @@ export const POST: APIRoute = async ({ request }) => {
       // TODO: Replace global variable with proper state management solution
       // This temporary solution stores Claude Code tokens globally for provider access
       // In production, consider using a request context or dependency injection pattern
-      (globalThis as unknown as { __claudeCodeToken?: string }).__claudeCodeToken = authHeader.substring(7);
+      (globalThis as unknown as { __claudeCodeToken?: string }).__claudeCodeToken =
+        authHeader.substring(7);
 
       const freshToken = authHeader.substring(7);
       if (freshToken.startsWith('sk-ant-oat')) {
@@ -121,9 +122,12 @@ export const POST: APIRoute = async ({ request }) => {
       });
 
       // Wrap stream with tracking to update database when complete
-      const trackingStream = interaction 
-        ? createTrackingStream(stream, interaction.id)
-        : stream;
+      let trackingStream;
+      if (interaction) {
+        trackingStream = createTrackingStream(stream, interaction.id);
+      } else {
+        trackingStream = stream;
+      }
 
       return new Response(trackingStream, {
         status: 200,
