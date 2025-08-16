@@ -71,6 +71,20 @@ export async function logAiInteraction({
   statusCode: number;
 }) {
   try {
+    // Extract token counts from response
+    const promptTokens = response?.usage?.input_tokens;
+    const completionTokens = response?.usage?.output_tokens;
+
+    // Calculate total tokens as sum of prompt and completion tokens
+    let totalTokens: number | undefined;
+    if (promptTokens !== undefined && completionTokens !== undefined) {
+      totalTokens = promptTokens + completionTokens;
+    } else if (promptTokens !== undefined) {
+      totalTokens = promptTokens;
+    } else if (completionTokens !== undefined) {
+      totalTokens = completionTokens;
+    }
+
     // Prepare the interaction data
     const interactionData: InteractionCreationData = {
       model: request.model,
@@ -79,9 +93,9 @@ export async function logAiInteraction({
       error: error ? (typeof error === 'string' ? error : error.message) : undefined,
       statusCode,
       responseTimeMs: responseTime,
-      totalTokens: response?.usage?.output_tokens ?? undefined,
-      promptTokens: response?.usage?.input_tokens ?? undefined,
-      completionTokens: response?.usage?.output_tokens ?? undefined,
+      totalTokens,
+      promptTokens,
+      completionTokens,
     };
 
     // Create the database record
