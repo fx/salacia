@@ -9,7 +9,7 @@ import type {
 } from '../types/messages.js';
 import { transformAiInteractionToDisplay } from '../types/messages.js';
 import type { AiInteractionData } from '../types/messages.js';
-import { AiInteraction } from '../db/models/AiInteraction.js';
+import { AiInteraction, AiProvider } from '../db/models/index.js';
 import type {
   MessagesCursorPaginationParams,
   MessagesCursorPaginationResponse,
@@ -38,7 +38,15 @@ export class MessagesService {
         throw new Error(`Invalid UUID format: ${id}`);
       }
 
-      const result = await AiInteraction.findByPk(id);
+      const result = await AiInteraction.findByPk(id, {
+        include: [
+          {
+            model: AiProvider,
+            as: 'provider',
+            attributes: ['id', 'name', 'type'],
+          },
+        ],
+      });
 
       if (!result) {
         return null;
@@ -87,6 +95,13 @@ export class MessagesService {
           order: order,
           limit: params.pageSize,
           offset: offset,
+          include: [
+            {
+              model: AiProvider,
+              as: 'provider',
+              attributes: ['id', 'name', 'type'],
+            },
+          ],
         }),
 
         // Count query for total items
@@ -368,6 +383,13 @@ export class MessagesService {
         where: whereConditions,
         order: order,
         limit: limit + 1,
+        include: [
+          {
+            model: AiProvider,
+            as: 'provider',
+            attributes: ['id', 'name', 'type'],
+          },
+        ],
       });
 
       const hasMore = results.length > limit;

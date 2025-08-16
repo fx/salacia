@@ -178,18 +178,19 @@ export interface AiInteractionData {
   error?: string | null;
   request: unknown;
   response?: unknown;
+  provider?: {
+    id: string;
+    name: string;
+    type: string;
+  } | null;
 }
 
 /**
  * Transforms a database AI interaction record into a display-friendly format.
  * Computes derived fields and formats data for frontend consumption.
  *
- * Note: The provider field is set to undefined in this basic transformation.
- * When used through the service layer, provider names are populated by joining
- * with the aiProviders table using the providerId reference.
- *
- * @param interaction - Raw database record from aiInteractions table
- * @returns Formatted message display object with provider field undefined
+ * @param interaction - Raw database record from aiInteractions table with optional provider association
+ * @returns Formatted message display object with provider name from joined data
  */
 export function transformAiInteractionToDisplay(interaction: AiInteractionData): MessageDisplay {
   // Extract request preview
@@ -229,7 +230,7 @@ export function transformAiInteractionToDisplay(interaction: AiInteractionData):
   return {
     id: interaction.id,
     model: interaction.model,
-    provider: undefined, // Provider name will be populated by service layer when joining with aiProviders table
+    provider: interaction.provider?.name,
     createdAt: interaction.createdAt,
     responseTime: interaction.responseTimeMs ?? undefined,
     totalTokens: interaction.totalTokens ?? undefined,
