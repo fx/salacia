@@ -82,6 +82,36 @@ See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pat
 
 ## Development Standards
 
+### Temporary Files and Debugging
+
+**🚨 CRITICAL: NEVER COMMIT TEMPORARY TEST FILES OR DEBUG CODE! 🚨**
+
+- **NEVER create temporary test files** like `test-extraction.js`, `debug-*.js`, `temp-*.ts`, etc.
+- **NEVER commit temporary API endpoints** like `/api/test-*` or `/api/debug-*`
+- **NEVER commit console.log statements** or debug logging code
+- **NEVER commit experimental/throwaway code** meant for quick testing
+- **ALWAYS clean up** any temporary files before committing
+- **Use .gitignore** for any persistent local testing files
+
+**Examples of files that should NEVER be committed:**
+
+```
+test-extraction.js
+debug-extraction.js
+src/pages/api/test-*.ts
+src/pages/api/debug-*.ts
+temp-*.js
+scratch-*.ts
+console.log('debug:', ...)  // Debug statements
+```
+
+**If you need to test something:**
+
+1. Use the existing test framework (`npm test`)
+2. Create proper unit tests in `*.test.ts` files
+3. Use the browser dev tools for debugging
+4. Test via the actual application interface
+
 ### Pull Request Requirements
 
 **PR Review Requirements**:

@@ -35,3 +35,17 @@ temp/
 *.temp
 # Playwright MCP temp files
 .playwright-mcp/
+
+# Debug and test files - NEVER COMMIT THESE
+test-*.js
+test-*.ts
+debug-*.js
+debug-*.ts
+temp-*.js
+temp-*.ts
+scratch-*.js
+scratch-*.ts
+src/pages/test-*.astro
+src/pages/debug-*.astro
+src/pages/api/test-*.ts
+src/pages/api/debug-*.ts
