@@ -54,11 +54,12 @@ export const testUtils = {
 };
 
 // Mock HTMLDialogElement for tests
-global.HTMLDialogElement = class MockHTMLDialogElement extends HTMLElement {
+// eslint-disable-next-line no-global-assign
+(global as any).HTMLDialogElement = class MockHTMLDialogElement extends HTMLElement {
   open = false;
   showModal = vi.fn(() => { this.open = true; });
   close = vi.fn(() => { this.open = false; });
-} as any;
+};
 
 // Setup MSW server
 beforeAll(() => {

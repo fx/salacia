@@ -126,15 +126,16 @@ export function MessageDetailDialog({
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      onClose={handleDialogClose}
-      onClick={handleBackdropClick}
-      position-="center"
-      size-="large"
-      box-="square"
-    >
-      <div onClick={e => e.stopPropagation()}>
+    <>
+      <dialog
+        ref={dialogRef}
+        onClose={handleDialogClose}
+        onClick={handleBackdropClick}
+        position-="center"
+        size-="large"
+        box-="square"
+      >
+        <div onClick={e => e.stopPropagation()}>
         <h2>Message Details</h2>
 
         {/* Metadata Section */}
@@ -260,8 +261,9 @@ export function MessageDetailDialog({
             Close
           </button>
         </div>
-      </div>
-    </dialog>
+        </div>
+      </dialog>
+    </>
   );
 }
 
