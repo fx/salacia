@@ -7,6 +7,7 @@
 
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { setupServer } from 'msw/node';
+import '@testing-library/jest-dom';
 
 // Re-export config
 export { TEST_CONFIG } from './config';
@@ -51,6 +52,13 @@ export const testUtils = {
     Object.assign(console, originalConsole);
   },
 };
+
+// Mock HTMLDialogElement for tests
+global.HTMLDialogElement = class MockHTMLDialogElement extends HTMLElement {
+  open = false;
+  showModal = vi.fn(() => { this.open = true; });
+  close = vi.fn(() => { this.open = false; });
+} as any;
 
 // Setup MSW server
 beforeAll(() => {
