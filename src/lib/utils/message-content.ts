@@ -101,8 +101,9 @@ function extractFromParsedData(data: unknown): string {
  * @returns Found value or undefined
  */
 function getNestedValue(obj: unknown, path: string): unknown {
-  return path.split('.').reduce((current: any, key: string) => {
+  return path.split('.').reduce((current: unknown, key: string): unknown => {
     if (current === null || current === undefined) return undefined;
-    return current[key];
+    if (typeof current !== 'object') return undefined;
+    return (current as Record<string, unknown>)[key];
   }, obj);
 }

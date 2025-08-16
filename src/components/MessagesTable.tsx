@@ -242,7 +242,7 @@ export function MessagesTable({
 
   return (
     <div role="region" aria-label="Messages table">
-      <table size-="compact" role="table">
+      <table size-="compact">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id} role="row">
