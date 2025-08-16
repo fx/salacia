@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/fx/salacia/compare/v1.0.2...v1.0.3) (2025-08-16)
+
+
+### Bug Fixes
+
+* **tokens:** calculate total_tokens as prompt + completion sum ([#124](https://github.com/fx/salacia/issues/124)) ([2dc9998](https://github.com/fx/salacia/commit/2dc9998706202c8f27ea8e4bd1ae2805faaab9fc))
+
 ## [1.0.2](https://github.com/fx/salacia/compare/v1.0.1...v1.0.2) (2025-08-15)
 
 
