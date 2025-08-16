@@ -33,6 +33,15 @@ export interface MessageCreatedEventData {
   model: string;
 
   /**
+   * Provider information for the interaction.
+   */
+  provider?: {
+    id: string;
+    name: string;
+    type: string;
+  } | null;
+
+  /**
    * Token usage metrics (if available).
    */
   promptTokens?: number | null;

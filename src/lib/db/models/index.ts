@@ -48,8 +48,14 @@ function setupAssociations(): void {
   });
 }
 
-// Initialize associations
-setupAssociations();
+// Track if associations have been set up to prevent duplicates
+let associationsSetup = false;
+
+// Initialize associations only once
+if (!associationsSetup) {
+  setupAssociations();
+  associationsSetup = true;
+}
 
 /**
  * Export all Sequelize models.

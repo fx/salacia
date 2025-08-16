@@ -130,7 +130,7 @@ export const defaultTransformMessage = (
   return {
     id: eventData.id,
     model: eventData.model ?? 'unknown',
-    provider: undefined,
+    provider: eventData.provider?.name,
     createdAt: new Date(eventData.createdAt),
     responseTime: eventData.responseTimeMs ?? undefined,
     totalTokens: eventData.totalTokens ?? undefined,
