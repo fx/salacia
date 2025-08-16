@@ -33,3 +33,5 @@ tmp/
 temp/
 *.tmp
 *.temp
+# Playwright MCP temp files
+.playwright-mcp/
