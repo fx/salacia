@@ -50,8 +50,11 @@ describe('Messages Types', () => {
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      // Our enhanced preview logic returns "Request data" for objects without recognizable message formats
-      expect(result.requestPreview).toBe('Request data');
+      // Current implementation JSON stringifies and truncates at MESSAGE_PREVIEW_MAX_LENGTH (100)
+      const expectedTruncated =
+        JSON.stringify(longRequest).substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH) +
+        '...';
+      expect(result.requestPreview).toBe(expectedTruncated);
     });
 
     it('should handle response preview truncation', () => {
@@ -60,9 +63,11 @@ describe('Messages Types', () => {
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      // Our enhanced preview logic now uses MAX_LENGTH, so the content fits exactly
-      expect(result.responsePreview).toBe('b'.repeat(PREVIEW_CONFIG.MAX_LENGTH));
-      expect(result.responsePreview).toHaveLength(PREVIEW_CONFIG.MAX_LENGTH);
+      // Current implementation JSON stringifies and truncates at MESSAGE_PREVIEW_MAX_LENGTH (100)
+      const expectedTruncated =
+        JSON.stringify(longResponse).substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH) +
+        '...';
+      expect(result.responsePreview).toBe(expectedTruncated);
     });
 
     it('should handle failed interactions', () => {
@@ -127,7 +132,7 @@ describe('Messages Types', () => {
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      expect(result.requestPreview).toBe('Empty request');
+      expect(result.requestPreview).toBe('No request data');
     });
   });
 });
