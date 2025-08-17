@@ -25,8 +25,7 @@ describe('Content Preview Utilities', () => {
       const jsonString =
         '{"model": "claude-3", "messages": [{"role": "user", "content": "Hello"}]}';
       const result = generateRequestPreview(jsonString);
-      expect(result).toContain('Model: claude-3');
-      expect(result).toContain('User: "Hello"');
+      expect(result).toBe('Hello');
     });
 
     it('handles basic Anthropic request format', () => {
@@ -37,9 +36,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('Model: claude-3-sonnet-20240229');
-      expect(result).toContain('User: "What is 2+2?"');
-      expect(result).toContain('max: 100');
+      expect(result).toBe('What is 2+2?');
     });
 
     it('handles complex message content arrays', () => {
@@ -58,9 +55,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('Model: claude-3-haiku');
-      expect(result).toContain('User: "Analyze this image"');
-      expect(result).toContain('max: 1000');
+      expect(result).toBe('Analyze this image');
     });
 
     it('handles requests with system prompts', () => {
@@ -72,9 +67,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('Model: claude-3-opus');
-      expect(result).toContain('User: "Help me with math"');
-      expect(result).toContain('System: "You are a helpful assistant."');
+      expect(result).toBe('Help me with math');
     });
 
     it('handles requests with tools', () => {
@@ -89,9 +82,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('Model: claude-3-sonnet');
-      expect(result).toContain('User: "Read a file for me"');
-      expect(result).toContain('2 tool(s)');
+      expect(result).toBe('Read a file for me');
     });
 
     it('handles streaming requests', () => {
@@ -103,8 +94,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('streaming');
-      expect(result).toContain('temp: 0.7');
+      expect(result).toBe('Stream response');
     });
 
     it('handles tool use messages', () => {
@@ -126,7 +116,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(request);
-      expect(result).toContain('User: "Use a tool"'); // Should get first user message, not tool result
+      expect(result).toBe('Use a tool'); // Should get first user message, not tool result
     });
 
     it('handles Claude Code-style complex requests', () => {
@@ -155,10 +145,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(complexRequest);
-      expect(result).toContain('Model: claude-sonnet-4-20250514');
-      expect(result).toContain('User: "Create a new feature"');
-      expect(result).toContain('3 tool(s)');
-      expect(result).toContain('max: 32000');
+      expect(result).toBe('Create a new feature');
     });
 
     it('truncates very long previews', () => {
@@ -207,10 +194,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateResponsePreview(response);
-      expect(result).toContain('"The answer is 4."');
-      expect(result).toContain('model: claude-3-sonnet-20240229');
-      expect(result).toContain('15 tokens');
-      expect(result).toContain('stop: end_turn');
+      expect(result).toBe('The answer is 4.');
     });
 
     it('handles error responses', () => {
@@ -247,8 +231,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateResponsePreview(response);
-      expect(result).toContain('"I\'ll read the file for you. [Tool: read_file]"');
-      expect(result).toContain('75 tokens');
+      expect(result).toBe("I'll read the file for you. 🔧 read_file");
     });
 
     it('handles streaming response chunks', () => {
@@ -262,7 +245,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateResponsePreview(streamChunk);
-      expect(result).toContain('"Hello"');
+      expect(result).toBe('"Hello"');
     });
 
     it('handles empty content gracefully', () => {
@@ -274,14 +257,47 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateResponsePreview(response);
-      expect(result).toContain('model: claude-3-haiku');
-      expect(result).toContain('Has content'); // Should indicate content exists even if empty
+      expect(result).toBe('∅ Empty response');
+    });
+
+    it('handles tool_use stop_reason with empty content', () => {
+      const response = {
+        id: 'msg_01YbvPJRLQCMzoaD21UCG9xc',
+        role: 'assistant',
+        type: 'message',
+        model: 'claude-sonnet-4-20250514',
+        usage: {
+          input_tokens: 8894,
+          output_tokens: 74,
+        },
+        content: [],
+        stop_reason: 'tool_use',
+        stop_sequence: null,
+      };
+
+      const result = generateResponsePreview(response);
+      expect(result).toBe('🔧 Stop for tool use');
+    });
+
+    it('handles end_turn stop_reason with empty content', () => {
+      const response = {
+        id: 'msg_end_turn',
+        role: 'assistant',
+        type: 'message',
+        model: 'claude-3-sonnet',
+        content: [],
+        stop_reason: 'end_turn',
+        stop_sequence: null,
+      };
+
+      const result = generateResponsePreview(response);
+      expect(result).toBe('✓ Response completed');
     });
 
     it('handles string responses', () => {
       const stringResponse = '{"role": "assistant", "content": "Simple response"}';
       const result = generateResponsePreview(stringResponse);
-      expect(result).toContain('"Simple response"');
+      expect(result).toBe('Simple response');
     });
 
     it('handles very long responses', () => {
@@ -292,8 +308,7 @@ describe('Content Preview Utilities', () => {
 
       const result = generateResponsePreview(response);
       expect(result.length).toBeLessThanOrEqual(153); // Max 150 + '...'
-      // The result should be truncated but might not end with ... if metadata is added
-      expect(result.length).toBeGreaterThan(60); // Should have content + metadata
+      expect(result.endsWith('...')).toBe(true);
     });
 
     it('handles malformed responses gracefully', () => {
@@ -317,10 +332,8 @@ describe('Content Preview Utilities', () => {
 
       const result = generateContentPreviews(request, response);
 
-      expect(result.requestPreview).toContain('Model: claude-3-haiku');
-      expect(result.requestPreview).toContain('User: "Test message"');
-      expect(result.responsePreview).toContain('"Test response"');
-      expect(result.responsePreview).toContain('model: claude-3-haiku');
+      expect(result.requestPreview).toBe('Test message');
+      expect(result.responsePreview).toBe('Test response');
     });
 
     it('handles missing response', () => {
@@ -331,7 +344,7 @@ describe('Content Preview Utilities', () => {
 
       const result = generateContentPreviews(request);
 
-      expect(result.requestPreview).toContain('Model: claude-3-haiku');
+      expect(result.requestPreview).toBe('Test');
       expect(result.responsePreview).toBeUndefined();
     });
   });
@@ -350,9 +363,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateResponsePreview(mockResponse);
-      expect(result).toContain('"Hello! How can I help you today?"');
-      expect(result).toContain('model: claude-3-haiku-20240307');
-      expect(result).toContain('30 tokens');
+      expect(result).toBe('Hello! How can I help you today?');
     });
 
     it('handles current database request format', () => {
@@ -363,7 +374,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(dbRequest);
-      expect(result).toBe('Model: claude-3-sonnet-20240229 | User: "What is 2+2?" | [max: 100]');
+      expect(result).toBe('What is 2+2?');
     });
 
     it('handles complex Claude Code request from logs', () => {
@@ -391,10 +402,7 @@ describe('Content Preview Utilities', () => {
       };
 
       const result = generateRequestPreview(claudeCodeRequest);
-      expect(result).toContain('Model: claude-sonnet-4-20250514');
-      expect(result).toContain('Create a preview utility');
-      expect(result).toContain('8 tool(s)');
-      expect(result).toContain('max: 32000');
+      expect(result).toBe('Create a preview utility');
     });
   });
 });

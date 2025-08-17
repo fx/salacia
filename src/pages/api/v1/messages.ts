@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
         const responseTime = Date.now() - startTime;
 
         // Log streaming request - create initial database record
-        const _interaction = await logAiInteraction({
+        const interaction = await logAiInteraction({
           request: requestData!,
           response: undefined, // Response will be updated when stream completes
           responseTime,
@@ -152,7 +152,11 @@ export const POST: APIRoute = async ({ request }) => {
         // Use AnthropicClient's streaming method directly
         const stream = await anthropicClient.createStreamingMessage(requestData!);
 
-        return new Response(stream, {
+        // Import and wrap with tracking stream to capture response
+        const { createTrackingStream } = await import('../../../lib/ai/streaming-tracker');
+        const trackedStream = createTrackingStream(stream, interaction?.id || 'unknown');
+
+        return new Response(trackedStream, {
           status: 200,
           headers: {
             'Content-Type': 'text/event-stream',

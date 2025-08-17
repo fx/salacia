@@ -95,9 +95,9 @@ function extractTextContent(
 
         // Handle tool use/result content
         if (obj.type === 'tool_use' && obj.name) {
-          itemText = `[Tool: ${obj.name}]`;
+          itemText = `🔧 ${obj.name}`;
         } else if (obj.type === 'tool_result') {
-          itemText = '[Tool Result]';
+          itemText = '🔧 Tool Result';
         }
       }
 
@@ -133,29 +133,53 @@ function extractTextContent(
  * Prioritizes the most recent user input for context
  */
 function extractUserMessage(messages: MessageLike[]): string {
-  // Find the last user message that contains actual text (not just tool results)
+  // Find the last user message that contains actual text (not just tool results or system reminders)
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     if (msg.role === 'user') {
       const content = extractTextContent(msg.content, PREVIEW_CONFIG.MAX_LENGTH);
-      // Skip messages that only contain tool results
-      if (content && !content.startsWith('[Tool Result]')) {
+      // Skip messages that only contain tool results, system reminders, or are too long (likely system prompts)
+      if (
+        content &&
+        !content.startsWith('🔧 Tool Result') &&
+        !content.startsWith('[Tool Result]') &&
+        !content.includes('<system-reminder>') &&
+        !content.includes('claudeMd') &&
+        !content.includes('Codebase and user instructions') &&
+        content.length < 500
+      ) {
+        // Reasonable length for actual user questions
         return content;
       }
     }
   }
 
-  // Fallback to any user message
+  // Look for any user message that contains tool use (instead of just tool results)
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     if (msg.role === 'user') {
-      return extractTextContent(msg.content, PREVIEW_CONFIG.MAX_LENGTH);
+      const content = extractTextContent(msg.content, PREVIEW_CONFIG.MAX_LENGTH);
+      if (content && (content.includes('🔧') || content.includes('[Tool:'))) {
+        return content; // Show tool use messages
+      }
     }
   }
 
-  // Fallback to any message
-  if (messages.length > 0) {
-    return extractTextContent(messages[messages.length - 1].content, PREVIEW_CONFIG.MAX_LENGTH);
+  // Fallback: look for any short user message
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === 'user') {
+      const content = extractTextContent(msg.content, 50); // Shorter fallback
+      if (content && content.length < 100 && !content.includes('<system-reminder>')) {
+        return content;
+      }
+    }
+  }
+
+  // Final fallback to message count
+  const userMessageCount = messages.filter(msg => msg.role === 'user').length;
+  if (userMessageCount > 0) {
+    return `${userMessageCount} user message(s)`;
   }
 
   return '';
@@ -188,54 +212,18 @@ export function generateRequestPreview(data: unknown): string {
     if (data && typeof data === 'object') {
       const req = data as RequestLike;
 
-      // Build preview components
-      const parts: string[] = [];
-
-      // Add model info
-      if (req.model) {
-        parts.push(`Model: ${req.model}`);
-      }
-
-      // Extract and add user message
+      // Just show the user message - model is already in the table
       if (req.messages && Array.isArray(req.messages) && req.messages.length > 0) {
         const userMsg = extractUserMessage(req.messages);
         if (userMsg) {
-          parts.push(`User: "${userMsg}"`);
-        } else {
-          parts.push(`${req.messages.length} message(s)`);
+          return userMsg.length > PREVIEW_CONFIG.MAX_LENGTH
+            ? `${userMsg.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
+            : userMsg;
         }
       }
 
-      // Add system prompt info if present
-      if (req.system) {
-        const systemText = extractTextContent(req.system, 30);
-        if (systemText) {
-          parts.push(`System: "${systemText}"`);
-        } else {
-          parts.push('Has system prompt');
-        }
-      }
-
-      // Add tools info
-      if (req.tools && Array.isArray(req.tools) && req.tools.length > 0) {
-        parts.push(`${req.tools.length} tool(s)`);
-      }
-
-      // Add configuration details
-      const configs: string[] = [];
-      if (req.max_tokens) configs.push(`max: ${req.max_tokens}`);
-      if (req.temperature !== undefined) configs.push(`temp: ${req.temperature}`);
-      if (req.stream) configs.push('streaming');
-
-      if (configs.length > 0) {
-        parts.push(`[${configs.join(', ')}]`);
-      }
-
-      // Join and truncate if necessary
-      const preview = parts.join(' | ');
-      return preview.length > PREVIEW_CONFIG.MAX_LENGTH
-        ? `${preview.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
-        : preview;
+      // Fallback if no user message found
+      return 'Request data';
     }
 
     // Fallback for other types
@@ -286,44 +274,36 @@ export function generateResponsePreview(data: unknown): string {
         return `"${resp.delta.text}"`;
       }
 
-      // Build preview components
-      const parts: string[] = [];
-
-      // Add content preview
+      // Just show the content - model is already in the table
       if (resp.content) {
-        const contentText = extractTextContent(resp.content, 60);
-        if (contentText) {
-          parts.push(`"${contentText}"`);
+        // Get full content first to check if truncation is needed
+        const fullContentText = extractTextContent(resp.content, 99999);
+        if (fullContentText) {
+          // Handle special tool-related content
+          if (
+            fullContentText.includes('<is_displaying_contents>') ||
+            fullContentText.includes('<filepaths>') ||
+            fullContentText.includes('tool_use') ||
+            fullContentText.includes('tool_result')
+          ) {
+            return '🔧 Tool response';
+          } else {
+            return fullContentText.length > PREVIEW_CONFIG.MAX_LENGTH
+              ? `${fullContentText.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
+              : fullContentText;
+          }
+        } else if (Array.isArray(resp.content) && resp.content.length === 0) {
+          // Handle empty content arrays - check stop_reason for context
+          if (resp.stop_reason === 'tool_use') {
+            return '🔧 Stop for tool use';
+          } else if (resp.stop_reason === 'end_turn') {
+            return '✓ Response completed';
+          } else {
+            return '∅ Empty response';
+          }
         } else {
-          parts.push('Has content');
+          return 'Has content';
         }
-      }
-
-      // Add metadata
-      const metadata: string[] = [];
-      if (resp.model) metadata.push(`model: ${resp.model}`);
-      if (resp.stop_reason) metadata.push(`stop: ${resp.stop_reason}`);
-
-      // Add usage info
-      if (resp.usage) {
-        const usage = resp.usage;
-        if (usage.total_tokens || (usage.input_tokens && usage.output_tokens)) {
-          const total =
-            usage.total_tokens || (usage.input_tokens || 0) + (usage.output_tokens || 0);
-          metadata.push(`${total} tokens`);
-        }
-      }
-
-      if (metadata.length > 0) {
-        parts.push(`[${metadata.join(', ')}]`);
-      }
-
-      // Join and truncate if necessary
-      const preview = parts.join(' ');
-      if (preview) {
-        return preview.length > PREVIEW_CONFIG.MAX_LENGTH
-          ? `${preview.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
-          : preview;
       }
 
       return 'Response received';
