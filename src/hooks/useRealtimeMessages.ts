@@ -24,8 +24,9 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSSE, type SSEEvent } from './useSSE.js';
-import { MESSAGES_CONSTANTS, type MessageDisplay } from '../lib/types/messages.js';
+import type { MessageDisplay } from '../lib/types/messages.js';
 import type { MessageCreatedEventData, MessageUpdatedEventData } from '../lib/realtime/types.js';
+import { generateContentPreviewsEnhanced } from '../lib/utils/content-preview.js';
 
 /**
  * Configuration options for the realtime messages hook.
@@ -90,39 +91,12 @@ const DEFAULT_OPTIONS: Required<Omit<RealtimeMessagesOptions, 'transformMessage'
 export const defaultTransformMessage = (
   eventData: MessageCreatedEventData | MessageUpdatedEventData
 ): MessageDisplay => {
-  // Build a MessageDisplay consistent with DB transformation
-  // Reuse preview extraction rules similar to transformAiInteractionToDisplay
-  let requestPreview = 'No request data';
-  if (eventData.request) {
-    try {
-      const reqStr =
-        typeof eventData.request === 'string'
-          ? eventData.request
-          : JSON.stringify(eventData.request);
-      requestPreview =
-        reqStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${reqStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : reqStr;
-    } catch {
-      requestPreview = 'Invalid request data';
-    }
-  }
+  // Use the same enhanced content preview logic as transformAiInteractionToDisplay
+  const { requestPreview, responsePreview: responsePreviewEnhanced } =
+    generateContentPreviewsEnhanced(eventData.request, eventData.response);
 
-  let responsePreview: string | undefined;
-  if (eventData.response) {
-    try {
-      const resStr =
-        typeof eventData.response === 'string'
-          ? eventData.response
-          : JSON.stringify(eventData.response);
-      responsePreview =
-        resStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${resStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : resStr;
-    } catch {
-      responsePreview = 'Invalid response data';
-    }
-  }
+  // Keep backward compatibility with string-based preview
+  const responsePreview = responsePreviewEnhanced?.text;
 
   const statusCode = eventData.statusCode ?? undefined;
   const error = eventData.error ?? undefined;
@@ -140,6 +114,7 @@ export const defaultTransformMessage = (
     error,
     requestPreview,
     responsePreview,
+    responsePreviewEnhanced,
     isSuccess: !error && statusCode === 200,
     request: eventData.request ?? null,
     response: eventData.response,

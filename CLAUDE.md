@@ -563,6 +563,15 @@ const unsubscribeUpdated = addEventListener('message:updated', handleMessageUpda
 
 **Failure to update ALL locations will result in events being emitted server-side but not received client-side.**
 
+### Streaming Implementation Patterns
+
+- **Line buffering in streaming**: Using `indexOf('\n')` to detect complete lines is the CORRECT and efficient approach for stream parsing
+- **Including newlines in parsed lines**: `textBuffer.slice(0, newlineIndex + 1)` correctly includes the newline character for proper parsing
+- **Do not suggest removing newlines** from lines passed to parsing functions - they are required for proper SSE/streaming data format
+- **Efficient line detection**: The pattern of using `indexOf('\n')` and slicing buffers is already optimized - do not suggest alternative approaches
+- **Stream forwarding**: Always forward original chunks unchanged to clients before parsing for internal tracking
+- **parseStreamingChunk functions**: These expect complete lines including newlines - do not suggest removing newline characters
+
 ## Testing Best Practices
 
 ### React Testing Library Principles

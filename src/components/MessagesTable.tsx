@@ -26,8 +26,9 @@ import {
 } from '@tanstack/react-table';
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
-import { extractTextContent } from '../lib/utils/message-content.js';
+import { truncateText } from '../lib/utils/text.js';
 import { MessageDetailDialog } from './MessageDetailDialog.js';
+import { ResponsePreview } from './ResponsePreview.js';
 
 /**
  * Props for the MessagesTable component.
@@ -58,18 +59,6 @@ const columnHelper = createColumnHelper<MessageDisplay>();
  */
 function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US').format(num);
-}
-
-/**
- * Truncates text to specified length with ellipsis.
- *
- * @param text - Text to truncate
- * @param maxLength - Maximum length before truncation
- * @returns Truncated text with ellipsis if needed
- */
-function truncateText(text: string, maxLength: number = 50): string {
-  if (text.length <= maxLength) return text;
-  return `${text.substring(0, maxLength)}...`;
 }
 
 /**
@@ -168,22 +157,28 @@ export function MessagesTable({
         },
         enableSorting: true,
       }),
-      columnHelper.accessor('request', {
+      columnHelper.accessor('requestPreview', {
         header: 'Request',
         cell: info => {
-          const request = info.getValue();
-          const textContent = extractTextContent(request);
-          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
+          const preview = info.getValue();
+          return <code title={preview}>{truncateText(preview, 40)}</code>;
         },
         enableSorting: false,
       }),
-      columnHelper.accessor('response', {
+      columnHelper.accessor('responsePreviewEnhanced', {
         header: 'Response',
         cell: info => {
-          const response = info.getValue();
-          if (!response) return '—';
-          const textContent = extractTextContent(response);
-          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
+          const enhancedPreview = info.getValue();
+          const fallbackPreview = info.row.original.responsePreview;
+
+          // If we have enhanced preview, use it; otherwise fall back to basic preview
+          if (enhancedPreview) {
+            return <ResponsePreview preview={enhancedPreview} maxLength={40} />;
+          } else if (fallbackPreview) {
+            return <code title={fallbackPreview}>{truncateText(fallbackPreview, 40)}</code>;
+          } else {
+            return '—';
+          }
         },
         enableSorting: false,
       }),
@@ -309,12 +304,12 @@ export function MessagesTable({
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr 
-                key={row.id} 
+              <tr
+                key={row.id}
                 role="row"
                 style={{ cursor: 'pointer' }}
                 onClick={() => handleRowClick(row.original)}
-                onKeyDown={(e) => {
+                onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleRowClick(row.original);

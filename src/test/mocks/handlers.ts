@@ -504,9 +504,17 @@ export function createUsageAwareHandler(baseResponse: AnthropicResponse) {
         typeof msg.content === 'string'
           ? msg.content.length
           : msg.content.reduce((sum, block) => {
-              // FIX: Properly check type before accessing length
-              const textLength = typeof block.text === 'string' ? block.text.length : 0;
-              return sum + textLength;
+              // Handle different content block types
+              if (block.type === 'text' && 'text' in block) {
+                return sum + block.text.length;
+              } else if (
+                block.type === 'tool_result' &&
+                'content' in block &&
+                typeof block.content === 'string'
+              ) {
+                return sum + block.content.length;
+              }
+              return sum;
             }, 0);
       return total + Math.ceil(contentLength / 4);
     }, 0);
