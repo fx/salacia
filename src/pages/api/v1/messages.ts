@@ -13,6 +13,7 @@ import { createLogger } from '../../../lib/utils/logger';
 import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
 import { ProviderManager } from '../../../lib/ai/provider-manager';
 import { generateMessageId } from '../../../lib/ai/api-utils';
+import { getClaudeCodeToken } from '../../../lib/utils/auth';
 
 const logger = createLogger('API/Messages');
 
@@ -107,8 +108,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       // For OAuth providers, we need to use the AnthropicClient directly with streaming
       if (provider.authType === 'oauth' && provider.type === 'anthropic') {
-        const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string })
-          .__claudeCodeToken;
+        const claudeCodeToken = getClaudeCodeToken();
         const tokenToUse = claudeCodeToken || provider.oauthAccessToken;
 
         if (!tokenToUse) {
@@ -202,8 +202,10 @@ export const POST: APIRoute = async ({ request }) => {
           content = message.content;
         } else if (Array.isArray(message.content)) {
           content = message.content
-            .filter(block => block.type === 'text' && 'text' in block)
-            .map(block => ('text' in block ? block.text! : ''))
+            .filter(
+              block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+            )
+            .map(block => (block as { type: 'text'; text: string }).text)
             .join('\n');
         } else {
           content = '';

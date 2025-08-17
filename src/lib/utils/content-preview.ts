@@ -17,6 +17,8 @@ const PREVIEW_CONFIG = {
   MAX_ARRAY_ITEMS: 3,
   /** Maximum depth for nested object traversal */
   MAX_DEPTH: 3,
+  /** Maximum length for user message content to display directly */
+  MAX_USER_MESSAGE_LENGTH: 500,
 } as const;
 
 /**
@@ -68,16 +70,36 @@ function parseJsonMetadata(text: string): {
     return { metadata: null, remainingText: text || '' };
   }
 
-  // Look for JSON at the beginning of the text
-  const jsonMatch = text.match(/^\s*\{[^}]*\}\s*/);
-  if (!jsonMatch) {
+  // Look for JSON at the beginning of the text using brace counting
+  const startIdx = text.search(/\{/);
+  if (startIdx === -1) {
+    return { metadata: null, remainingText: text };
+  }
+
+  // Find the matching closing brace for the first opening brace
+  let braceCount = 0;
+  let endIdx = -1;
+  for (let i = startIdx; i < text.length; i++) {
+    if (text[i] === '{') {
+      braceCount++;
+    } else if (text[i] === '}') {
+      braceCount--;
+      if (braceCount === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (endIdx === -1) {
+    // No matching closing brace found
     return { metadata: null, remainingText: text };
   }
 
   try {
-    const jsonStr = jsonMatch[0].trim();
+    const jsonStr = text.slice(startIdx, endIdx + 1).trim();
     const parsed = JSON.parse(jsonStr) as TopicMetadata;
-    const remainingText = text.substring(jsonMatch[0].length);
+    const remainingText = text.substring(endIdx + 1);
 
     // Validate that it contains expected topic fields
     if (
@@ -393,7 +415,7 @@ function extractUserMessage(messages: MessageLike[]): string {
         !content.includes('<system-reminder>') &&
         !content.includes('claudeMd') &&
         !content.includes('Codebase and user instructions') &&
-        content.length < 500
+        content.length < PREVIEW_CONFIG.MAX_USER_MESSAGE_LENGTH
       ) {
         // Reasonable length for actual user questions
         return content;

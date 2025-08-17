@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import type { AiInteractionData } from '../lib/types/messages.js';
 import { transformAiInteractionToDisplay, MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
+// Import PREVIEW_CONFIG to access MAX_LENGTH constant
+const PREVIEW_CONFIG = { MAX_LENGTH: 150 } as const;
+
 describe('Messages Types', () => {
   describe('MESSAGES_CONSTANTS', () => {
     it('should have correct constant values', () => {
@@ -52,14 +55,14 @@ describe('Messages Types', () => {
     });
 
     it('should handle response preview truncation', () => {
-      const longResponse = { content: 'b'.repeat(150) };
+      const longResponse = { content: 'b'.repeat(PREVIEW_CONFIG.MAX_LENGTH) };
       const interaction = { ...mockInteraction, response: longResponse };
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      // Our enhanced preview logic now uses MAX_LENGTH of 150, so the content fits exactly
-      expect(result.responsePreview).toBe('b'.repeat(150));
-      expect(result.responsePreview).toHaveLength(150);
+      // Our enhanced preview logic now uses MAX_LENGTH, so the content fits exactly
+      expect(result.responsePreview).toBe('b'.repeat(PREVIEW_CONFIG.MAX_LENGTH));
+      expect(result.responsePreview).toHaveLength(PREVIEW_CONFIG.MAX_LENGTH);
     });
 
     it('should handle failed interactions', () => {
