@@ -1,4 +1,5 @@
 // AiInteraction type is now defined inline where needed
+import { generateContentPreviews } from '../utils/content-preview';
 
 /**
  * Constants for pagination and display configuration.
@@ -193,39 +194,11 @@ export interface AiInteractionData {
  * @returns Formatted message display object with provider name from joined data
  */
 export function transformAiInteractionToDisplay(interaction: AiInteractionData): MessageDisplay {
-  // Extract request preview
-  let requestPreview = 'No request data';
-  if (interaction.request) {
-    try {
-      const requestStr =
-        typeof interaction.request === 'string'
-          ? interaction.request
-          : JSON.stringify(interaction.request);
-      requestPreview =
-        requestStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${requestStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : requestStr;
-    } catch {
-      requestPreview = 'Invalid request data';
-    }
-  }
-
-  // Extract response preview
-  let responsePreview: string | undefined;
-  if (interaction.response) {
-    try {
-      const responseStr =
-        typeof interaction.response === 'string'
-          ? interaction.response
-          : JSON.stringify(interaction.response);
-      responsePreview =
-        responseStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
-          ? `${responseStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
-          : responseStr;
-    } catch {
-      responsePreview = 'Invalid response data';
-    }
-  }
+  // Generate intelligent previews using the new utility
+  const { requestPreview, responsePreview } = generateContentPreviews(
+    interaction.request,
+    interaction.response
+  );
 
   return {
     id: interaction.id,
