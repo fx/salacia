@@ -84,15 +84,15 @@ export class ProviderManager {
       const providers = result.providers;
 
       // Find the default provider or any active OAuth provider
-      const defaultProvider = providers.find((p: AiProvider) => p.isDefault && p.isActive);
+      const defaultProvider = providers.find(p => p.isDefault && p.isActive);
       if (defaultProvider) {
-        return defaultProvider;
+        return defaultProvider as AiProvider;
       }
 
       // If no default, try to find any active OAuth provider
-      const oauthProvider = providers.find((p: AiProvider) => p.authType === 'oauth' && p.isActive);
+      const oauthProvider = providers.find(p => p.authType === 'oauth' && p.isActive);
       if (oauthProvider) {
-        return oauthProvider;
+        return oauthProvider as AiProvider;
       }
 
       // No fallback to environment variables - must use database providers

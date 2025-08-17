@@ -63,8 +63,8 @@ export class AIService {
       const messages = this.convertAnthropicMessages(request, selectedProvider);
 
       // Generate response
-      const generateOptions: Parameters<typeof generateText>[0] = {
-        model,
+      const generateOptions = {
+        model: model as Parameters<typeof generateText>[0]['model'],
         messages,
         temperature: request.temperature,
         topP: request.top_p,
