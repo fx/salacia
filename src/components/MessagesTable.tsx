@@ -26,8 +26,8 @@ import {
 } from '@tanstack/react-table';
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
+import { extractTextContent } from '../lib/utils/message-content.js';
 import { MessageDetailDialog } from './MessageDetailDialog.js';
-import { ResponsePreview } from './ResponsePreview.js';
 
 /**
  * Props for the MessagesTable component.
@@ -168,28 +168,22 @@ export function MessagesTable({
         },
         enableSorting: true,
       }),
-      columnHelper.accessor('requestPreview', {
+      columnHelper.accessor('request', {
         header: 'Request',
         cell: info => {
-          const preview = info.getValue();
-          return <code title={preview}>{truncateText(preview, 40)}</code>;
+          const request = info.getValue();
+          const textContent = extractTextContent(request);
+          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
         },
         enableSorting: false,
       }),
-      columnHelper.accessor('responsePreviewEnhanced', {
+      columnHelper.accessor('response', {
         header: 'Response',
         cell: info => {
-          const enhancedPreview = info.getValue();
-          const fallbackPreview = info.row.original.responsePreview;
-
-          // If we have enhanced preview, use it; otherwise fall back to basic preview
-          if (enhancedPreview) {
-            return <ResponsePreview preview={enhancedPreview} maxLength={40} />;
-          } else if (fallbackPreview) {
-            return <code title={fallbackPreview}>{truncateText(fallbackPreview, 40)}</code>;
-          } else {
-            return '—';
-          }
+          const response = info.getValue();
+          if (!response) return '—';
+          const textContent = extractTextContent(response);
+          return <code title={textContent}>{truncateText(textContent, 40)}</code>;
         },
         enableSorting: false,
       }),

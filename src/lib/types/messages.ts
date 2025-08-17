@@ -1,5 +1,4 @@
 // AiInteraction type is now defined inline where needed
-import { generateContentPreviewsEnhanced, type PreviewResult } from '../utils/content-preview';
 
 /**
  * Constants for pagination and display configuration.
@@ -44,8 +43,6 @@ export interface MessageDisplay {
   requestPreview: string;
   /** Preview of the response content (truncated) */
   responsePreview?: string;
-  /** Enhanced response preview with stop reason metadata */
-  responsePreviewEnhanced?: PreviewResult;
   /** Whether the interaction was successful */
   isSuccess: boolean;
   /** Raw request data for detailed view */
@@ -196,12 +193,39 @@ export interface AiInteractionData {
  * @returns Formatted message display object with provider name from joined data
  */
 export function transformAiInteractionToDisplay(interaction: AiInteractionData): MessageDisplay {
-  // Generate intelligent previews using the enhanced utility
-  const { requestPreview, responsePreview: responsePreviewEnhanced } =
-    generateContentPreviewsEnhanced(interaction.request, interaction.response);
+  // Extract request preview
+  let requestPreview = 'No request data';
+  if (interaction.request) {
+    try {
+      const requestStr =
+        typeof interaction.request === 'string'
+          ? interaction.request
+          : JSON.stringify(interaction.request);
+      requestPreview =
+        requestStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${requestStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : requestStr;
+    } catch {
+      requestPreview = 'Invalid request data';
+    }
+  }
 
-  // Keep backward compatibility with string-based preview
-  const responsePreview = responsePreviewEnhanced?.text;
+  // Extract response preview
+  let responsePreview: string | undefined;
+  if (interaction.response) {
+    try {
+      const responseStr =
+        typeof interaction.response === 'string'
+          ? interaction.response
+          : JSON.stringify(interaction.response);
+      responsePreview =
+        responseStr.length > MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH
+          ? `${responseStr.substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH)}...`
+          : responseStr;
+    } catch {
+      responsePreview = 'Invalid response data';
+    }
+  }
 
   return {
     id: interaction.id,
@@ -216,7 +240,6 @@ export function transformAiInteractionToDisplay(interaction: AiInteractionData):
     error: interaction.error || undefined,
     requestPreview,
     responsePreview,
-    responsePreviewEnhanced,
     isSuccess: !interaction.error && interaction.statusCode === 200,
     request: interaction.request,
     response: interaction.response,
