@@ -46,7 +46,9 @@ function getStopReasonIcon(stopReason: string): { icon: string; tooltip: string 
     return known;
   }
 
-  // Default for unknown stop reasons - show the stop reason clearly
+  // For unknown stop reasons, return a generic icon and display the stop reason in the tooltip.
+  // This ensures that users are informed about the actual stop reason, even if it is not recognized,
+  // and avoids hiding potentially important information due to lack of mapping.
   return { icon: '⏹️', tooltip: `Stopped: ${stopReason}` };
 }
 
@@ -70,7 +72,12 @@ function parseJsonMetadata(text: string): {
     return { metadata: null, remainingText: text || '' };
   }
 
-  // Look for JSON at the beginning of the text using brace counting
+  // We use brace counting to extract a single top-level JSON object from the start of the string.
+  // Regex cannot reliably match nested braces, and using a full JSON parser on the entire string
+  // would fail if there is trailing non-JSON text. This approach is robust for well-formed JSON
+  // at the start, but has limitations: it does not handle malformed JSON, ignores whitespace before
+  // the opening brace, and does not support multiple consecutive JSON objects. Edge cases may occur
+  // if the input contains unmatched braces or deeply nested objects.
   const startIdx = text.search(/\{/);
   if (startIdx === -1) {
     return { metadata: null, remainingText: text };
@@ -398,6 +405,21 @@ function extractTextContentWithMetadata(
 }
 
 /**
+ * Determines if a user message should be skipped in preview generation.
+ * Filters out tool results, system reminders, and overly long messages.
+ */
+function shouldSkipUserMessage(content: string): boolean {
+  return (
+    content.startsWith('🔧 Tool Result') ||
+    content.startsWith('[Tool Result]') ||
+    content.includes('<system-reminder>') ||
+    content.includes('claudeMd') ||
+    content.includes('Codebase and user instructions') ||
+    content.length >= PREVIEW_CONFIG.MAX_USER_MESSAGE_LENGTH
+  );
+}
+
+/**
  * Extracts the last user message from a messages array
  * Prioritizes the most recent user input for context
  */
@@ -408,15 +430,7 @@ function extractUserMessage(messages: MessageLike[]): string {
     if (msg.role === 'user') {
       const content = extractTextContent(msg.content, PREVIEW_CONFIG.MAX_LENGTH);
       // Skip messages that only contain tool results, system reminders, or are too long (likely system prompts)
-      if (
-        content &&
-        !content.startsWith('🔧 Tool Result') &&
-        !content.startsWith('[Tool Result]') &&
-        !content.includes('<system-reminder>') &&
-        !content.includes('claudeMd') &&
-        !content.includes('Codebase and user instructions') &&
-        content.length < PREVIEW_CONFIG.MAX_USER_MESSAGE_LENGTH
-      ) {
+      if (content && !shouldSkipUserMessage(content)) {
         // Reasonable length for actual user questions
         return content;
       }
