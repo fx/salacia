@@ -1,6 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { createOllama } from 'ollama-ai-provider';
 import type { AIProviderType, EnhancedProviderConfig } from './types';
 import { TokenManager } from '../auth/token-manager';
 
@@ -50,7 +49,10 @@ export class ProviderFactory {
         });
 
       case 'ollama':
-        return createOllama({
+        // Ollama has an OpenAI-compatible API, so we use the OpenAI provider
+        // with a custom base URL pointing to the Ollama server
+        return createOpenAI({
+          apiKey: 'ollama', // Ollama doesn't require an API key, but the SDK needs something
           baseURL: config.settings?.baseUrl || 'http://localhost:11434',
         });
 
