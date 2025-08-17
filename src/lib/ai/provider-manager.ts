@@ -1,5 +1,6 @@
 import { ProviderFactory } from './provider-factory';
 import { TokenManager } from '../auth/token-manager';
+import { OllamaClient } from './providers/ollama/client';
 import type {
   AIProviderType,
   ProviderSettings,
@@ -83,15 +84,15 @@ export class ProviderManager {
       const providers = result.providers;
 
       // Find the default provider or any active OAuth provider
-      const defaultProvider = providers.find((p: any) => p.isDefault && p.isActive);
+      const defaultProvider = providers.find((p: AiProvider) => p.isDefault && p.isActive);
       if (defaultProvider) {
-        return defaultProvider as AiProvider;
+        return defaultProvider;
       }
 
       // If no default, try to find any active OAuth provider
-      const oauthProvider = providers.find((p: any) => p.authType === 'oauth' && p.isActive);
+      const oauthProvider = providers.find((p: AiProvider) => p.authType === 'oauth' && p.isActive);
       if (oauthProvider) {
-        return oauthProvider as AiProvider;
+        return oauthProvider;
       }
 
       // No fallback to environment variables - must use database providers
@@ -184,6 +185,12 @@ export class ProviderManager {
    */
   static async testProvider(provider: AiProvider): Promise<{ success: boolean; error?: string }> {
     try {
+      // For Ollama providers, test connectivity directly
+      if (provider.type === 'ollama') {
+        const ollamaClient = new OllamaClient(provider.baseUrl || 'http://localhost:11434');
+        return await ollamaClient.testConnection();
+      }
+
       // For OAuth providers, validate token status first
       if (provider.authType === 'oauth') {
         try {
@@ -256,6 +263,32 @@ export class ProviderManager {
     throw new Error(
       'No AI provider configured. Please set up providers in the database or configure environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY).'
     );
+  }
+
+  /**
+   * Discover available models from an Ollama provider
+   */
+  static async discoverOllamaModels(baseUrl?: string): Promise<string[]> {
+    try {
+      const ollamaClient = new OllamaClient(baseUrl || 'http://localhost:11434');
+      return await ollamaClient.discoverModels();
+    } catch (error) {
+      logger.warn('Failed to discover Ollama models:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get detailed model information from Ollama
+   */
+  static async getOllamaModelDetails(baseUrl?: string) {
+    try {
+      const ollamaClient = new OllamaClient(baseUrl || 'http://localhost:11434');
+      return await ollamaClient.getModelDetails();
+    } catch (error) {
+      logger.warn('Failed to get Ollama model details:', error);
+      return [];
+    }
   }
 
   /**

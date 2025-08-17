@@ -8,6 +8,7 @@
  */
 
 export { AnthropicClient } from './anthropic/client';
+export { OllamaClient } from './ollama/client';
 
 // Future provider implementations can be added here:
 // export { OpenAIClient } from './openai/client';

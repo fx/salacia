@@ -1,5 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createOllama } from 'ollama-ai-provider';
 import type { AIProviderType, EnhancedProviderConfig } from './types';
 import { TokenManager } from '../auth/token-manager';
 
@@ -48,6 +49,11 @@ export class ProviderFactory {
           baseURL: config.settings?.baseUrl || 'https://api.groq.com/openai/v1',
         });
 
+      case 'ollama':
+        return createOllama({
+          baseURL: config.settings?.baseUrl || 'http://localhost:11434',
+        });
+
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
@@ -64,6 +70,8 @@ export class ProviderFactory {
         return 'claude-3-opus-20240229';
       case 'groq':
         return 'mixtral-8x7b-32768';
+      case 'ollama':
+        return 'llama3.2';
       default:
         throw new Error(`No default model for provider type: ${type}`);
     }
@@ -89,6 +97,22 @@ export class ProviderFactory {
       case 'groq':
         return ['mixtral-8x7b-32768', 'llama2-70b-4096', 'gemma-7b-it'];
 
+      case 'ollama':
+        return [
+          'llama3.2',
+          'llama3.1',
+          'llama3.1:70b',
+          'llama3.1:405b',
+          'codellama',
+          'codellama:70b',
+          'mistral',
+          'mistral-nemo',
+          'phi3',
+          'gemma2',
+          'qwen2.5',
+          'deepseek-coder',
+        ];
+
       default:
         return [];
     }
@@ -107,6 +131,11 @@ export class ProviderFactory {
    * Handles OAuth token refresh and fallback to API key
    */
   static async getAuthenticationCredentials(config: EnhancedProviderConfig): Promise<string> {
+    // Ollama typically doesn't require authentication
+    if (config.type === 'ollama') {
+      return config.apiKey || '';
+    }
+
     // For OAuth providers, try to get a valid token first
     if (config.authType === 'oauth') {
       try {
@@ -198,16 +227,19 @@ export class ProviderFactory {
         openai: 'gpt-4-turbo-preview',
         anthropic: 'claude-3-opus-20240229',
         groq: 'mixtral-8x7b-32768',
+        ollama: 'llama3.1:70b',
       },
       'claude-3-sonnet-20240229': {
         openai: 'gpt-4',
         anthropic: 'claude-3-sonnet-20240229',
         groq: 'mixtral-8x7b-32768',
+        ollama: 'llama3.1',
       },
       'claude-3-haiku-20240307': {
         openai: 'gpt-3.5-turbo',
         anthropic: 'claude-3-haiku-20240307',
         groq: 'gemma-7b-it',
+        ollama: 'llama3.2',
       },
     };
 

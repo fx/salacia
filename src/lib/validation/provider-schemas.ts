@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Provider type enumeration for validation.
  * Must match the AIProviderType from types.ts
  */
-export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq']);
+export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq', 'ollama']);
 
 /**
  * Authentication type enumeration for validation.
@@ -44,11 +44,12 @@ export const createProviderSchema = z
   })
   .refine(
     data => {
-      // For API key providers, API key is required
-      if (data.authType === 'api_key') {
+      // For API key providers, API key is required except for Ollama
+      if (data.authType === 'api_key' && data.type !== 'ollama') {
         return data.apiKey && data.apiKey.length > 0;
       }
       // OAuth providers don't need validation here - client ID is set automatically
+      // Ollama providers don't require API key
       return true;
     },
     {
