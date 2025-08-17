@@ -455,6 +455,7 @@ top: calc(0.5lh - (var(--table-border-width) / 2));
 - **The `-=` syntax is NOT a typo** - it is the correct WebTUI semantic attribute format
 - **These attributes target CSS selectors like `[size-="compact"]`** - removing the dash breaks the CSS targeting
 - **Do not suggest removing the equals sign from WebTUI attributes** - `size-="compact"` is CORRECT, not `size-"compact"`
+- **NEVER flag WebTUI attributes like `size-=`, `box-=`, `variant-=` as typos** - they are the correct semantic attribute syntax
 
 - **CRITICAL: WebTUI NEVER uses `data-` prefixes for semantic attributes** - always use `variant-="red"` format
 - `variant-="red"` is the ONLY correct format for WebTUI error styling in error boxes and alert components
