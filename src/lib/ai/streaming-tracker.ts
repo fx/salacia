@@ -40,7 +40,9 @@ export function createTrackingStream(
   stream: ReadableStream,
   interactionId: string
 ): ReadableStream {
+  // Use a separate TextDecoder for parsing without interfering with the original stream
   const decoder = new TextDecoder();
+  let textBuffer = '';
 
   // State to track the complete response
   const state: StreamingState = {
@@ -59,18 +61,39 @@ export function createTrackingStream(
           const { done, value } = await reader.read();
 
           if (done) {
+            // Process any remaining text in buffer
+            if (textBuffer.trim()) {
+              parseStreamingChunk(textBuffer, state, currentContentBlock);
+            }
+
             // Stream finished, update database with complete response
             await updateDatabaseWithCompleteResponse(interactionId, state);
             controller.close();
             break;
           }
 
-          // Forward the chunk to the client
+          // CRITICAL: Forward the exact chunk to the client first, unmodified
           controller.enqueue(value);
 
-          // Parse and track the streaming events
-          const chunk = decoder.decode(value, { stream: true });
-          parseStreamingChunk(chunk, state, currentContentBlock);
+          // Parse and track the streaming events for database logging only
+          // Use a separate decode operation that doesn't interfere with the stream
+          try {
+            const chunkText = decoder.decode(value, { stream: true });
+            textBuffer += chunkText;
+
+            // Process complete lines only to avoid parsing partial JSON
+            let newlineIndex;
+            while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+              const line = textBuffer.slice(0, newlineIndex + 1); // include newline
+              textBuffer = textBuffer.slice(newlineIndex + 1);
+              if (line.trim()) {
+                parseStreamingChunk(line, state, currentContentBlock);
+              }
+            }
+          } catch (parseError) {
+            // If parsing fails, continue forwarding the stream without tracking
+            logger.debug('Failed to parse chunk for tracking (stream continues):', parseError);
+          }
         }
       } catch (error) {
         logger.error('Error in streaming tracker:', error);

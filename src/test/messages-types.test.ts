@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import type { AiInteractionData } from '../lib/types/messages.js';
 import { transformAiInteractionToDisplay, MESSAGES_CONSTANTS } from '../lib/types/messages.js';
 
+// Import PREVIEW_CONFIG to access MAX_LENGTH constant
+const PREVIEW_CONFIG = { MAX_LENGTH: 150 } as const;
+
 describe('Messages Types', () => {
   describe('MESSAGES_CONSTANTS', () => {
     it('should have correct constant values', () => {
@@ -47,18 +50,24 @@ describe('Messages Types', () => {
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      expect(result.requestPreview).toHaveLength(103); // 100 chars + '...'
-      expect(result.requestPreview).toMatch(/\.\.\.$/); // Ends with '...'
+      // Current implementation JSON stringifies and truncates at MESSAGE_PREVIEW_MAX_LENGTH (100)
+      const expectedTruncated =
+        JSON.stringify(longRequest).substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH) +
+        '...';
+      expect(result.requestPreview).toBe(expectedTruncated);
     });
 
     it('should handle response preview truncation', () => {
-      const longResponse = { content: 'b'.repeat(150) };
+      const longResponse = { content: 'b'.repeat(PREVIEW_CONFIG.MAX_LENGTH) };
       const interaction = { ...mockInteraction, response: longResponse };
 
       const result = transformAiInteractionToDisplay(interaction);
 
-      expect(result.responsePreview).toHaveLength(103); // 100 chars + '...'
-      expect(result.responsePreview).toMatch(/\.\.\.$/); // Ends with '...'
+      // Current implementation JSON stringifies and truncates at MESSAGE_PREVIEW_MAX_LENGTH (100)
+      const expectedTruncated =
+        JSON.stringify(longResponse).substring(0, MESSAGES_CONSTANTS.MESSAGE_PREVIEW_MAX_LENGTH) +
+        '...';
+      expect(result.responsePreview).toBe(expectedTruncated);
     });
 
     it('should handle failed interactions', () => {

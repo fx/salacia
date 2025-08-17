@@ -309,12 +309,12 @@ export function MessagesTable({
           </thead>
           <tbody>
             {table.getRowModel().rows.map(row => (
-              <tr 
-                key={row.id} 
+              <tr
+                key={row.id}
                 role="row"
                 style={{ cursor: 'pointer' }}
                 onClick={() => handleRowClick(row.original)}
-                onKeyDown={(e) => {
+                onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleRowClick(row.original);
