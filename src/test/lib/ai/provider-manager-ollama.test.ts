@@ -1,19 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ProviderManager } from '../../../lib/ai/provider-manager';
 
 describe('ProviderManager - Ollama Support', () => {
   beforeEach(() => {
-    globalThis.fetch = vi.fn();
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('discoverOllamaModels', () => {
     it('should discover models from ollama server', async () => {
       const mockModels = {
-        models: [
-          { name: 'llama3.2' },
-          { name: 'mistral' },
-          { name: 'codellama' },
-        ],
+        models: [{ name: 'llama3.2' }, { name: 'mistral' }, { name: 'codellama' }],
       };
 
       vi.mocked(globalThis.fetch).mockResolvedValueOnce({
@@ -149,3 +151,4 @@ describe('ProviderManager - Ollama Support', () => {
     });
   });
 });
+

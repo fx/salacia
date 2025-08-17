@@ -4,7 +4,7 @@ import { AiProvider as AiProviderModel } from '../../../../lib/db/models/AiProvi
 
 /**
  * API endpoint to discover available models from an Ollama provider
- * 
+ *
  * This endpoint connects to the Ollama server and retrieves the list of
  * available models that can be used for inference.
  */
@@ -12,33 +12,27 @@ export const POST: APIRoute = async ({ params, request }) => {
   try {
     const providerId = params.id;
     if (!providerId) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Provider ID is required' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Provider ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Find the provider in the database
     const provider = await AiProviderModel.findByPk(providerId);
     if (!provider) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Provider not found' }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Provider not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Only support Ollama providers
     if (provider.type !== 'ollama') {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Model discovery is only supported for Ollama providers' 
+        JSON.stringify({
+          success: false,
+          error: 'Model discovery is only supported for Ollama providers',
         }),
         {
           status: 400,
@@ -68,7 +62,6 @@ export const POST: APIRoute = async ({ params, request }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('Error discovering models:', error);
     return new Response(
@@ -83,3 +76,4 @@ export const POST: APIRoute = async ({ params, request }) => {
     );
   }
 };
+

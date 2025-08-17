@@ -48,7 +48,7 @@ export class OllamaClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
         headers: {
@@ -56,7 +56,7 @@ export class OllamaClient {
         },
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -94,7 +94,7 @@ export class OllamaClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
+
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
         headers: {
@@ -102,11 +102,13 @@ export class OllamaClient {
         },
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        logger.warn(`Failed to fetch models from Ollama: ${response.status} ${response.statusText}`);
+        logger.warn(
+          `Failed to fetch models from Ollama: ${response.status} ${response.statusText}`
+        );
         return [];
       }
 
@@ -125,7 +127,7 @@ export class OllamaClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
+
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         method: 'GET',
         headers: {
@@ -133,11 +135,13 @@ export class OllamaClient {
         },
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        logger.warn(`Failed to fetch model details from Ollama: ${response.status} ${response.statusText}`);
+        logger.warn(
+          `Failed to fetch model details from Ollama: ${response.status} ${response.statusText}`
+        );
         return [];
       }
 
@@ -164,7 +168,7 @@ export class OllamaClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${this.baseUrl}/api/version`, {
         method: 'GET',
         headers: {
@@ -172,7 +176,7 @@ export class OllamaClient {
         },
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
@@ -186,3 +190,4 @@ export class OllamaClient {
     }
   }
 }
+
