@@ -82,12 +82,12 @@ export function createTrackingStream(
             textBuffer += chunkText;
 
             // Process complete lines only to avoid parsing partial JSON
-            const lines = textBuffer.split('\n');
-            textBuffer = lines.pop() || ''; // Keep the last potentially incomplete line
-
-            for (const line of lines) {
+            let newlineIndex;
+            while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+              const line = textBuffer.slice(0, newlineIndex + 1); // include newline
+              textBuffer = textBuffer.slice(newlineIndex + 1);
               if (line.trim()) {
-                parseStreamingChunk(line + '\n', state, currentContentBlock);
+                parseStreamingChunk(line, state, currentContentBlock);
               }
             }
           } catch (parseError) {
