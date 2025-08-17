@@ -228,7 +228,11 @@ export function Navigation() {
         <span is-="badge" variant-="yellow">
           SALACIA
         </span>
-        <span is-="badge" variant-="background1">
+        <span
+          is-="badge"
+          variant-="background1"
+          title={`Version ${packageJson.version} (${import.meta.env.VITE_GIT_SHORTREF || 'unknown'})`}
+        >
           v{packageJson.version}
         </span>
       </span>

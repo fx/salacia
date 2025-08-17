@@ -572,6 +572,14 @@ const unsubscribeUpdated = addEventListener('message:updated', handleMessageUpda
 - **Stream forwarding**: Always forward original chunks unchanged to clients before parsing for internal tracking
 - **parseStreamingChunk functions**: These expect complete lines including newlines - do not suggest removing newline characters
 
+### Build-Time Security Guidelines
+
+- **Build-time execSync for git metadata**: Using `execSync('git rev-parse --short HEAD')` in build configuration (astro.config.mjs, vite.config.ts) is ACCEPTABLE for extracting git metadata
+- **Trusted build environment**: Build-time git commands run in controlled CI/CD environments, not user-controlled runtime environments
+- **Static build artifacts**: Git metadata is embedded as static strings in build artifacts, not executed at runtime
+- **Do not flag build-time git operations** as security concerns - they are standard practice for version tracking and deployment metadata
+- **Runtime vs build-time distinction**: Only flag execSync/child_process usage in runtime code (API routes, server handlers), not build configuration
+
 ## Testing Best Practices
 
 ### React Testing Library Principles
