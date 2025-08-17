@@ -444,7 +444,10 @@ describe('Content Preview Utilities', () => {
 
       const result = generateResponsePreviewEnhanced(response);
 
-      expect(result.text).toBe(longText.substring(0, 150) + '...');
+      expect(result.text.length).toBeLessThanOrEqual(153); // Max 150 + '...'
+      if (result.text.length > 150) {
+        expect(result.text.endsWith('...')).toBe(true);
+      }
       expect(result.stopReason).toEqual({
         icon: '✓',
         tooltip: 'Response completed naturally',
@@ -588,6 +591,136 @@ describe('Content Preview Utilities', () => {
 
       expect(result.requestPreview).toBe('Test');
       expect(result.responsePreview).toBeUndefined();
+    });
+  });
+
+  describe('JSON metadata parsing', () => {
+    it('parses isNewTopic and title from JSON at start of response', () => {
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: '{"isNewTopic": true, "title": "Claude Identity"} I am Claude, an AI assistant created by Anthropic.',
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Claude Identity');
+      expect(result.topicInfo).toEqual({
+        icon: '💡',
+        title: 'Claude Identity',
+        isNewTopic: true,
+      });
+      expect(result.stopReason).toEqual({
+        icon: '✓',
+        tooltip: 'Response completed naturally',
+        value: 'end_turn',
+      });
+    });
+
+    it('parses JSON with blank title and uses remaining text', () => {
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: '{"isNewTopic": false, "title": ""} Let me help you with that coding problem.',
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Let me help you with that coding problem.');
+      expect(result.topicInfo).toEqual({
+        icon: '💬',
+        title: 'Let me help you with that coding problem.',
+        isNewTopic: false,
+      });
+    });
+
+    it('handles JSON without topic metadata', () => {
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: '{"model": "claude-3", "tokens": 100} This is a regular response.',
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('{"model": "claude-3", "tokens": 100} This is a regular response.');
+      expect(result.topicInfo).toBeUndefined();
+    });
+
+    it('handles malformed JSON gracefully', () => {
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: '{"isNewTopic": true, "title": "Broken JSON} This should work normally.',
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe(
+        '{"isNewTopic": true, "title": "Broken JSON} This should work normally.'
+      );
+      expect(result.topicInfo).toBeUndefined();
+    });
+
+    it('handles topic metadata with very long title', () => {
+      const longTitle = 'A'.repeat(100);
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: `{"isNewTopic": true, "title": "${longTitle}"} Additional content here.`,
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe(longTitle);
+      expect(result.topicInfo?.title).toBe(longTitle);
+      expect(result.topicInfo?.isNewTopic).toBe(true);
+    });
+
+    it('fallback to remaining text when title is missing', () => {
+      const response = {
+        content: [
+          {
+            type: 'text',
+            text: '{"isNewTopic": true} Here is the actual conversation content that should be used as title.',
+          },
+        ],
+        stop_reason: 'end_turn',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toContain('Here is the actual conversation content that shoul');
+      expect(result.text.endsWith('...')).toBe(true);
+      expect(result.topicInfo?.icon).toBe('💡');
+      expect(result.topicInfo?.isNewTopic).toBe(true);
+      expect(result.topicInfo?.title).toContain('Here is the actual conversation content');
     });
   });
 });

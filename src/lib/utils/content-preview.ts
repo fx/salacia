@@ -49,6 +49,52 @@ function getStopReasonIcon(stopReason: string): { icon: string; tooltip: string 
 }
 
 /**
+ * Interface for topic metadata found in response content
+ */
+interface TopicMetadata {
+  isNewTopic?: boolean;
+  title?: string;
+}
+
+/**
+ * Parses JSON metadata at the beginning of text content
+ * Returns both the parsed metadata and the remaining text
+ */
+function parseJsonMetadata(text: string): {
+  metadata: TopicMetadata | null;
+  remainingText: string;
+} {
+  if (!text || typeof text !== 'string') {
+    return { metadata: null, remainingText: text || '' };
+  }
+
+  // Look for JSON at the beginning of the text
+  const jsonMatch = text.match(/^\s*\{[^}]*\}\s*/);
+  if (!jsonMatch) {
+    return { metadata: null, remainingText: text };
+  }
+
+  try {
+    const jsonStr = jsonMatch[0].trim();
+    const parsed = JSON.parse(jsonStr) as TopicMetadata;
+    const remainingText = text.substring(jsonMatch[0].length);
+
+    // Validate that it contains expected topic fields
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      ('isNewTopic' in parsed || 'title' in parsed)
+    ) {
+      return { metadata: parsed, remainingText };
+    }
+  } catch {
+    // JSON parsing failed, treat as regular text
+  }
+
+  return { metadata: null, remainingText: text };
+}
+
+/**
  * Interface for structured content that might contain messages
  */
 interface MessageLike {
@@ -104,6 +150,12 @@ export interface PreviewResult {
     tooltip: string;
     value: string;
   };
+  /** Optional topic metadata */
+  topicInfo?: {
+    icon: string;
+    title: string;
+    isNewTopic: boolean;
+  };
 }
 
 /**
@@ -118,7 +170,10 @@ function extractTextContent(
 
   // Handle string content directly
   if (typeof content === 'string') {
-    return content.length > maxLength ? `${content.substring(0, maxLength)}...` : content;
+    // Parse JSON metadata if present and use remaining text
+    const { remainingText } = parseJsonMetadata(content);
+    const textToUse = remainingText || content;
+    return textToUse.length > maxLength ? `${textToUse.substring(0, maxLength)}...` : textToUse;
   }
 
   // Handle array of content blocks
@@ -169,6 +224,155 @@ function extractTextContent(
   }
 
   return '';
+}
+
+/**
+ * Enhanced text extraction that returns both text and topic metadata
+ */
+function extractTextContentWithMetadata(
+  content: unknown,
+  maxLength: number = PREVIEW_CONFIG.MAX_LENGTH
+): { text: string; topicInfo?: { icon: string; title: string; isNewTopic: boolean } } {
+  if (!content) return { text: '' };
+
+  // Handle string content directly
+  if (typeof content === 'string') {
+    const { metadata, remainingText } = parseJsonMetadata(content);
+    let textToUse = remainingText || content;
+
+    // Generate topic info if metadata exists
+    let topicInfo: { icon: string; title: string; isNewTopic: boolean } | undefined;
+    if (metadata) {
+      const isNewTopic = Boolean(metadata.isNewTopic);
+      let title = metadata.title || '';
+
+      // If no title in metadata, use beginning of remaining text
+      if (!title && remainingText) {
+        const previewText = remainingText.trim().substring(0, 50);
+        title =
+          previewText.length < remainingText.trim().length ? `${previewText}...` : previewText;
+      }
+
+      topicInfo = {
+        icon: isNewTopic ? '💡' : '💬',
+        title: title || 'Untitled',
+        isNewTopic,
+      };
+
+      // For display, combine icon and title
+      textToUse = title || remainingText || 'New conversation';
+    }
+
+    const finalText =
+      textToUse.length > maxLength ? `${textToUse.substring(0, maxLength)}...` : textToUse;
+    return { text: finalText, topicInfo };
+  }
+
+  // Handle array of content blocks
+  if (Array.isArray(content)) {
+    const texts: string[] = [];
+    let totalLength = 0;
+    let topicInfo: { icon: string; title: string; isNewTopic: boolean } | undefined;
+
+    for (const item of content.slice(0, PREVIEW_CONFIG.MAX_ARRAY_ITEMS)) {
+      let itemText = '';
+
+      if (typeof item === 'string') {
+        // Check first string item for topic metadata
+        if (!topicInfo) {
+          const { metadata, remainingText } = parseJsonMetadata(item);
+          if (metadata) {
+            const isNewTopic = Boolean(metadata.isNewTopic);
+            let title = metadata.title || '';
+
+            if (!title && remainingText) {
+              const previewText = remainingText.trim().substring(0, 50);
+              title =
+                previewText.length < remainingText.trim().length
+                  ? `${previewText}...`
+                  : previewText;
+            }
+
+            topicInfo = {
+              icon: isNewTopic ? '💡' : '💬',
+              title: title || 'Untitled',
+              isNewTopic,
+            };
+
+            itemText = title || remainingText || 'New conversation';
+          } else {
+            itemText = item;
+          }
+        } else {
+          itemText = item;
+        }
+      } else if (item && typeof item === 'object') {
+        const obj = item as Record<string, unknown>;
+        const textContent = (obj.text || obj.content || obj.message || '') as string;
+
+        // Check for topic metadata in text content
+        if (!topicInfo && textContent) {
+          const { metadata, remainingText } = parseJsonMetadata(textContent);
+          if (metadata) {
+            const isNewTopic = Boolean(metadata.isNewTopic);
+            let title = metadata.title || '';
+
+            if (!title && remainingText) {
+              const previewText = remainingText.trim().substring(0, 50);
+              title =
+                previewText.length < remainingText.trim().length
+                  ? `${previewText}...`
+                  : previewText;
+            }
+
+            topicInfo = {
+              icon: isNewTopic ? '💡' : '💬',
+              title: title || 'Untitled',
+              isNewTopic,
+            };
+
+            itemText = title || remainingText || 'New conversation';
+          } else {
+            itemText = textContent;
+          }
+        } else {
+          itemText = textContent;
+        }
+
+        // Handle tool use/result content
+        if (obj.type === 'tool_use' && obj.name) {
+          itemText = `🔧 ${obj.name}`;
+        } else if (obj.type === 'tool_result') {
+          itemText = '🔧 Tool Result';
+        }
+      }
+
+      if (itemText && typeof itemText === 'string') {
+        if (totalLength + itemText.length > maxLength) {
+          itemText = itemText.substring(0, maxLength - totalLength);
+          texts.push(itemText);
+          break;
+        }
+        texts.push(itemText);
+        totalLength += itemText.length;
+      }
+    }
+
+    const result = texts.join(' ');
+    const finalText = result.length > maxLength ? `${result.substring(0, maxLength)}...` : result;
+    return { text: finalText, topicInfo };
+  }
+
+  // Handle object with text properties
+  if (content && typeof content === 'object') {
+    const obj = content as Record<string, unknown>;
+    const textField = obj.text || obj.content || obj.message || obj.data;
+    if (textField) {
+      return extractTextContentWithMetadata(textField, maxLength);
+    }
+  }
+
+  return { text: '' };
 }
 
 /**
@@ -333,22 +537,28 @@ export function generateResponsePreviewEnhanced(data: unknown): PreviewResult {
 
       // Handle content
       if (resp.content) {
-        // Get full content first to check if truncation is needed
-        const fullContentText = extractTextContent(resp.content, 99999);
-        if (fullContentText) {
+        // Extract content with topic metadata
+        const { text: contentText, topicInfo } = extractTextContentWithMetadata(
+          resp.content,
+          PREVIEW_CONFIG.MAX_LENGTH
+        );
+
+        if (contentText) {
+          // Add topic info if found
+          if (topicInfo) {
+            result.topicInfo = topicInfo;
+          }
+
           // Handle special tool-related content
           if (
-            fullContentText.includes('<is_displaying_contents>') ||
-            fullContentText.includes('<filepaths>') ||
-            fullContentText.includes('tool_use') ||
-            fullContentText.includes('tool_result')
+            contentText.includes('<is_displaying_contents>') ||
+            contentText.includes('<filepaths>') ||
+            contentText.includes('tool_use') ||
+            contentText.includes('tool_result')
           ) {
             result.text = '🔧 Tool response';
           } else {
-            result.text =
-              fullContentText.length > PREVIEW_CONFIG.MAX_LENGTH
-                ? `${fullContentText.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
-                : fullContentText;
+            result.text = contentText;
           }
         } else if (Array.isArray(resp.content) && resp.content.length === 0) {
           // Handle empty content arrays - check stop_reason for context

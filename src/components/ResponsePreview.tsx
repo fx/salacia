@@ -43,25 +43,40 @@ export function ResponsePreview({
 
   const truncatedText = truncateText(preview.text, maxLength);
 
-  // If there's no stop reason, just show the text
-  if (!preview.stopReason) {
+  // If there's no stop reason and no topic info, just show the text
+  if (!preview.stopReason && !preview.topicInfo) {
     return <code title={preview.text}>{truncatedText}</code>;
   }
 
-  // Show stop reason icon at the beginning, followed by text
+  // Show icons at the beginning, followed by text
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25ch' }}>
-      <span
-        title={preview.stopReason.tooltip}
-        style={{
-          fontSize: '0.9em',
-          cursor: 'help',
-          opacity: 0.8,
-        }}
-        aria-label={preview.stopReason.tooltip}
-      >
-        {preview.stopReason.icon}
-      </span>
+      {preview.topicInfo && (
+        <span
+          title={`${preview.topicInfo.isNewTopic ? 'New topic' : 'Continuing topic'}: ${preview.topicInfo.title}`}
+          style={{
+            fontSize: '0.9em',
+            cursor: 'help',
+            opacity: 0.8,
+          }}
+          aria-label={`${preview.topicInfo.isNewTopic ? 'New topic' : 'Continuing topic'}: ${preview.topicInfo.title}`}
+        >
+          {preview.topicInfo.icon}
+        </span>
+      )}
+      {preview.stopReason && (
+        <span
+          title={preview.stopReason.tooltip}
+          style={{
+            fontSize: '0.9em',
+            cursor: 'help',
+            opacity: 0.8,
+          }}
+          aria-label={preview.stopReason.tooltip}
+        >
+          {preview.stopReason.icon}
+        </span>
+      )}
       <code title={preview.text}>{truncatedText}</code>
     </span>
   );
