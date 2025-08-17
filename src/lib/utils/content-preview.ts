@@ -20,6 +20,35 @@ const PREVIEW_CONFIG = {
 } as const;
 
 /**
+ * Maps stop_reason values to appropriate icons with hover text
+ */
+const STOP_REASON_ICONS = {
+  end_turn: { icon: '✓', tooltip: 'Response completed naturally' },
+  max_tokens: { icon: '🚫', tooltip: 'Reached maximum token limit' },
+  stop_sequence: { icon: '🛑', tooltip: 'Hit configured stop sequence' },
+  tool_use: { icon: '🔧', tooltip: 'Stopped to use tools' },
+  timeout: { icon: '⏱️', tooltip: 'Request timed out' },
+  error: { icon: '❌', tooltip: 'Error occurred during generation' },
+} as const;
+
+/**
+ * Gets the appropriate icon and tooltip for a stop reason
+ */
+function getStopReasonIcon(stopReason: string): { icon: string; tooltip: string } {
+  if (!stopReason || typeof stopReason !== 'string') {
+    return { icon: '⏹️', tooltip: 'Response stopped' };
+  }
+
+  const known = STOP_REASON_ICONS[stopReason as keyof typeof STOP_REASON_ICONS];
+  if (known) {
+    return known;
+  }
+
+  // Default for unknown stop reasons - show the stop reason clearly
+  return { icon: '⏹️', tooltip: `Stopped: ${stopReason}` };
+}
+
+/**
  * Interface for structured content that might contain messages
  */
 interface MessageLike {
@@ -60,6 +89,20 @@ interface ResponseLike {
   error?: {
     type?: string;
     message?: string;
+  };
+}
+
+/**
+ * Enhanced preview result with optional metadata for stop reasons
+ */
+export interface PreviewResult {
+  /** The main preview text */
+  text: string;
+  /** Optional stop reason icon and tooltip */
+  stopReason?: {
+    icon: string;
+    tooltip: string;
+    value: string;
   };
 }
 
@@ -237,8 +280,111 @@ export function generateRequestPreview(data: unknown): string {
 }
 
 /**
+ * Generates an enhanced preview for API response data with stop reason metadata
+ * Handles different response formats and extracts meaningful content
+ */
+export function generateResponsePreviewEnhanced(data: unknown): PreviewResult {
+  if (!data) return { text: 'No response' };
+
+  try {
+    // Handle string data (raw JSON)
+    if (typeof data === 'string') {
+      // Try to parse as JSON for better preview
+      try {
+        const parsed = JSON.parse(data);
+        return generateResponsePreviewEnhanced(parsed);
+      } catch {
+        // Return truncated string if JSON parsing fails
+        const text =
+          data.length <= PREVIEW_CONFIG.MAX_LENGTH
+            ? data
+            : `${data.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`;
+        return { text };
+      }
+    }
+
+    // Handle object data
+    if (data && typeof data === 'object') {
+      const resp = data as ResponseLike & { delta?: { text?: string; type?: string } };
+      const result: PreviewResult = { text: '' };
+
+      // Add stop reason metadata if present
+      if (resp.stop_reason) {
+        const stopReasonData = getStopReasonIcon(resp.stop_reason);
+        result.stopReason = {
+          icon: stopReasonData.icon,
+          tooltip: stopReasonData.tooltip,
+          value: resp.stop_reason,
+        };
+      }
+
+      // Handle error responses
+      if (resp.error) {
+        const errorMsg = resp.error.message || resp.error.type || 'Unknown error';
+        result.text = `Error: ${errorMsg}`;
+        return result;
+      }
+
+      // Handle streaming chunks
+      if (resp.delta && resp.delta.text) {
+        result.text = `"${resp.delta.text}"`;
+        return result;
+      }
+
+      // Handle content
+      if (resp.content) {
+        // Get full content first to check if truncation is needed
+        const fullContentText = extractTextContent(resp.content, 99999);
+        if (fullContentText) {
+          // Handle special tool-related content
+          if (
+            fullContentText.includes('<is_displaying_contents>') ||
+            fullContentText.includes('<filepaths>') ||
+            fullContentText.includes('tool_use') ||
+            fullContentText.includes('tool_result')
+          ) {
+            result.text = '🔧 Tool response';
+          } else {
+            result.text =
+              fullContentText.length > PREVIEW_CONFIG.MAX_LENGTH
+                ? `${fullContentText.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
+                : fullContentText;
+          }
+        } else if (Array.isArray(resp.content) && resp.content.length === 0) {
+          // Handle empty content arrays - check stop_reason for context
+          if (resp.stop_reason === 'tool_use') {
+            result.text = 'Stop for tool use';
+          } else if (resp.stop_reason === 'end_turn') {
+            result.text = 'Response completed';
+          } else {
+            result.text = '∅ Empty response';
+          }
+        } else {
+          result.text = 'Has content';
+        }
+      } else {
+        result.text = 'Response received';
+      }
+
+      return result;
+    }
+
+    // Fallback for other types
+    const stringified = String(data);
+    const text =
+      stringified.length > PREVIEW_CONFIG.MAX_LENGTH
+        ? `${stringified.substring(0, PREVIEW_CONFIG.MAX_LENGTH)}...`
+        : stringified;
+    return { text };
+  } catch {
+    return { text: 'Unable to parse response' };
+  }
+}
+
+/**
  * Generates a human-readable preview for API response data
  * Handles different response formats and extracts meaningful content
+ * @deprecated Use generateResponsePreviewEnhanced for stop reason metadata
  */
 export function generateResponsePreview(data: unknown): string {
   if (!data) return 'No response';
@@ -320,8 +466,31 @@ export function generateResponsePreview(data: unknown): string {
 }
 
 /**
+ * Enhanced content previews with stop reason metadata
+ */
+export interface ContentPreviewsEnhanced {
+  requestPreview: string;
+  responsePreview?: PreviewResult;
+}
+
+/**
+ * Generates enhanced previews for both request and response data
+ * Includes stop reason metadata for responses
+ */
+export function generateContentPreviewsEnhanced(
+  request: unknown,
+  response?: unknown
+): ContentPreviewsEnhanced {
+  return {
+    requestPreview: generateRequestPreview(request),
+    responsePreview: response ? generateResponsePreviewEnhanced(response) : undefined,
+  };
+}
+
+/**
  * Generates previews for both request and response data
  * Convenience function that returns both previews in a consistent format
+ * @deprecated Use generateContentPreviewsEnhanced for stop reason metadata
  */
 export function generateContentPreviews(request: unknown, response?: unknown) {
   return {

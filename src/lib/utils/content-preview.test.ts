@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   generateRequestPreview,
   generateResponsePreview,
+  generateResponsePreviewEnhanced,
   generateContentPreviews,
+  generateContentPreviewsEnhanced,
 } from './content-preview';
 
 describe('Content Preview Utilities', () => {
@@ -403,6 +405,189 @@ describe('Content Preview Utilities', () => {
 
       const result = generateRequestPreview(claudeCodeRequest);
       expect(result).toBe('Create a preview utility');
+    });
+  });
+
+  describe('generateResponsePreviewEnhanced', () => {
+    it('includes stop_reason metadata when present with content', () => {
+      const response = {
+        id: 'msg_123',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'text', text: 'The answer is 4.' }],
+        model: 'claude-3-sonnet-20240229',
+        stop_reason: 'end_turn',
+        usage: {
+          input_tokens: 10,
+          output_tokens: 5,
+        },
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('The answer is 4.');
+      expect(result.stopReason).toEqual({
+        icon: '✓',
+        tooltip: 'Response completed naturally',
+        value: 'end_turn',
+      });
+    });
+
+    it('shows checkmark for end_turn responses with long content', () => {
+      const longText =
+        'This is a very long response that will be truncated because it exceeds the maximum length limit for previews in the message table display and continues for much longer than expected to test truncation behavior properly';
+      const response = {
+        content: [{ type: 'text', text: longText }],
+        stop_reason: 'end_turn',
+        model: 'claude-3-haiku',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe(longText.substring(0, 150) + '...');
+      expect(result.stopReason).toEqual({
+        icon: '✓',
+        tooltip: 'Response completed naturally',
+        value: 'end_turn',
+      });
+    });
+
+    it('handles tool_use stop_reason', () => {
+      const response = {
+        id: 'msg_456',
+        role: 'assistant',
+        content: [],
+        stop_reason: 'tool_use',
+        model: 'claude-3-opus',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Stop for tool use');
+      expect(result.stopReason).toEqual({
+        icon: '🔧',
+        tooltip: 'Stopped to use tools',
+        value: 'tool_use',
+      });
+    });
+
+    it('handles max_tokens stop_reason with content', () => {
+      const response = {
+        content: [{ type: 'text', text: 'Long response that got cut off' }],
+        stop_reason: 'max_tokens',
+        model: 'claude-3-haiku',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Long response that got cut off');
+      expect(result.stopReason).toEqual({
+        icon: '🚫',
+        tooltip: 'Reached maximum token limit',
+        value: 'max_tokens',
+      });
+    });
+
+    it('handles stop_sequence stop_reason with content', () => {
+      const response = {
+        content: [{ type: 'text', text: 'Response that hit a stop word' }],
+        stop_reason: 'stop_sequence',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Response that hit a stop word');
+      expect(result.stopReason).toEqual({
+        icon: '🛑',
+        tooltip: 'Hit configured stop sequence',
+        value: 'stop_sequence',
+      });
+    });
+
+    it('handles unknown stop_reason with clear text in tooltip', () => {
+      const response = {
+        content: [{ type: 'text', text: 'Some response' }],
+        stop_reason: 'custom_stop_sequence_xyz',
+        model: 'claude-3-sonnet',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Some response');
+      expect(result.stopReason).toEqual({
+        icon: '⏹️',
+        tooltip: 'Stopped: custom_stop_sequence_xyz',
+        value: 'custom_stop_sequence_xyz',
+      });
+    });
+
+    it('returns text only when no stop_reason present', () => {
+      const response = {
+        content: [{ type: 'text', text: 'Simple response' }],
+        model: 'claude-3-haiku',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Simple response');
+      expect(result.stopReason).toBeUndefined();
+    });
+
+    it('handles error responses with stop_reason', () => {
+      const response = {
+        error: {
+          type: 'invalid_request_error',
+          message: 'Missing required parameter',
+        },
+        stop_reason: 'error',
+      };
+
+      const result = generateResponsePreviewEnhanced(response);
+
+      expect(result.text).toBe('Error: Missing required parameter');
+      expect(result.stopReason).toEqual({
+        icon: '❌',
+        tooltip: 'Error occurred during generation',
+        value: 'error',
+      });
+    });
+  });
+
+  describe('generateContentPreviewsEnhanced', () => {
+    it('generates enhanced previews with stop reason metadata', () => {
+      const request = {
+        model: 'claude-3-haiku',
+        messages: [{ role: 'user', content: 'Test message' }],
+      };
+
+      const response = {
+        content: [{ type: 'text', text: 'Test response' }],
+        stop_reason: 'end_turn',
+        model: 'claude-3-haiku',
+      };
+
+      const result = generateContentPreviewsEnhanced(request, response);
+
+      expect(result.requestPreview).toBe('Test message');
+      expect(result.responsePreview?.text).toBe('Test response');
+      expect(result.responsePreview?.stopReason).toEqual({
+        icon: '✓',
+        tooltip: 'Response completed naturally',
+        value: 'end_turn',
+      });
+    });
+
+    it('handles missing response in enhanced mode', () => {
+      const request = {
+        model: 'claude-3-haiku',
+        messages: [{ role: 'user', content: 'Test' }],
+      };
+
+      const result = generateContentPreviewsEnhanced(request);
+
+      expect(result.requestPreview).toBe('Test');
+      expect(result.responsePreview).toBeUndefined();
     });
   });
 });

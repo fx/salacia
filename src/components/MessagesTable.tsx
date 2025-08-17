@@ -27,6 +27,7 @@ import {
 import type { MessageDisplay, MessageSort } from '../lib/types/messages.js';
 import { formatCompactDate } from '../lib/utils/date.js';
 import { MessageDetailDialog } from './MessageDetailDialog.js';
+import { ResponsePreview } from './ResponsePreview.js';
 
 /**
  * Props for the MessagesTable component.
@@ -175,12 +176,20 @@ export function MessagesTable({
         },
         enableSorting: false,
       }),
-      columnHelper.accessor('responsePreview', {
+      columnHelper.accessor('responsePreviewEnhanced', {
         header: 'Response',
         cell: info => {
-          const preview = info.getValue();
-          if (!preview) return '—';
-          return <code title={preview}>{truncateText(preview, 40)}</code>;
+          const enhancedPreview = info.getValue();
+          const fallbackPreview = info.row.original.responsePreview;
+
+          // If we have enhanced preview, use it; otherwise fall back to basic preview
+          if (enhancedPreview) {
+            return <ResponsePreview preview={enhancedPreview} maxLength={40} />;
+          } else if (fallbackPreview) {
+            return <code title={fallbackPreview}>{truncateText(fallbackPreview, 40)}</code>;
+          } else {
+            return '—';
+          }
         },
         enableSorting: false,
       }),
