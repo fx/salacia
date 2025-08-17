@@ -4,6 +4,119 @@ import type { AnthropicRequest, AnthropicResponse } from '../../types';
 const logger = createLogger('AnthropicClient');
 
 /**
+ * Claude Code tool definitions that match the actual tools available
+ * These enable tool execution mode when included in requests
+ */
+const CLAUDE_CODE_TOOLS = [
+  {
+    name: 'Task',
+    description: 'Launch a new agent to handle complex, multi-step tasks autonomously',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        description: { type: 'string', description: 'A short (3-5 word) description of the task' },
+        prompt: { type: 'string', description: 'The task for the agent to perform' },
+        subagent_type: {
+          type: 'string',
+          description: 'The type of specialized agent to use for this task',
+        },
+      },
+      required: ['description', 'prompt', 'subagent_type'],
+    },
+  },
+  {
+    name: 'Bash',
+    description: 'Executes a given bash command in a persistent shell session',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        command: { type: 'string', description: 'The command to execute' },
+        description: {
+          type: 'string',
+          description: 'Clear, concise description of what this command does',
+        },
+      },
+      required: ['command'],
+    },
+  },
+  {
+    name: 'Read',
+    description: 'Reads a file from the local filesystem',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        file_path: { type: 'string', description: 'The absolute path to the file to read' },
+        limit: { type: 'number', description: 'The number of lines to read' },
+        offset: { type: 'number', description: 'The line number to start reading from' },
+      },
+      required: ['file_path'],
+    },
+  },
+  {
+    name: 'Write',
+    description: 'Writes a file to the local filesystem',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        file_path: { type: 'string', description: 'The absolute path to the file to write' },
+        content: { type: 'string', description: 'The content to write to the file' },
+      },
+      required: ['file_path', 'content'],
+    },
+  },
+  {
+    name: 'Edit',
+    description: 'Performs exact string replacements in files',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        file_path: { type: 'string', description: 'The absolute path to the file to modify' },
+        old_string: { type: 'string', description: 'The text to replace' },
+        new_string: { type: 'string', description: 'The text to replace it with' },
+        replace_all: { type: 'boolean', description: 'Replace all occurrences of old_string' },
+      },
+      required: ['file_path', 'old_string', 'new_string'],
+    },
+  },
+  {
+    name: 'Glob',
+    description: 'Fast file pattern matching tool that works with any codebase size',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pattern: { type: 'string', description: 'The glob pattern to match files against' },
+        path: { type: 'string', description: 'The directory to search in' },
+      },
+      required: ['pattern'],
+    },
+  },
+  {
+    name: 'Grep',
+    description: 'A powerful search tool built on ripgrep',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pattern: { type: 'string', description: 'The regular expression pattern to search for' },
+        path: { type: 'string', description: 'File or directory to search in' },
+        output_mode: { type: 'string', enum: ['content', 'files_with_matches', 'count'] },
+      },
+      required: ['pattern'],
+    },
+  },
+  {
+    name: 'LS',
+    description: 'Lists files and directories in a given path',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        path: { type: 'string', description: 'The absolute path to the directory to list' },
+      },
+      required: ['path'],
+    },
+  },
+];
+
+/**
  * Anthropic API client that bypasses the Vercel AI SDK
  * This is needed for OAuth token spoofing to work properly
  */
@@ -31,6 +144,13 @@ export class AnthropicClient {
 
     const modifiedRequest = { ...request };
     const claudeCodePrompt = "You are Claude Code, Anthropic's official CLI for Claude.";
+
+    // Always add Claude Code tools to enable tool execution mode
+    modifiedRequest.tools = CLAUDE_CODE_TOOLS;
+    logger.debug('Adding Claude Code tools to request', {
+      toolCount: CLAUDE_CODE_TOOLS.length,
+      tools: CLAUDE_CODE_TOOLS.map(t => t.name),
+    });
 
     if (modifiedRequest.system) {
       if (typeof modifiedRequest.system === 'string') {
@@ -100,6 +220,13 @@ export class AnthropicClient {
 
     const modifiedRequest = { ...request, stream: true };
     const claudeCodePrompt = "You are Claude Code, Anthropic's official CLI for Claude.";
+
+    // Always add Claude Code tools to enable tool execution mode
+    modifiedRequest.tools = CLAUDE_CODE_TOOLS;
+    logger.debug('Adding Claude Code tools to streaming request', {
+      toolCount: CLAUDE_CODE_TOOLS.length,
+      tools: CLAUDE_CODE_TOOLS.map(t => t.name),
+    });
 
     if (modifiedRequest.system) {
       if (typeof modifiedRequest.system === 'string') {

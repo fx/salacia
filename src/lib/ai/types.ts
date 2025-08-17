@@ -80,17 +80,46 @@ export const AnthropicMessageSchema = z.object({
   content: z.union([
     z.string(),
     z.array(
-      z.object({
-        type: z.enum(['text', 'image']),
-        text: z.string().optional(),
-        source: z
-          .object({
+      z.union([
+        // Text content
+        z.object({
+          type: z.literal('text'),
+          text: z.string(),
+        }),
+        // Image content
+        z.object({
+          type: z.literal('image'),
+          source: z.object({
             type: z.literal('base64'),
             media_type: z.string(),
             data: z.string(),
-          })
-          .optional(),
-      })
+          }),
+        }),
+        // Tool use content
+        z.object({
+          type: z.literal('tool_use'),
+          id: z.string(),
+          name: z.string(),
+          input: z.record(z.any()),
+        }),
+        // Tool result content
+        z.object({
+          type: z.literal('tool_result'),
+          tool_use_id: z.string(),
+          content: z
+            .union([
+              z.string(),
+              z.array(
+                z.object({
+                  type: z.literal('text'),
+                  text: z.string(),
+                })
+              ),
+            ])
+            .optional(),
+          is_error: z.boolean().optional(),
+        }),
+      ])
     ),
   ]),
 });
@@ -122,6 +151,19 @@ export const AnthropicRequestSchema = z.object({
         })
       ),
     ])
+    .optional(),
+  tools: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        input_schema: z.object({
+          type: z.literal('object'),
+          properties: z.record(z.any()),
+          required: z.array(z.string()).optional(),
+        }),
+      })
+    )
     .optional(),
   metadata: z.record(z.any()).optional(),
 });
