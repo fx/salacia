@@ -227,9 +227,11 @@ export const POST: APIRoute = async ({ request }) => {
         }
       });
 
-      // Use AI SDK's doStream method directly like OpenCode
-      const result = await model.doStream({
-        prompt,
+      // Use AI SDK's streamText method
+      const { streamText } = await import('ai');
+      const result = await streamText({
+        model: model as any, // Type assertion needed due to SDK version differences
+        messages: prompt,
         ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
         ...(requestData!.temperature && { temperature: requestData!.temperature }),
         ...(requestData!.top_p && { topP: requestData!.top_p }),
@@ -279,7 +281,7 @@ export const POST: APIRoute = async ({ request }) => {
               encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`)
             );
 
-            const reader = result.stream.getReader();
+            const reader = result.fullStream.getReader();
             try {
               while (true) {
                 const { done, value: chunk } = await reader.read();
@@ -307,7 +309,7 @@ export const POST: APIRoute = async ({ request }) => {
                       index: 0,
                       delta: {
                         type: 'text_delta',
-                        text: chunk.delta,
+                        text: 'textDelta' in chunk ? chunk.textDelta : '',
                       },
                     };
                     controller.enqueue(
@@ -327,10 +329,18 @@ export const POST: APIRoute = async ({ request }) => {
                       )
                     );
 
+                    const outputTokens =
+                      'usage' in chunk &&
+                      chunk.usage &&
+                      typeof chunk.usage === 'object' &&
+                      'outputTokens' in chunk.usage
+                        ? (chunk.usage as any).outputTokens || 0
+                        : 0;
+
                     const messageDelta = {
                       type: 'message_delta',
                       delta: { stop_reason: 'end_turn', stop_sequence: null },
-                      usage: { output_tokens: chunk.usage?.outputTokens || 0 },
+                      usage: { output_tokens: outputTokens },
                     };
                     controller.enqueue(
                       encoder.encode(
