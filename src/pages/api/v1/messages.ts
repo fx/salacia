@@ -102,8 +102,69 @@ export const POST: APIRoute = async ({ request }) => {
     const isStreaming = requestData!.stream === true;
 
     if (isStreaming) {
-      // Get provider and create client directly
+      // Get provider and check if it's OAuth
       const provider = await ProviderManager.ensureDefaultProvider();
+
+      // For OAuth providers, we need to use the AnthropicClient directly with streaming
+      if (provider.authType === 'oauth' && provider.type === 'anthropic') {
+        const claudeCodeToken = (globalThis as unknown as { __claudeCodeToken?: string })
+          .__claudeCodeToken;
+        const tokenToUse = claudeCodeToken || provider.oauthAccessToken;
+
+        if (!tokenToUse) {
+          return createErrorResponse(
+            API_ERROR_TYPES.PERMISSION_ERROR,
+            'No OAuth token available for provider',
+            503
+          );
+        }
+
+        logger.debug('Using OAuth streaming with AnthropicClient', {
+          hasClaudeCodeToken: !!claudeCodeToken,
+          provider: provider.name,
+        });
+
+        // Import and use AnthropicClient with streaming
+        const { AnthropicClient } = await import('../../../lib/ai/providers');
+        const anthropicClient = new AnthropicClient(
+          tokenToUse,
+          provider.baseUrl || 'https://api.anthropic.com/v1'
+        );
+
+        const responseTime = Date.now() - startTime;
+
+        // Log streaming request - create initial database record
+        const _interaction = await logAiInteraction({
+          request: requestData!,
+          response: undefined, // Response will be updated when stream completes
+          responseTime,
+          statusCode: 200,
+          providerId: provider.id,
+        });
+
+        // Log API request
+        await logApiRequest({
+          request,
+          statusCode: 200,
+          responseTime,
+        });
+
+        // Use AnthropicClient's streaming method directly
+        const stream = await anthropicClient.createStreamingMessage(requestData!);
+
+        return new Response(stream, {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            'X-Response-Time': `${responseTime}ms`,
+            ...CORS_HEADERS,
+          },
+        });
+      }
+
+      // For non-OAuth providers, use AI SDK streaming
       const client = await ProviderManager.createClient(provider);
       const model = client(requestData!.model);
 
