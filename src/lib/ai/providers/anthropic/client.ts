@@ -145,7 +145,12 @@ export class AnthropicClient {
         );
       }
 
-      return response.body!;
+      // Ensure we're returning the raw stream from Anthropic without any processing
+      if (!response.body) {
+        throw new Error('No response body received from Anthropic API');
+      }
+
+      return response.body;
     } catch (error) {
       logger.error('Failed to create streaming response', error);
       throw error;
