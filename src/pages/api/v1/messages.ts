@@ -11,7 +11,8 @@ import {
 } from '../../../lib/ai/api-utils';
 import { createLogger } from '../../../lib/utils/logger';
 import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
-import { createTrackingStream } from '../../../lib/ai/streaming-tracker';
+import { ProviderManager } from '../../../lib/ai/provider-manager';
+import { generateMessageId } from '../../../lib/ai/api-utils';
 
 const logger = createLogger('API/Messages');
 
@@ -101,17 +102,81 @@ export const POST: APIRoute = async ({ request }) => {
     const isStreaming = requestData!.stream === true;
 
     if (isStreaming) {
-      // Generate streaming response using AI service
-      const { stream, providerId } = await AIService.generateStreamingCompletion(requestData!);
+      // Get provider and create client directly
+      const provider = await ProviderManager.ensureDefaultProvider();
+      const client = await ProviderManager.createClient(provider);
+      const model = client(requestData!.model);
+
+      // Convert Anthropic format to AI SDK format
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+
+      if (requestData!.system) {
+        let systemContent: string;
+        if (typeof requestData!.system === 'string') {
+          systemContent = requestData!.system;
+        } else if (Array.isArray(requestData!.system)) {
+          systemContent = requestData!.system
+            .filter(
+              block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+            )
+            .map(block => block.text)
+            .join('\n');
+        } else {
+          systemContent = '';
+        }
+        if (systemContent) {
+          messages.push({ role: 'system', content: systemContent });
+        }
+      }
+
+      // Convert messages
+      for (const message of requestData!.messages) {
+        let content: string;
+
+        if (typeof message.content === 'string') {
+          content = message.content;
+        } else if (Array.isArray(message.content)) {
+          content = message.content
+            .filter(block => block.type === 'text' && 'text' in block)
+            .map(block => ('text' in block ? block.text! : ''))
+            .join('\n');
+        } else {
+          content = '';
+        }
+
+        const role = message.role as 'system' | 'user' | 'assistant';
+        messages.push({ role, content });
+      }
+
+      // Convert to proper AI SDK prompt format
+      const prompt = messages.map(msg => {
+        if (msg.role === 'system') {
+          return { role: 'system' as const, content: msg.content };
+        } else {
+          return {
+            role: msg.role as 'user' | 'assistant',
+            content: [{ type: 'text' as const, text: msg.content }],
+          };
+        }
+      });
+
+      // Use AI SDK's doStream method directly like OpenCode
+      const result = await model.doStream({
+        prompt,
+        ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
+        ...(requestData!.temperature && { temperature: requestData!.temperature }),
+        ...(requestData!.top_p && { topP: requestData!.top_p }),
+      });
+
       const responseTime = Date.now() - startTime;
 
       // Log streaming request - create initial database record
-      const interaction = await logAiInteraction({
+      const _interaction = await logAiInteraction({
         request: requestData!,
         response: undefined, // Response will be updated when stream completes
         responseTime,
         statusCode: 200,
-        providerId,
+        providerId: provider.id,
       });
 
       // Log API request
@@ -121,15 +186,142 @@ export const POST: APIRoute = async ({ request }) => {
         responseTime,
       });
 
-      // Wrap stream with tracking to update database when complete
-      let trackingStream;
-      if (interaction) {
-        trackingStream = createTrackingStream(stream, interaction.id);
-      } else {
-        trackingStream = stream;
-      }
+      // Create streaming response exactly like OpenCode does
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const id = generateMessageId();
+          let hasStarted = false;
 
-      return new Response(trackingStream, {
+          try {
+            // Send message_start event first
+            const messageStart = {
+              type: 'message_start',
+              message: {
+                id,
+                type: 'message',
+                role: 'assistant',
+                content: [],
+                model: requestData!.model,
+                stop_reason: null,
+                stop_sequence: null,
+                usage: { input_tokens: 0, output_tokens: 0 },
+              },
+            };
+            controller.enqueue(
+              encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`)
+            );
+
+            const reader = result.stream.getReader();
+            try {
+              while (true) {
+                const { done, value: chunk } = await reader.read();
+                if (done) break;
+                switch (chunk.type) {
+                  case 'text-delta': {
+                    if (!hasStarted) {
+                      // Send content_block_start event
+                      const contentBlockStart = {
+                        type: 'content_block_start',
+                        index: 0,
+                        content_block: { type: 'text', text: '' },
+                      };
+                      controller.enqueue(
+                        encoder.encode(
+                          `event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`
+                        )
+                      );
+                      hasStarted = true;
+                    }
+
+                    // Send text delta exactly like Anthropic format
+                    const data = {
+                      type: 'content_block_delta',
+                      index: 0,
+                      delta: {
+                        type: 'text_delta',
+                        text: chunk.delta,
+                      },
+                    };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: content_block_delta\ndata: ${JSON.stringify(data)}\n\n`
+                      )
+                    );
+                    break;
+                  }
+
+                  case 'finish': {
+                    // Send completion events
+                    const contentBlockStop = { type: 'content_block_stop', index: 0 };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`
+                      )
+                    );
+
+                    const messageDelta = {
+                      type: 'message_delta',
+                      delta: { stop_reason: 'end_turn', stop_sequence: null },
+                      usage: { output_tokens: chunk.usage?.outputTokens || 0 },
+                    };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`
+                      )
+                    );
+
+                    const messageStop = { type: 'message_stop' };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`
+                      )
+                    );
+
+                    controller.close();
+                    break;
+                  }
+
+                  case 'error': {
+                    const errorData = {
+                      type: 'error',
+                      error: {
+                        type: 'api_error',
+                        message: typeof chunk.error === 'string' ? chunk.error : 'Streaming error',
+                      },
+                    };
+                    controller.enqueue(
+                      encoder.encode(`event: error\ndata: ${JSON.stringify(errorData)}\n\n`)
+                    );
+                    controller.close();
+                    break;
+                  }
+
+                  // Ignore other chunk types like OpenCode does
+                  default:
+                    break;
+                }
+              }
+            } finally {
+              reader.releaseLock();
+            }
+          } catch (error) {
+            const errorData = {
+              type: 'error',
+              error: {
+                type: 'api_error',
+                message: error instanceof Error ? error.message : 'Streaming error',
+              },
+            };
+            controller.enqueue(
+              encoder.encode(`event: error\ndata: ${JSON.stringify(errorData)}\n\n`)
+            );
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
         status: 200,
         headers: {
           'Content-Type': 'text/event-stream',
