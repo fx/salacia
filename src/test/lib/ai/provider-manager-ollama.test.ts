@@ -151,4 +151,3 @@ describe('ProviderManager - Ollama Support', () => {
     });
   });
 });
-
