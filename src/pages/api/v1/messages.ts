@@ -332,12 +332,13 @@ export const POST: APIRoute = async ({ request }) => {
                     }
 
                     // Send text delta exactly like Anthropic format
+                    const text = (chunk as any).text || '';
                     const data = {
                       type: 'content_block_delta',
                       index: 0,
                       delta: {
                         type: 'text_delta',
-                        text: 'textDelta' in chunk ? chunk.textDelta : '',
+                        text,
                       },
                     };
                     controller.enqueue(
