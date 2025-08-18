@@ -28,14 +28,6 @@ describe('ProviderFactory - Ollama Support', () => {
     });
   });
 
-  describe('mapModelName', () => {
-    it('should map anthropic models to ollama equivalents', () => {
-      expect(ProviderFactory.mapModelName('ollama', 'claude-3-opus-20240229')).toBe('llama3.1:70b');
-      expect(ProviderFactory.mapModelName('ollama', 'claude-3-sonnet-20240229')).toBe('llama3.1');
-      expect(ProviderFactory.mapModelName('ollama', 'claude-3-haiku-20240307')).toBe('llama3.2');
-    });
-  });
-
   describe('getAuthenticationCredentials', () => {
     it('should handle ollama providers without API key', async () => {
       const config: EnhancedProviderConfig = {

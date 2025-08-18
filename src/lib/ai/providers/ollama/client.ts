@@ -38,7 +38,8 @@ export class OllamaClient {
   private baseUrl: string;
 
   constructor(baseUrl = 'http://localhost:11434') {
-    this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+    // Normalize base URL - remove trailing slash and /v1 suffix for API calls
+    this.baseUrl = baseUrl.replace(/\/$/, '').replace(/\/v1$/, '');
   }
 
   /**

@@ -12,6 +12,7 @@ import {
 import { createLogger } from '../../../lib/utils/logger';
 import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
 import { ProviderManager } from '../../../lib/ai/provider-manager';
+import { ProviderFactory } from '../../../lib/ai/provider-factory';
 import { generateMessageId } from '../../../lib/ai/api-utils';
 import { getClaudeCodeToken } from '../../../lib/utils/auth';
 
@@ -170,7 +171,34 @@ export const POST: APIRoute = async ({ request }) => {
 
       // For non-OAuth providers, use AI SDK streaming
       const client = await ProviderManager.createClient(provider);
-      const model = client(requestData!.model);
+      let reqModel = requestData!.model;
+      if (provider.type === 'ollama') {
+        // Treat unknown Anthropic/OpenAI names or missing/default as "default" sentinel
+        const anthropicLike =
+          !reqModel ||
+          reqModel === 'default' ||
+          /^(claude|gpt|mixtral|gemma|sonnet|haiku)/i.test(reqModel);
+        if (anthropicLike) {
+          reqModel = await ProviderManager.getOllamaDefaultModel(provider);
+        }
+      }
+      const mappedModelId =
+        provider.type === 'ollama'
+          ? reqModel
+          : ProviderFactory.mapModelName(provider.type as any, reqModel);
+
+      if (provider.type === 'ollama') {
+        logger.debug('Ollama model selection', {
+          requested: requestData!.model,
+          resolved: reqModel,
+          used: mappedModelId,
+        });
+      }
+
+      const model =
+        provider.type === 'ollama' && typeof (client as any).chat === 'function'
+          ? (client as any).chat(mappedModelId)
+          : (client as any)(mappedModelId);
 
       // Convert Anthropic format to AI SDK format
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
@@ -271,7 +299,7 @@ export const POST: APIRoute = async ({ request }) => {
                 type: 'message',
                 role: 'assistant',
                 content: [],
-                model: requestData!.model,
+                model: mappedModelId,
                 stop_reason: null,
                 stop_sequence: null,
                 usage: { input_tokens: 0, output_tokens: 0 },

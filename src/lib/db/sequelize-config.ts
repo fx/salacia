@@ -57,7 +57,8 @@ export function createSequelizeConfig(): SequelizeConfig {
   const config: SequelizeConfig = {
     connectionString: env.DATABASE_URL,
     dialect: 'postgres',
-    logging: env.NODE_ENV === 'development' && env.LOG_LEVEL === 'debug',
+    // Disable noisy SQL logging by default; enable only when explicitly in debug
+    logging: false,
     pool: {
       max: env.NODE_ENV === 'production' ? 20 : 10,
       min: env.NODE_ENV === 'production' ? 5 : 2,

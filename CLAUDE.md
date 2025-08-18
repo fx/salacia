@@ -47,7 +47,7 @@
 - **Development server**: `npm run dev` (run in background)
 - **Type checking**: `npm run type-check`
 - **Linting**: `npm run lint`
-- **Tests**: `npm test`
+- **Tests**: `npm test:run`
 
 ## Technology Stack
 

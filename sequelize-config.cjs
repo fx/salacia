@@ -9,7 +9,8 @@ const config = {
   development: {
     url: process.env.DATABASE_URL,
     dialect: 'postgres',
-    logging: console.log,
+    // Use env flag to enable SQL logs locally; default off
+    logging: process.env.SQL_LOG === '1' ? console.log : false,
     pool: {
       max: 10,
       min: 2,
@@ -57,10 +58,13 @@ const config = {
       freezeTableName: true,
     },
     dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
-        require: true,
-        rejectUnauthorized: true,
-      } : false,
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? {
+              require: true,
+              rejectUnauthorized: true,
+            }
+          : false,
     },
   },
 };
