@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/fx/salacia/compare/v1.1.0...v1.2.0) (2025-08-21)
+
+
+### Features
+
+* **ai:** add Ollama provider support with model discovery ([#143](https://github.com/fx/salacia/issues/143)) ([94b439a](https://github.com/fx/salacia/commit/94b439aaa648734cc04a06814edcf72ed4d281d4))
+* **ci:** add manual trigger support to docker tag workflow ([15e5711](https://github.com/fx/salacia/commit/15e57113f6a2efb74f8c961179ab03dd46ca0476))
+* **ui:** add enhanced message content preview with stop reason indicators ([#140](https://github.com/fx/salacia/issues/140)) ([2cd3a30](https://github.com/fx/salacia/commit/2cd3a30af4b0fca7b57c9ef2500d948a1115b73f))
+* **ui:** add git shortref hover to version badge ([#141](https://github.com/fx/salacia/issues/141)) ([f0888a0](https://github.com/fx/salacia/commit/f0888a001d3ad0fbf758a3857e1b3a42138b6170))
+
+
+### Bug Fixes
+
+* **ci:** move tests to CI workflow and add proper database env ([158dafd](https://github.com/fx/salacia/commit/158dafdec298830dfef6fcd3fb56352883b8cf1c))
+
 ## [1.1.0](https://github.com/fx/salacia/compare/v1.0.3...v1.1.0) (2025-08-16)
 
 
