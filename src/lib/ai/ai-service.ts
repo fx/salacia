@@ -57,14 +57,33 @@ export class AIService {
       }
 
       const client = await ProviderManager.createClient(selectedProvider);
-      const model = client(this.mapModelName(selectedProvider, request.model));
+      // Resolve dynamic default model for Ollama: prefer running (/api/ps), else first DB-configured model
+      let requestedModel = request.model;
+      if (selectedProvider.type === 'ollama') {
+        const anthropicLike =
+          !requestedModel ||
+          requestedModel === 'default' ||
+          /^(claude|gpt|mixtral|gemma|sonnet|haiku)/i.test(requestedModel);
+        if (anthropicLike) {
+          requestedModel = await ProviderManager.getOllamaDefaultModel(selectedProvider);
+        }
+      }
+      const mappedModelId =
+        selectedProvider.type === 'ollama'
+          ? requestedModel
+          : this.mapModelName(selectedProvider, requestedModel);
+      // Use OpenAI chat endpoint for Ollama to avoid /responses 404 on typical proxies
+      const model =
+        selectedProvider.type === 'ollama' && typeof (client as any).chat === 'function'
+          ? (client as any).chat(mappedModelId)
+          : (client as any)(mappedModelId);
 
       // Convert Anthropic format to AI SDK format
       const messages = this.convertAnthropicMessages(request, selectedProvider);
 
       // Generate response
-      const generateOptions: Parameters<typeof generateText>[0] = {
-        model,
+      const generateOptions = {
+        model: model as Parameters<typeof generateText>[0]['model'],
         messages,
         temperature: request.temperature,
         topP: request.top_p,
@@ -89,7 +108,7 @@ export class AIService {
             text: result.text,
           },
         ],
-        model: request.model,
+        model: mappedModelId,
         stop_reason: this.mapFinishReason(result.finishReason),
         stop_sequence: null,
         usage: {

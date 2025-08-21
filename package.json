@@ -34,6 +34,7 @@
     "@webtui/theme-catppuccin": "^0.0.3",
     "ai": "^5.0.0",
     "astro": "^5.12.8",
+    "ollama-ai-provider": "^1.2.0",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "postgres": "^3.4.5",

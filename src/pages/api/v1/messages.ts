@@ -12,6 +12,7 @@ import {
 import { createLogger } from '../../../lib/utils/logger';
 import { logAiInteraction, logApiRequest } from '../../../lib/services/message-logger';
 import { ProviderManager } from '../../../lib/ai/provider-manager';
+import { ProviderFactory } from '../../../lib/ai/provider-factory';
 import { generateMessageId } from '../../../lib/ai/api-utils';
 import { getClaudeCodeToken } from '../../../lib/utils/auth';
 
@@ -73,11 +74,13 @@ export const POST: APIRoute = async ({ request }) => {
         const hasSystem = 'system' in data;
 
         if (hasModel) {
+          const hasStream = 'stream' in data;
           const summary = {
             model: data.model,
             messageCount: hasMessages ? (data as { messages: unknown[] }).messages.length : 0,
             maxTokens: hasMaxTokens ? data.max_tokens : 'default',
             hasSystem: hasSystem,
+            stream: hasStream ? data.stream : 'not specified',
           };
           logger.debug('Request summary:', summary);
         }
@@ -168,72 +171,179 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
 
-      // For non-OAuth providers, use AI SDK streaming
-      const client = await ProviderManager.createClient(provider);
-      const model = client(requestData!.model);
+      // Declare result variable to hold streaming response
+      let result: { fullStream: { getReader: () => any } };
+      let finalModelName = requestData!.model; // Track the final model name used
 
-      // Convert Anthropic format to AI SDK format
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+      // Handle Ollama providers with direct streaming to bypass AI SDK issues
+      if (provider.type === 'ollama') {
+        // Model resolution for Ollama
+        let reqModel = requestData!.model;
+        const anthropicLike =
+          !reqModel ||
+          reqModel === 'default' ||
+          /^(claude|gpt|mixtral|gemma|sonnet|haiku)/i.test(reqModel);
+        if (anthropicLike) {
+          reqModel = await ProviderManager.getOllamaDefaultModel(provider);
+        }
 
-      if (requestData!.system) {
-        let systemContent: string;
-        if (typeof requestData!.system === 'string') {
-          systemContent = requestData!.system;
-        } else if (Array.isArray(requestData!.system)) {
-          systemContent = requestData!.system
-            .filter(
-              block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
-            )
-            .map(block => block.text)
-            .join('\n');
-        } else {
-          systemContent = '';
+        finalModelName = reqModel; // Store the resolved model name
+
+        logger.debug('Ollama model selection', {
+          requested: requestData!.model,
+          resolved: reqModel,
+        });
+
+        // Convert Anthropic format to OpenAI format for Ollama
+        const messages: Array<{ role: string; content: string }> = [];
+
+        if (requestData!.system) {
+          let systemContent: string;
+          if (typeof requestData!.system === 'string') {
+            systemContent = requestData!.system;
+          } else if (Array.isArray(requestData!.system)) {
+            systemContent = requestData!.system
+              .filter(
+                block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+              )
+              .map(block => block.text)
+              .join('\n');
+          } else {
+            systemContent = '';
+          }
+          if (systemContent) {
+            messages.push({ role: 'system', content: systemContent });
+          }
         }
-        if (systemContent) {
-          messages.push({ role: 'system', content: systemContent });
+
+        // Convert messages
+        for (const message of requestData!.messages) {
+          let content: string;
+
+          if (typeof message.content === 'string') {
+            content = message.content;
+          } else if (Array.isArray(message.content)) {
+            content = message.content
+              .filter(
+                block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+              )
+              .map(block => (block as { type: 'text'; text: string }).text)
+              .join('\n');
+          } else {
+            content = '';
+          }
+
+          messages.push({ role: message.role, content });
         }
+
+        // Use direct Ollama streaming
+        const { createOllamaStream } = await import('../../../lib/ai/providers/ollama/streaming');
+        const baseUrl = provider.baseUrl || 'http://localhost:11434';
+        const apiKey = provider.apiKey || 'ollama';
+
+        const ollamaStreamOptions = {
+          baseUrl,
+          apiKey,
+          model: reqModel,
+          messages,
+          ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
+          ...(requestData!.temperature && { temperature: requestData!.temperature }),
+          ...(requestData!.top_p && { topP: requestData!.top_p }),
+        };
+
+        logger.debug('Creating direct Ollama stream', ollamaStreamOptions);
+        const ollamaStream = await createOllamaStream(ollamaStreamOptions);
+
+        // Create a wrapper that reads from Ollama stream and converts to our format
+        result = {
+          fullStream: {
+            getReader: () => ollamaStream.getReader(),
+          },
+        };
+
+        logger.debug('Direct Ollama stream created successfully');
+      } else {
+        // For non-Ollama providers, use AI SDK streaming
+        const client = await ProviderManager.createClient(provider);
+        const mappedModelId = ProviderFactory.mapModelName(
+          provider.type as 'openai' | 'anthropic' | 'groq',
+          requestData!.model
+        );
+
+        finalModelName = mappedModelId; // Store the mapped model name
+
+        const model = (client as any)(mappedModelId);
+
+        // Convert Anthropic format to AI SDK format
+        const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+
+        if (requestData!.system) {
+          let systemContent: string;
+          if (typeof requestData!.system === 'string') {
+            systemContent = requestData!.system;
+          } else if (Array.isArray(requestData!.system)) {
+            systemContent = requestData!.system
+              .filter(
+                block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+              )
+              .map(block => block.text)
+              .join('\n');
+          } else {
+            systemContent = '';
+          }
+          if (systemContent) {
+            messages.push({ role: 'system', content: systemContent });
+          }
+        }
+
+        // Convert messages
+        for (const message of requestData!.messages) {
+          let content: string;
+
+          if (typeof message.content === 'string') {
+            content = message.content;
+          } else if (Array.isArray(message.content)) {
+            content = message.content
+              .filter(
+                block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+              )
+              .map(block => (block as { type: 'text'; text: string }).text)
+              .join('\n');
+          } else {
+            content = '';
+          }
+
+          const role = message.role as 'system' | 'user' | 'assistant';
+          messages.push({ role, content });
+        }
+
+        // Convert to proper AI SDK prompt format
+        const prompt = messages.map(msg => {
+          if (msg.role === 'system') {
+            return { role: 'system' as const, content: msg.content };
+          } else {
+            return {
+              role: msg.role as 'user' | 'assistant',
+              content: [{ type: 'text' as const, text: msg.content }],
+            };
+          }
+        });
+
+        // Use AI SDK's streamText method
+        const { streamText } = await import('ai');
+        logger.debug('Calling AI SDK streamText with model', {
+          modelType: typeof model,
+          provider: provider.type,
+        });
+        result = streamText({
+          model: model as any, // Type assertion needed due to SDK version differences
+          messages: prompt,
+          ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
+          ...(requestData!.temperature && { temperature: requestData!.temperature }),
+          ...(requestData!.top_p && { topP: requestData!.top_p }),
+        });
+        logger.debug('AI SDK streamText returned', { hasFullStream: !!result.fullStream });
       }
-
-      // Convert messages
-      for (const message of requestData!.messages) {
-        let content: string;
-
-        if (typeof message.content === 'string') {
-          content = message.content;
-        } else if (Array.isArray(message.content)) {
-          content = message.content
-            .filter(
-              block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
-            )
-            .map(block => (block as { type: 'text'; text: string }).text)
-            .join('\n');
-        } else {
-          content = '';
-        }
-
-        const role = message.role as 'system' | 'user' | 'assistant';
-        messages.push({ role, content });
-      }
-
-      // Convert to proper AI SDK prompt format
-      const prompt = messages.map(msg => {
-        if (msg.role === 'system') {
-          return { role: 'system' as const, content: msg.content };
-        } else {
-          return {
-            role: msg.role as 'user' | 'assistant',
-            content: [{ type: 'text' as const, text: msg.content }],
-          };
-        }
-      });
-
-      // Use AI SDK's doStream method directly like OpenCode
-      const result = await model.doStream({
-        prompt,
-        ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
-        ...(requestData!.temperature && { temperature: requestData!.temperature }),
-        ...(requestData!.top_p && { topP: requestData!.top_p }),
-      });
 
       const responseTime = Date.now() - startTime;
 
@@ -269,7 +379,7 @@ export const POST: APIRoute = async ({ request }) => {
                 type: 'message',
                 role: 'assistant',
                 content: [],
-                model: requestData!.model,
+                model: finalModelName,
                 stop_reason: null,
                 stop_sequence: null,
                 usage: { input_tokens: 0, output_tokens: 0 },
@@ -279,11 +389,18 @@ export const POST: APIRoute = async ({ request }) => {
               encoder.encode(`event: message_start\ndata: ${JSON.stringify(messageStart)}\n\n`)
             );
 
-            const reader = result.stream.getReader();
+            const reader = result.fullStream.getReader();
+            logger.debug('Starting stream reader loop');
+            let chunkCount = 0;
             try {
               while (true) {
                 const { done, value: chunk } = await reader.read();
-                if (done) break;
+                chunkCount++;
+                if (done) {
+                  logger.debug(`Stream ended after ${chunkCount} chunks`);
+                  break;
+                }
+                logger.debug(`Processing chunk ${chunkCount}`, { type: chunk.type });
                 switch (chunk.type) {
                   case 'text-delta': {
                     if (!hasStarted) {
@@ -302,12 +419,13 @@ export const POST: APIRoute = async ({ request }) => {
                     }
 
                     // Send text delta exactly like Anthropic format
+                    const text = (chunk as any).text || '';
                     const data = {
                       type: 'content_block_delta',
                       index: 0,
                       delta: {
                         type: 'text_delta',
-                        text: chunk.delta,
+                        text,
                       },
                     };
                     controller.enqueue(
@@ -327,10 +445,18 @@ export const POST: APIRoute = async ({ request }) => {
                       )
                     );
 
+                    const outputTokens =
+                      'usage' in chunk &&
+                      chunk.usage &&
+                      typeof chunk.usage === 'object' &&
+                      'outputTokens' in chunk.usage
+                        ? (chunk.usage as any).outputTokens || 0
+                        : 0;
+
                     const messageDelta = {
                       type: 'message_delta',
                       delta: { stop_reason: 'end_turn', stop_sequence: null },
-                      usage: { output_tokens: chunk.usage?.outputTokens || 0 },
+                      usage: { output_tokens: outputTokens },
                     };
                     controller.enqueue(
                       encoder.encode(

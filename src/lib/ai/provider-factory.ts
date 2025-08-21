@@ -1,7 +1,20 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import type { AIProviderType, EnhancedProviderConfig } from './types';
+import type { AIProviderType, ProviderSettings } from './types';
 import { TokenManager } from '../auth/token-manager';
+
+/**
+ * Narrow configuration for provider client creation to avoid circular/opaque zod-inferred types.
+ */
+interface ProviderClientConfig {
+  id: string;
+  name: string;
+  type: AIProviderType;
+  authType: 'api_key' | 'oauth';
+  apiKey?: string;
+  fallbackApiKey?: string;
+  settings?: ProviderSettings;
+}
 
 /**
  * Factory for creating AI provider clients using Vercel AI SDK
@@ -11,7 +24,7 @@ export class ProviderFactory {
    * Create a provider client based on configuration.
    *
    * @async
-   * @param {EnhancedProviderConfig} config - Provider configuration including authentication settings.
+   * @param {ProviderClientConfig} config - Provider configuration including authentication settings.
    * @returns {Promise<any>} A Promise that resolves to the provider client instance.
    *
    * @description
@@ -23,7 +36,7 @@ export class ProviderFactory {
    *
    * Supports both API key and OAuth authentication methods across multiple provider types (OpenAI, Anthropic, Groq).
    */
-  static async createProvider(config: EnhancedProviderConfig) {
+  static async createProvider(config: ProviderClientConfig) {
     // Get authentication credentials based on auth type
     const apiKey = await this.getAuthenticationCredentials(config);
 
@@ -48,6 +61,19 @@ export class ProviderFactory {
           baseURL: config.settings?.baseUrl || 'https://api.groq.com/openai/v1',
         });
 
+      case 'ollama': {
+        // Ollama exposes an OpenAI-compatible API at /v1
+        // Normalize the base URL and avoid duplicating /v1 (handles .../v1 already)
+        const raw = config.settings?.baseUrl || 'http://localhost:11434';
+        const base = raw.replace(/\/+$/, '');
+        const baseV1 = base.endsWith('/v1') ? base : `${base}/v1`;
+
+        return createOpenAI({
+          apiKey: config.apiKey || 'ollama', // placeholder; Ollama doesn't need a key
+          baseURL: baseV1,
+        });
+      }
+
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
@@ -64,6 +90,8 @@ export class ProviderFactory {
         return 'claude-3-opus-20240229';
       case 'groq':
         return 'mixtral-8x7b-32768';
+      case 'ollama':
+        return 'llama3.2';
       default:
         throw new Error(`No default model for provider type: ${type}`);
     }
@@ -89,6 +117,22 @@ export class ProviderFactory {
       case 'groq':
         return ['mixtral-8x7b-32768', 'llama2-70b-4096', 'gemma-7b-it'];
 
+      case 'ollama':
+        return [
+          'llama3.2',
+          'llama3.1',
+          'llama3.1:70b',
+          'llama3.1:405b',
+          'codellama',
+          'codellama:70b',
+          'mistral',
+          'mistral-nemo',
+          'phi3',
+          'gemma2',
+          'qwen2.5',
+          'deepseek-coder',
+        ];
+
       default:
         return [];
     }
@@ -106,7 +150,12 @@ export class ProviderFactory {
    * Get authentication credentials for a provider config
    * Handles OAuth token refresh and fallback to API key
    */
-  static async getAuthenticationCredentials(config: EnhancedProviderConfig): Promise<string> {
+  static async getAuthenticationCredentials(config: ProviderClientConfig): Promise<string> {
+    // Ollama typically doesn't require authentication
+    if (config.type === 'ollama') {
+      return config.apiKey || '';
+    }
+
     // For OAuth providers, try to get a valid token first
     if (config.authType === 'oauth') {
       try {
@@ -155,7 +204,7 @@ export class ProviderFactory {
   /**
    * Check if a provider config has valid authentication
    */
-  static async hasValidAuthentication(config: EnhancedProviderConfig): Promise<boolean> {
+  static async hasValidAuthentication(config: ProviderClientConfig): Promise<boolean> {
     try {
       await this.getAuthenticationCredentials(config);
       return true;
@@ -167,7 +216,7 @@ export class ProviderFactory {
   /**
    * Create provider with automatic token refresh for OAuth providers
    */
-  static async createProviderWithRefresh(config: EnhancedProviderConfig) {
+  static async createProviderWithRefresh(config: ProviderClientConfig) {
     // For OAuth providers, ensure token is valid before creating client
     if (config.authType === 'oauth' && config.id) {
       try {
@@ -198,16 +247,19 @@ export class ProviderFactory {
         openai: 'gpt-4-turbo-preview',
         anthropic: 'claude-3-opus-20240229',
         groq: 'mixtral-8x7b-32768',
+        ollama: 'llama3.1:70b',
       },
       'claude-3-sonnet-20240229': {
         openai: 'gpt-4',
         anthropic: 'claude-3-sonnet-20240229',
         groq: 'mixtral-8x7b-32768',
+        ollama: 'llama3.1',
       },
       'claude-3-haiku-20240307': {
         openai: 'gpt-3.5-turbo',
         anthropic: 'claude-3-haiku-20240307',
         groq: 'gemma-7b-it',
+        ollama: 'llama3.2',
       },
     };
 

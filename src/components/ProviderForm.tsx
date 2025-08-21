@@ -74,12 +74,14 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     expiresAt?: string;
     supportsOAuth: boolean;
   } | null>(null);
+  const [discoveringModels, setDiscoveringModels] = useState(false);
 
   // Provider type options
   const providerTypes = [
     { value: 'openai', label: 'OpenAI' },
     { value: 'anthropic', label: 'Anthropic' },
     { value: 'groq', label: 'Groq' },
+    { value: 'ollama', label: 'Ollama' },
   ];
 
   // Populate form data when editing
@@ -241,7 +243,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     if (!formData.type) {
       return 'Provider type is required';
     }
-    if (formData.authType === 'api_key' && !formData.apiKey.trim()) {
+    if (formData.authType === 'api_key' && formData.type !== 'ollama' && !formData.apiKey.trim()) {
       return 'API key is required for API key authentication';
     }
     if (formData.baseUrl && !isValidUrl(formData.baseUrl)) {
@@ -290,6 +292,53 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
       return false;
     } catch {
       return false;
+    }
+  };
+
+  /**
+   * Discover models from Ollama server
+   */
+  const handleDiscoverModels = async () => {
+    const activeProvider = provider || currentProvider;
+    if (!activeProvider?.id) {
+      setError('Provider must be saved before discovering models');
+      return;
+    }
+
+    setDiscoveringModels(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/providers/${activeProvider.id}/discover-models`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          baseUrl: formData.baseUrl || 'http://localhost:11434',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data.models) {
+        const discoveredModels = result.data.models;
+        if (discoveredModels.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            models: discoveredModels.join(', '),
+          }));
+          setSuccessMessage(`Discovered ${discoveredModels.length} models from Ollama server`);
+        } else {
+          setError('No models found on the Ollama server. Make sure models are installed.');
+        }
+      } else {
+        setError(result.error || 'Failed to discover models');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setDiscoveringModels(false);
     }
   };
 
@@ -454,17 +503,26 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
         {formData.authType === 'api_key' && (
           <div data-gap="1">
             <label htmlFor="apiKey">
-              <strong>API Key *</strong>
+              <strong>API Key {formData.type !== 'ollama' ? '*' : '(Optional)'}</strong>
             </label>
             <input
               id="apiKey"
               type="password"
               value={formData.apiKey}
               onChange={e => handleChange('apiKey', e.target.value)}
-              placeholder="Enter your API key"
-              required
+              placeholder={
+                formData.type === 'ollama' 
+                  ? 'Enter API key if required (optional for local Ollama)'
+                  : 'Enter your API key'
+              }
+              required={formData.type !== 'ollama'}
             />
-            <small>Your authentication key for this provider</small>
+            <small>
+              {formData.type === 'ollama' 
+                ? 'Optional authentication key (not needed for local installations)'
+                : 'Your authentication key for this provider'
+              }
+            </small>
           </div>
         )}
 
@@ -570,23 +628,61 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
             type="url"
             value={formData.baseUrl}
             onChange={e => handleChange('baseUrl', e.target.value)}
-            placeholder="e.g., https://api.openai.com/v1"
+            placeholder={
+              formData.type === 'ollama' 
+                ? 'e.g., http://localhost:11434' 
+                : 'e.g., https://api.openai.com/v1'
+            }
           />
-          <small>Optional custom API endpoint URL</small>
+          <small>
+            {formData.type === 'ollama' 
+              ? 'Ollama server URL (default: http://localhost:11434)'
+              : 'Optional custom API endpoint URL'
+            }
+          </small>
         </div>
 
         <div data-gap="1">
           <label htmlFor="models">
             <strong>Available Models</strong>
           </label>
-          <input
-            id="models"
-            type="text"
-            value={formData.models}
-            onChange={e => handleChange('models', e.target.value)}
-            placeholder="e.g., gpt-4, gpt-3.5-turbo"
-          />
-          <small>Comma-separated list of available models</small>
+          {formData.type === 'ollama' && (provider || currentProvider) && (
+            <div data-align="space-between" data-gap="1">
+              <input
+                id="models"
+                type="text"
+                value={formData.models}
+                onChange={e => handleChange('models', e.target.value)}
+                placeholder="e.g., llama3.2, mistral, codellama"
+                style={{ flex: '1' }}
+              />
+              <button
+                type="button"
+                onClick={handleDiscoverModels}
+                disabled={discoveringModels || loading}
+                size-="compact"
+                box-="square"
+                variant-="blue"
+              >
+                {discoveringModels ? 'Discovering...' : 'Discover'}
+              </button>
+            </div>
+          )}
+          {(formData.type !== 'ollama' || !(provider || currentProvider)) && (
+            <input
+              id="models"
+              type="text"
+              value={formData.models}
+              onChange={e => handleChange('models', e.target.value)}
+              placeholder="e.g., gpt-4, gpt-3.5-turbo"
+            />
+          )}
+          <small>
+            {formData.type === 'ollama' 
+              ? 'Comma-separated list of available models (use Discover to auto-detect)'
+              : 'Comma-separated list of available models'
+            }
+          </small>
         </div>
 
         <div data-gap="1">

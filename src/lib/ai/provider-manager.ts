@@ -1,11 +1,9 @@
 import { ProviderFactory } from './provider-factory';
 import { TokenManager } from '../auth/token-manager';
-import type {
-  AIProviderType,
-  ProviderSettings,
-  ModelConfig,
-  EnhancedProviderConfig,
-} from './types';
+import { AiProvider as AiProviderModel } from '../db/models/AiProvider';
+import { OllamaClient } from './providers/ollama/client';
+import { getOllamaRunningModels } from './providers/ollama/ps';
+import type { AIProviderType, ProviderSettings } from './types';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ProviderManager');
@@ -46,7 +44,6 @@ export class ProviderManager {
    */
   static async updateOAuthToken(newToken: string): Promise<void> {
     try {
-      const { AiProvider: AiProviderModel } = await import('../db/models/AiProvider');
       const providers = await AiProviderModel.findAll({
         where: {
           authType: 'oauth',
@@ -83,13 +80,13 @@ export class ProviderManager {
       const providers = result.providers;
 
       // Find the default provider or any active OAuth provider
-      const defaultProvider = providers.find((p: any) => p.isDefault && p.isActive);
+      const defaultProvider = providers.find(p => p.isDefault && p.isActive);
       if (defaultProvider) {
         return defaultProvider as AiProvider;
       }
 
       // If no default, try to find any active OAuth provider
-      const oauthProvider = providers.find((p: any) => p.authType === 'oauth' && p.isActive);
+      const oauthProvider = providers.find(p => p.authType === 'oauth' && p.isActive);
       if (oauthProvider) {
         return oauthProvider as AiProvider;
       }
@@ -107,20 +104,13 @@ export class ProviderManager {
    */
   static async createClient(provider: AiProvider) {
     // Validate provider type at runtime
-    const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq'];
+    const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq', 'ollama'];
     if (!validTypes.includes(provider.type as AIProviderType)) {
       throw new Error(`Invalid provider type: ${provider.type}`);
     }
 
-    // Safely handle models and settings with proper type checking
-    const models = provider.models as unknown;
+    // Safely handle settings with proper type checking
     const settings = provider.settings as unknown;
-
-    // Parse models with proper typing
-    let parsedModels: ModelConfig[] = [];
-    if (Array.isArray(models)) {
-      parsedModels = models as ModelConfig[];
-    }
 
     // Parse settings with proper typing and defaults
     let parsedSettings: ProviderSettings = {
@@ -153,27 +143,16 @@ export class ProviderManager {
       parsedSettings = { ...parsedSettings, baseUrl: provider.baseUrl };
     }
 
-    const providerConfig: EnhancedProviderConfig = {
+    const providerConfig = {
       id: provider.id,
       name: provider.name,
-      type: provider.type as AIProviderType, // Safe after validation above
+      type: provider.type as AIProviderType,
       authType: provider.authType,
-      // For OAuth providers, we'll let ProviderFactory handle token refresh
+      // For OAuth providers, client creation will fetch/refresh token as needed
       apiKey: provider.authType === 'api_key' ? provider.apiKey : undefined,
-      // OAuth fields
-      oauthAccessToken: provider.oauthAccessToken,
-      oauthRefreshToken: provider.oauthRefreshToken,
-      oauthTokenExpiresAt: provider.oauthTokenExpiresAt,
-      oauthScope: provider.oauthScope,
-      oauthClientId: provider.oauthClientId,
       // Include API key as fallback for OAuth providers
       fallbackApiKey: provider.apiKey,
-      models: parsedModels,
       settings: parsedSettings,
-      isActive: provider.isActive,
-      isDefault: provider.isDefault,
-      createdAt: provider.createdAt,
-      updatedAt: provider.updatedAt,
     };
 
     return ProviderFactory.createProviderWithRefresh(providerConfig);
@@ -184,6 +163,12 @@ export class ProviderManager {
    */
   static async testProvider(provider: AiProvider): Promise<{ success: boolean; error?: string }> {
     try {
+      // For Ollama providers, test connectivity directly
+      if (provider.type === 'ollama') {
+        const ollamaClient = new OllamaClient(provider.baseUrl || 'http://localhost:11434');
+        return await ollamaClient.testConnection();
+      }
+
       // For OAuth providers, validate token status first
       if (provider.authType === 'oauth') {
         try {
@@ -227,9 +212,9 @@ export class ProviderManager {
   static async getProviderWithFreshTokens(providerId: string): Promise<AiProvider | null> {
     try {
       // This would typically fetch from database
-      // For now, we'll use the TokenManager's interface conversion
-      const { AiProvider: AiProviderModel } = await import('../db/models/AiProvider');
-      const providerModel = await AiProviderModel.findByPk(providerId);
+      // For now, we'll use the ProviderService to retrieve the provider model
+      const { ProviderService } = await import('../services/provider-service');
+      const providerModel = await ProviderService.getProvider(providerId);
 
       if (!providerModel) {
         return null;
@@ -256,6 +241,82 @@ export class ProviderManager {
     throw new Error(
       'No AI provider configured. Please set up providers in the database or configure environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY).'
     );
+  }
+
+  /**
+   * Discover available models from an Ollama provider
+   */
+  static async discoverOllamaModels(baseUrl?: string): Promise<string[]> {
+    try {
+      const ollamaClient = new OllamaClient(baseUrl || 'http://localhost:11434');
+      return await ollamaClient.discoverModels();
+    } catch (error) {
+      logger.warn('Failed to discover Ollama models:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get detailed model information from Ollama
+   */
+  static async getOllamaModelDetails(baseUrl?: string) {
+    try {
+      const ollamaClient = new OllamaClient(baseUrl || 'http://localhost:11434');
+      return await ollamaClient.getModelDetails();
+    } catch (error) {
+      logger.warn('Failed to get Ollama model details:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Resolve Ollama default model by preferring a running model (/api/ps),
+   * otherwise the first configured DB model, else static fallback.
+   */
+  static async getOllamaDefaultModel(provider: AiProvider): Promise<string> {
+    try {
+      const base = provider.baseUrl || 'http://localhost:11434';
+      const running = await getOllamaRunningModels(base);
+      logger.debug('Ollama default resolution', {
+        base,
+        runningCount: running.length,
+        runningFirst: running[0],
+        hasDbModels: Array.isArray(provider.models),
+        dbFirstType: Array.isArray(provider.models)
+          ? typeof (provider.models as any[])[0]
+          : undefined,
+        dbFirstValue: Array.isArray(provider.models) ? (provider.models as any[])[0] : undefined,
+      });
+      if (running.length > 0) {
+        logger.debug('Ollama default selection: running model', { selected: running[0] });
+        return running[0];
+      }
+    } catch (e) {
+      logger.debug('Ollama /api/ps check failed; falling back to DB/static', {
+        error: e instanceof Error ? e.message : String(e),
+      });
+      // ignore and fall through to DB-configured models
+    }
+
+    if (Array.isArray(provider.models) && provider.models.length > 0) {
+      const first = (provider.models as any[])[0] as unknown;
+      const candidate =
+        typeof first === 'string'
+          ? (first as string)
+          : first && typeof (first as any).name === 'string'
+            ? (first as any).name
+            : first && typeof (first as any).id === 'string'
+              ? (first as any).id
+              : undefined;
+      if (candidate) {
+        logger.debug('Ollama default selection: DB model', { selected: candidate });
+        return candidate;
+      }
+    }
+
+    const fallback = ProviderFactory.getDefaultModel('ollama');
+    logger.debug('Ollama default selection: static fallback', { selected: fallback });
+    return fallback;
   }
 
   /**
