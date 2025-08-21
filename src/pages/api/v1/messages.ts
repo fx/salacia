@@ -172,7 +172,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // Declare result variable to hold streaming response
-      let result: { fullStream: { getReader: () => ReadableStreamDefaultReader<any> } };
+      let result: { fullStream: { getReader: () => any } };
       let finalModelName = requestData!.model; // Track the final model name used
 
       // Handle Ollama providers with direct streaming to bypass AI SDK issues
@@ -265,7 +265,7 @@ export const POST: APIRoute = async ({ request }) => {
       } else {
         // For non-Ollama providers, use AI SDK streaming
         const client = await ProviderManager.createClient(provider);
-        const mappedModelId = ProviderFactory.mapModelName(provider.type as any, requestData!.model);
+        const mappedModelId = ProviderFactory.mapModelName(provider.type as 'openai' | 'anthropic' | 'groq', requestData!.model);
         
         finalModelName = mappedModelId; // Store the mapped model name
 
