@@ -186,7 +186,7 @@ export const POST: APIRoute = async ({ request }) => {
         if (anthropicLike) {
           reqModel = await ProviderManager.getOllamaDefaultModel(provider);
         }
-        
+
         finalModelName = reqModel; // Store the resolved model name
 
         logger.debug('Ollama model selection', {
@@ -265,8 +265,11 @@ export const POST: APIRoute = async ({ request }) => {
       } else {
         // For non-Ollama providers, use AI SDK streaming
         const client = await ProviderManager.createClient(provider);
-        const mappedModelId = ProviderFactory.mapModelName(provider.type as 'openai' | 'anthropic' | 'groq', requestData!.model);
-        
+        const mappedModelId = ProviderFactory.mapModelName(
+          provider.type as 'openai' | 'anthropic' | 'groq',
+          requestData!.model
+        );
+
         finalModelName = mappedModelId; // Store the mapped model name
 
         const model = (client as any)(mappedModelId);
@@ -328,8 +331,11 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Use AI SDK's streamText method
         const { streamText } = await import('ai');
-        logger.debug('Calling AI SDK streamText with model', { modelType: typeof model, provider: provider.type });
-        result = await streamText({
+        logger.debug('Calling AI SDK streamText with model', {
+          modelType: typeof model,
+          provider: provider.type,
+        });
+        result = streamText({
           model: model as any, // Type assertion needed due to SDK version differences
           messages: prompt,
           ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),

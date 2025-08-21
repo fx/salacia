@@ -18,10 +18,10 @@ export interface OllamaStreamingOptions {
  */
 export async function createOllamaStream(options: OllamaStreamingOptions): Promise<ReadableStream> {
   const { baseUrl, apiKey, model, messages, maxTokens, temperature, topP } = options;
-  
+
   // Normalize base URL to include /v1
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '');
-  const apiUrl = normalizedBaseUrl.endsWith('/v1') 
+  const apiUrl = normalizedBaseUrl.endsWith('/v1')
     ? `${normalizedBaseUrl}/chat/completions`
     : `${normalizedBaseUrl}/v1/chat/completions`;
 
@@ -42,21 +42,25 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(requestBody),
   });
 
-  logger.debug('Ollama API response received', { 
-    status: response.status, 
+  logger.debug('Ollama API response received', {
+    status: response.status,
     statusText: response.statusText,
-    headers: Object.fromEntries(response.headers.entries()),
-    hasBody: !!response.body
+    contentType: response.headers.get('content-type'),
+    hasBody: !!response.body,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    logger.error('Ollama API error response', { status: response.status, statusText: response.statusText, body: errorText });
+    logger.error('Ollama API error response', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText,
+    });
     throw new Error(`Ollama API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
@@ -74,14 +78,14 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
 
       let chunkCount = 0;
       let bytesReceived = 0;
-      
+
       const pump = async () => {
         try {
           logger.debug('Starting Ollama stream pump');
           while (true) {
             const { done, value } = await reader.read();
             chunkCount++;
-            
+
             if (done) {
               logger.debug('Ollama stream completed', { chunkCount, bytesReceived });
               controller.close();
@@ -90,10 +94,10 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
 
             if (value) {
               bytesReceived += value.length;
-              logger.debug(`Received chunk ${chunkCount}`, { 
-                chunkSize: value.length, 
+              logger.debug(`Received chunk ${chunkCount}`, {
+                chunkSize: value.length,
                 totalBytes: bytesReceived,
-                bufferLength: buffer.length
+                bufferLength: buffer.length,
               });
             }
 
@@ -107,7 +111,7 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
               const trimmed = line.trim();
               if (trimmed.startsWith('data: ')) {
                 const dataContent = trimmed.slice(6); // Remove 'data: '
-                
+
                 if (dataContent === '[DONE]') {
                   logger.debug('Received [DONE] marker');
                   const finishChunk = {
@@ -124,7 +128,7 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
                 try {
                   const chunk = JSON.parse(dataContent);
                   logger.debug('Parsed Ollama chunk', { choices: chunk.choices?.length });
-                  
+
                   // Extract text content from OpenAI format
                   if (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) {
                     const delta = chunk.choices[0].delta;
@@ -137,10 +141,12 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
                       logger.debug('Emitting text chunk', { text: delta.content });
                       controller.enqueue(textChunk);
                     }
-                    
+
                     // Check for finish reason
                     if (chunk.choices[0].finish_reason) {
-                      logger.debug('Received finish reason', { reason: chunk.choices[0].finish_reason });
+                      logger.debug('Received finish reason', {
+                        reason: chunk.choices[0].finish_reason,
+                      });
                       const finishChunk = {
                         type: 'finish',
                         usage: {
@@ -153,7 +159,10 @@ export async function createOllamaStream(options: OllamaStreamingOptions): Promi
                     }
                   }
                 } catch (error) {
-                  logger.warn('Failed to parse Ollama chunk:', { dataContent, error: error instanceof Error ? error.message : error });
+                  logger.warn('Failed to parse Ollama chunk:', {
+                    dataContent,
+                    error: error instanceof Error ? error.message : error,
+                  });
                 }
               } else if (trimmed && !trimmed.startsWith('event:')) {
                 logger.debug('Unexpected line format', { line: trimmed });
