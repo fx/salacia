@@ -3,7 +3,7 @@ import { z } from 'zod';
 /**
  * Supported AI provider types
  */
-export const AIProviderTypeSchema = z.enum(['openai', 'anthropic', 'groq', 'ollama']);
+export const AIProviderTypeSchema = z.enum(['openai', 'anthropic', 'groq', 'ollama', 'deepinfra']);
 export type AIProviderType = z.infer<typeof AIProviderTypeSchema>;
 
 /**

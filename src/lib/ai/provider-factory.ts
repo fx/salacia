@@ -74,6 +74,13 @@ export class ProviderFactory {
         });
       }
 
+      case 'deepinfra':
+        // DeepInfra uses OpenAI-compatible API
+        return createOpenAI({
+          apiKey,
+          baseURL: config.settings?.baseUrl || 'https://api.deepinfra.com/v1/openai',
+        });
+
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
@@ -92,6 +99,8 @@ export class ProviderFactory {
         return 'mixtral-8x7b-32768';
       case 'ollama':
         return 'llama3.2';
+      case 'deepinfra':
+        return 'meta-llama/Meta-Llama-3.1-8B-Instruct';
       default:
         throw new Error(`No default model for provider type: ${type}`);
     }
@@ -131,6 +140,20 @@ export class ProviderFactory {
           'gemma2',
           'qwen2.5',
           'deepseek-coder',
+        ];
+
+      case 'deepinfra':
+        return [
+          'meta-llama/Meta-Llama-3.1-8B-Instruct',
+          'meta-llama/Meta-Llama-3.1-70B-Instruct',
+          'meta-llama/Meta-Llama-3.1-405B-Instruct',
+          'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
+          'microsoft/WizardLM-2-8x22B',
+          'mistralai/Mixtral-8x7B-Instruct-v0.1',
+          'mistralai/Mixtral-8x22B-Instruct-v0.1',
+          'google/gemma-2-9b-it',
+          'google/gemma-2-27b-it',
+          'Qwen/Qwen2.5-72B-Instruct',
         ];
 
       default:
@@ -248,18 +271,21 @@ export class ProviderFactory {
         anthropic: 'claude-3-opus-20240229',
         groq: 'mixtral-8x7b-32768',
         ollama: 'llama3.1:70b',
+        deepinfra: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
       },
       'claude-3-sonnet-20240229': {
         openai: 'gpt-4',
         anthropic: 'claude-3-sonnet-20240229',
         groq: 'mixtral-8x7b-32768',
         ollama: 'llama3.1',
+        deepinfra: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
       },
       'claude-3-haiku-20240307': {
         openai: 'gpt-3.5-turbo',
         anthropic: 'claude-3-haiku-20240307',
         groq: 'gemma-7b-it',
         ollama: 'llama3.2',
+        deepinfra: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
       },
     };
 
