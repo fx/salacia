@@ -175,6 +175,9 @@ export const POST: APIRoute = async ({ request }) => {
       let result: { fullStream: { getReader: () => any } };
       let finalModelName = requestData!.model; // Track the final model name used
 
+      // Track tool calls and their arguments for proper streaming (used by non-Ollama providers)
+      const toolCallsMap = new Map<string, { name: string; args: any }>();
+
       // Handle Ollama providers with direct streaming to bypass AI SDK issues
       if (provider.type === 'ollama') {
         // Model resolution for Ollama
@@ -378,9 +381,21 @@ export const POST: APIRoute = async ({ request }) => {
             tools[tool.name] = {
               description: tool.description,
               parameters: tool.input_schema,
-              execute: async (args: any) => {
-                // This is a placeholder - actual tool execution would happen here
+              execute: async (args: any, options: any) => {
+                // Track the tool call with its arguments
+                const toolCallId = options?.toolCallId || `tool_${Date.now()}`;
+                toolCallsMap.set(toolCallId, { name: tool.name, args });
+
                 logger.debug(`Tool ${tool.name} called with args:`, args);
+
+                // Return a simulated result for now
+                // In production, this would actually execute the tool
+                if (tool.name === 'get_weather' && args.location) {
+                  return `The weather in ${args.location} is sunny and 72°F.`;
+                } else if (tool.name === 'Read' && args.file_path) {
+                  return `[Simulated content of ${args.file_path}]\n# Example file content\nline 1\nline 2`;
+                }
+
                 return `[Tool ${tool.name} executed with args: ${JSON.stringify(args)}]`;
               },
             };
@@ -511,10 +526,18 @@ export const POST: APIRoute = async ({ request }) => {
                   }
 
                   case 'tool-call': {
+                    const toolCallId = (chunk as any).toolCallId;
+                    const toolName = (chunk as any).toolName;
+
+                    // Retrieve the args from our tracking map
+                    const toolCallData = toolCallsMap.get(toolCallId);
+                    const args = toolCallData?.args || {};
+
                     logger.debug('Tool call chunk received', {
-                      toolCallId: (chunk as any).toolCallId,
-                      toolName: (chunk as any).toolName,
-                      args: (chunk as any).args,
+                      toolCallId,
+                      toolName,
+                      args,
+                      hasStoredArgs: !!toolCallData,
                     });
 
                     // Send tool use content block for Anthropic format
@@ -523,9 +546,9 @@ export const POST: APIRoute = async ({ request }) => {
                       index: hasStarted ? 1 : 0,
                       content_block: {
                         type: 'tool_use',
-                        id: (chunk as any).toolCallId || `tool_${Date.now()}`,
-                        name: (chunk as any).toolName || 'unknown_tool',
-                        input: (chunk as any).args || {},
+                        id: toolCallId || `tool_${Date.now()}`,
+                        name: toolName || 'unknown_tool',
+                        input: args,
                       },
                     };
                     controller.enqueue(
@@ -542,8 +565,8 @@ export const POST: APIRoute = async ({ request }) => {
                       )
                     );
 
-                    // Track tool call in response
-                    accumulatedContent += `\n[Tool: ${(chunk as any).toolName}(${JSON.stringify((chunk as any).args)})]`;
+                    // Don't add tool calls to visible accumulated content
+                    // The model will generate its own text response
                     hasStarted = true;
                     break;
                   }
@@ -561,12 +584,8 @@ export const POST: APIRoute = async ({ request }) => {
                       result: (chunk as any).result,
                     });
 
-                    // Add tool result to accumulated content
-                    const resultText =
-                      typeof (chunk as any).result === 'string'
-                        ? (chunk as any).result
-                        : JSON.stringify((chunk as any).result);
-                    accumulatedContent += `\n[Tool Result: ${resultText}]`;
+                    // Don't add tool results to accumulated content
+                    // The model will incorporate them into its response text
                     break;
                   }
 
