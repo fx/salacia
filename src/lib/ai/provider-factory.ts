@@ -1,5 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createDeepInfra } from '@ai-sdk/deepinfra';
 import type { AIProviderType, ProviderSettings } from './types';
 import { TokenManager } from '../auth/token-manager';
 
@@ -75,8 +76,8 @@ export class ProviderFactory {
       }
 
       case 'deepinfra':
-        // DeepInfra uses OpenAI-compatible API
-        return createOpenAI({
+        // DeepInfra uses its own SDK
+        return createDeepInfra({
           apiKey,
           baseURL: config.settings?.baseUrl || 'https://api.deepinfra.com/v1',
         });

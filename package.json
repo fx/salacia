@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.0",
+    "@ai-sdk/deepinfra": "^1.0.11",
     "@ai-sdk/openai": "^2.0.0",
     "@astrojs/react": "^4.3.0",
     "@tanstack/react-table": "^8.21.3",
