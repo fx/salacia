@@ -348,7 +348,7 @@ export const POST: APIRoute = async ({ request }) => {
       const responseTime = Date.now() - startTime;
 
       // Log streaming request - create initial database record
-      const _interaction = await logAiInteraction({
+      const interaction = await logAiInteraction({
         request: requestData!,
         response: undefined, // Response will be updated when stream completes
         responseTime,
@@ -369,6 +369,9 @@ export const POST: APIRoute = async ({ request }) => {
         async start(controller) {
           const id = generateMessageId();
           let hasStarted = false;
+          let accumulatedContent = ''; // Track accumulated response content
+          let inputTokens = 0;
+          let outputTokens = 0;
 
           try {
             // Send message_start event first
@@ -420,6 +423,7 @@ export const POST: APIRoute = async ({ request }) => {
 
                     // Send text delta exactly like Anthropic format
                     const text = (chunk as any).text || '';
+                    accumulatedContent += text; // Accumulate response content
                     const data = {
                       type: 'content_block_delta',
                       index: 0,
@@ -445,12 +449,21 @@ export const POST: APIRoute = async ({ request }) => {
                       )
                     );
 
-                    const outputTokens =
+                    outputTokens =
                       'usage' in chunk &&
                       chunk.usage &&
                       typeof chunk.usage === 'object' &&
                       'outputTokens' in chunk.usage
                         ? (chunk.usage as any).outputTokens || 0
+                        : 0;
+
+                    // Also check for inputTokens in the finish chunk
+                    inputTokens =
+                      'usage' in chunk &&
+                      chunk.usage &&
+                      typeof chunk.usage === 'object' &&
+                      'inputTokens' in chunk.usage
+                        ? (chunk.usage as any).inputTokens || 0
                         : 0;
 
                     const messageDelta = {
@@ -470,6 +483,44 @@ export const POST: APIRoute = async ({ request }) => {
                         `event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`
                       )
                     );
+
+                    // Update the interaction with the complete response
+                    if (interaction && accumulatedContent) {
+                      const { updateAiInteraction } = await import(
+                        '../../../lib/services/message-logger'
+                      );
+                      await updateAiInteraction({
+                        interactionId: interaction.id,
+                        response: {
+                          id,
+                          type: 'message' as const,
+                          role: 'assistant' as const,
+                          content: [
+                            {
+                              type: 'text' as const,
+                              text: accumulatedContent,
+                            },
+                          ],
+                          model: finalModelName,
+                          stop_reason: 'end_turn' as const,
+                          stop_sequence: null,
+                          usage: {
+                            input_tokens: inputTokens,
+                            output_tokens: outputTokens,
+                          },
+                        },
+                        additionalTokens: {
+                          promptTokens: inputTokens,
+                          completionTokens: outputTokens,
+                          totalTokens: inputTokens + outputTokens,
+                        },
+                      });
+                      logger.debug('Updated interaction with complete response', {
+                        interactionId: interaction.id,
+                        contentLength: accumulatedContent.length,
+                        tokens: { input: inputTokens, output: outputTokens },
+                      });
+                    }
 
                     controller.close();
                     break;
