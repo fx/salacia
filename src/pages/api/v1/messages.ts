@@ -15,6 +15,7 @@ import { ProviderManager } from '../../../lib/ai/provider-manager';
 import { ProviderFactory } from '../../../lib/ai/provider-factory';
 import { generateMessageId } from '../../../lib/ai/api-utils';
 import { getClaudeCodeToken } from '../../../lib/utils/auth';
+import { detectModelFamily, getModelFamilySystemPrompt } from '../../../lib/ai/model-families';
 
 const logger = createLogger('API/Messages');
 
@@ -202,23 +203,53 @@ export const POST: APIRoute = async ({ request }) => {
         // Convert Anthropic format to OpenAI format for Ollama
         const messages: Array<{ role: string; content: string }> = [];
 
+        // Detect model family and prepend model-specific instructions if needed
+        const modelFamily = detectModelFamily(finalModelName);
+        const modelSpecificPrompt = getModelFamilySystemPrompt(modelFamily);
+
+        logger.debug('Model family detection (Ollama)', {
+          model: finalModelName,
+          family: modelFamily,
+          hasSpecificPrompt: !!modelSpecificPrompt,
+        });
+
+        // Build system content from both model-specific prompt and user-provided system prompt
+        let combinedSystemContent = '';
+
+        // Add model-specific prompt first if available
+        if (modelSpecificPrompt) {
+          combinedSystemContent = modelSpecificPrompt;
+        }
+
+        // Add user-provided system prompt
         if (requestData!.system) {
-          let systemContent: string;
+          let userSystemContent: string;
           if (typeof requestData!.system === 'string') {
-            systemContent = requestData!.system;
+            userSystemContent = requestData!.system;
           } else if (Array.isArray(requestData!.system)) {
-            systemContent = requestData!.system
+            userSystemContent = requestData!.system
               .filter(
                 block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
               )
               .map(block => block.text)
               .join('\n');
           } else {
-            systemContent = '';
+            userSystemContent = '';
           }
-          if (systemContent) {
-            messages.push({ role: 'system', content: systemContent });
+
+          if (userSystemContent) {
+            // Combine model-specific and user system prompts
+            if (combinedSystemContent) {
+              combinedSystemContent = `${combinedSystemContent}\n\n${userSystemContent}`;
+            } else {
+              combinedSystemContent = userSystemContent;
+            }
           }
+        }
+
+        // Add combined system prompt if we have content
+        if (combinedSystemContent) {
+          messages.push({ role: 'system', content: combinedSystemContent });
         }
 
         // Convert messages
@@ -296,23 +327,53 @@ export const POST: APIRoute = async ({ request }) => {
         // Convert Anthropic format to AI SDK format
         const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
 
+        // Detect model family and prepend model-specific instructions if needed
+        const modelFamily = detectModelFamily(finalModelName);
+        const modelSpecificPrompt = getModelFamilySystemPrompt(modelFamily);
+
+        logger.debug('Model family detection', {
+          model: finalModelName,
+          family: modelFamily,
+          hasSpecificPrompt: !!modelSpecificPrompt,
+        });
+
+        // Build system content from both model-specific prompt and user-provided system prompt
+        let combinedSystemContent = '';
+
+        // Add model-specific prompt first if available
+        if (modelSpecificPrompt) {
+          combinedSystemContent = modelSpecificPrompt;
+        }
+
+        // Add user-provided system prompt
         if (requestData!.system) {
-          let systemContent: string;
+          let userSystemContent: string;
           if (typeof requestData!.system === 'string') {
-            systemContent = requestData!.system;
+            userSystemContent = requestData!.system;
           } else if (Array.isArray(requestData!.system)) {
-            systemContent = requestData!.system
+            userSystemContent = requestData!.system
               .filter(
                 block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
               )
               .map(block => block.text)
               .join('\n');
           } else {
-            systemContent = '';
+            userSystemContent = '';
           }
-          if (systemContent) {
-            messages.push({ role: 'system', content: systemContent });
+
+          if (userSystemContent) {
+            // Combine model-specific and user system prompts
+            if (combinedSystemContent) {
+              combinedSystemContent = `${combinedSystemContent}\n\n${userSystemContent}`;
+            } else {
+              combinedSystemContent = userSystemContent;
+            }
           }
+        }
+
+        // Add combined system prompt if we have content
+        if (combinedSystemContent) {
+          messages.push({ role: 'system', content: combinedSystemContent });
         }
 
         // Convert messages and handle tool use blocks
