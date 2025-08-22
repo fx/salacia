@@ -80,6 +80,83 @@ This project uses the following core technologies:
 
 See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pattern.
 
+### Adding New AI Provider Support
+
+**CRITICAL**: When adding a new AI provider, ALL of these locations MUST be updated:
+
+#### 1. Backend Type Definitions
+
+- `src/lib/ai/types.ts` - Add to `AIProviderTypeSchema` enum
+  ```typescript
+  export const AIProviderTypeSchema = z.enum([
+    'openai',
+    'anthropic',
+    'groq',
+    'ollama',
+    'deepinfra',
+    'newprovider',
+  ]);
+  ```
+
+#### 2. Provider Factory Implementation
+
+- `src/lib/ai/provider-factory.ts` - Add:
+  - Case in `createProvider()` switch statement
+  - Default model in `getDefaultModel()`
+  - Available models list in `getAvailableModels()`
+  - Model mapping in `mapModelName()` if needed for compatibility
+
+#### 3. Validation Schemas
+
+- `src/lib/validation/provider-schemas.ts` - Update `providerTypeSchema`:
+  ```typescript
+  export const providerTypeSchema = z.enum([
+    'openai',
+    'anthropic',
+    'groq',
+    'ollama',
+    'deepinfra',
+    'newprovider',
+  ]);
+  ```
+
+#### 4. Frontend UI
+
+- `src/components/ProviderForm.tsx` - Add to `providerTypes` array:
+  ```typescript
+  const providerTypes = [
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'anthropic', label: 'Anthropic' },
+    { value: 'groq', label: 'Groq' },
+    { value: 'ollama', label: 'Ollama' },
+    { value: 'deepinfra', label: 'DeepInfra' },
+    { value: 'newprovider', label: 'New Provider' },
+  ];
+  ```
+
+#### 5. Testing
+
+- Create comprehensive test file: `src/test/lib/ai/provider-factory-{provider}.test.ts`
+- Test coverage should include:
+  - Provider creation with default settings
+  - Custom base URL configuration
+  - Model name mapping (if applicable)
+  - Default model selection
+  - Available models list
+  - Error handling
+
+#### 6. Development Server Note
+
+**IMPORTANT**: After making changes, the Astro dev server may need a restart to pick up schema changes:
+
+```bash
+# Kill existing server and restart
+pkill -f "astro dev" || killall node
+npm run dev
+```
+
+**Failure to update ALL locations will result in validation errors when trying to use the new provider.**
+
 ## Development Standards
 
 ### Temporary Files and Debugging

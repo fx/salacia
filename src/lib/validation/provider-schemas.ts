@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Provider type enumeration for validation.
  * Must match the AIProviderType from types.ts
  */
-export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq', 'ollama']);
+export const providerTypeSchema = z.enum(['openai', 'anthropic', 'groq', 'ollama', 'deepinfra']);
 
 /**
  * Authentication type enumeration for validation.
