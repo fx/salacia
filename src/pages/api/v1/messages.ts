@@ -177,6 +177,8 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Track tool calls and their arguments for proper streaming (used by non-Ollama providers)
       const toolCallsMap = new Map<string, { name: string; args: any }>();
+      // Track tool input as it streams in
+      const toolInputBuffer = new Map<string, string>();
 
       // Handle Ollama providers with direct streaming to bypass AI SDK issues
       if (provider.type === 'ollama') {
@@ -529,9 +531,14 @@ export const POST: APIRoute = async ({ request }) => {
                     const toolCallId = (chunk as any).toolCallId;
                     const toolName = (chunk as any).toolName;
 
-                    // Retrieve the args from our tracking map
+                    // Retrieve the args from our tracking map (should have been set by tool-input-end)
                     const toolCallData = toolCallsMap.get(toolCallId);
                     const args = toolCallData?.args || {};
+
+                    // Update the name if we have it
+                    if (toolCallData && toolName) {
+                      toolCallData.name = toolName;
+                    }
 
                     logger.debug('Tool call chunk received', {
                       toolCallId,
@@ -568,6 +575,48 @@ export const POST: APIRoute = async ({ request }) => {
                     // Don't add tool calls to visible accumulated content
                     // The model will generate its own text response
                     hasStarted = true;
+                    break;
+                  }
+
+                  case 'tool-input-start': {
+                    // Initialize buffer for this tool call
+                    const toolId = (chunk as any).id;
+                    if (toolId) {
+                      toolInputBuffer.set(toolId, '');
+                      logger.debug('Tool input start', {
+                        toolId,
+                        toolName: (chunk as any).toolName,
+                      });
+                    }
+                    break;
+                  }
+
+                  case 'tool-input-delta': {
+                    // Accumulate tool input arguments
+                    const toolId = (chunk as any).id;
+                    const delta = (chunk as any).delta;
+                    if (toolId && delta) {
+                      const current = toolInputBuffer.get(toolId) || '';
+                      toolInputBuffer.set(toolId, current + delta);
+                      logger.debug('Tool input delta', { toolId, delta });
+                    }
+                    break;
+                  }
+
+                  case 'tool-input-end': {
+                    // Parse complete tool input
+                    const toolId = (chunk as any).id;
+                    if (toolId) {
+                      const inputStr = toolInputBuffer.get(toolId) || '{}';
+                      try {
+                        const args = JSON.parse(inputStr);
+                        toolCallsMap.set(toolId, { name: '', args }); // Name will be set later
+                        logger.debug('Tool input complete', { toolId, args });
+                      } catch (e) {
+                        logger.error('Failed to parse tool input', { toolId, inputStr, error: e });
+                      }
+                      toolInputBuffer.delete(toolId);
+                    }
                     break;
                   }
 
