@@ -78,7 +78,7 @@ export class ProviderFactory {
         // DeepInfra uses OpenAI-compatible API
         return createOpenAI({
           apiKey,
-          baseURL: config.settings?.baseUrl || 'https://api.deepinfra.com/v1/openai',
+          baseURL: config.settings?.baseUrl || 'https://api.deepinfra.com/v1',
         });
 
       default:
