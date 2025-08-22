@@ -265,10 +265,24 @@ export const POST: APIRoute = async ({ request }) => {
       } else {
         // For non-Ollama providers, use AI SDK streaming
         const client = await ProviderManager.createClient(provider);
-        const mappedModelId = ProviderFactory.mapModelName(
-          provider.type as 'openai' | 'anthropic' | 'groq',
-          requestData!.model
-        );
+
+        // For DeepInfra, use the configured model from the database
+        let mappedModelId: string;
+        if (
+          provider.type === 'deepinfra' &&
+          Array.isArray(provider.models) &&
+          provider.models.length > 0
+        ) {
+          // Use the first configured model for DeepInfra
+          mappedModelId = provider.models[0] as string;
+          logger.debug('Using configured DeepInfra model', { model: mappedModelId });
+        } else {
+          // For other providers, use the mapping
+          mappedModelId = ProviderFactory.mapModelName(
+            provider.type as 'openai' | 'anthropic' | 'groq',
+            requestData!.model
+          );
+        }
 
         finalModelName = mappedModelId; // Store the mapped model name
 
