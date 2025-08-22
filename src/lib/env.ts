@@ -14,13 +14,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4321),
   HOST: z.string().default('localhost'),
 
-  // AI Provider API Keys (optional - can be configured per-provider in database)
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-  GROQ_API_KEY: z.string().optional(),
-
-  // AI Provider Configuration
-  DEFAULT_AI_PROVIDER: z.enum(['openai', 'anthropic', 'groq']).optional(),
+  // AI Provider Configuration (providers are configured in database)
   AI_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
   AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
   AI_STREAMING_ENABLED: z.coerce.boolean().default(true),

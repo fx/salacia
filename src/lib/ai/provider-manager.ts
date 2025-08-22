@@ -239,7 +239,7 @@ export class ProviderManager {
 
     // If no provider exists, throw an error - the system is not configured
     throw new Error(
-      'No AI provider configured. Please set up providers in the database or configure environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY).'
+      'No AI provider configured. Please add and activate at least one provider in Settings → Providers.'
     );
   }
 
