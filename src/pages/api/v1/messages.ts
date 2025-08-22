@@ -16,6 +16,7 @@ import { ProviderFactory } from '../../../lib/ai/provider-factory';
 import { generateMessageId } from '../../../lib/ai/api-utils';
 import { getClaudeCodeToken } from '../../../lib/utils/auth';
 import { detectModelFamily, getModelFamilySystemPrompt } from '../../../lib/ai/model-families';
+import { CLAUDE_CODE_TOOLS, isClaudeCodeRequest } from '../../../lib/ai/claude-code-tools';
 
 const logger = createLogger('API/Messages');
 
@@ -38,7 +39,7 @@ export const POST: APIRoute = async ({ request }) => {
     request.headers.forEach((value, key) => {
       headers[key] = value;
     });
-    logger.debug('Incoming headers from Claude Code:', headers);
+    logger.debug('Incoming headers:', headers);
 
     const authHeader = request.headers.get('authorization');
     if (authHeader?.startsWith('Bearer ')) {
@@ -102,6 +103,23 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     requestData = parsedData;
+
+    // Inject Claude Code tools if this is a Claude Code request and essential tools are missing
+    const isFromClaudeCode = isClaudeCodeRequest(headers);
+    if (isFromClaudeCode) {
+      // Check if essential tools like Read are missing
+      const hasReadTool = requestData.tools?.some(tool => tool.name === 'Read');
+
+      if (!hasReadTool) {
+        // Add our essential Claude Code tools if they're missing
+        logger.debug('Injecting essential Claude Code tools for Claude Code request', {
+          existingToolCount: requestData.tools?.length || 0,
+        });
+
+        // Merge with existing tools rather than replacing
+        requestData.tools = [...(requestData.tools || []), ...CLAUDE_CODE_TOOLS];
+      }
+    }
 
     // Check if streaming is requested
     const isStreaming = requestData!.stream === true;
@@ -451,15 +469,57 @@ export const POST: APIRoute = async ({ request }) => {
 
                 logger.debug(`Tool ${tool.name} called with args:`, args);
 
-                // Return a simulated result for now
-                // In production, this would actually execute the tool
-                if (tool.name === 'get_weather' && args.location) {
+                // Execute common Claude Code tools
+                // Handle Read tool - check for file_path in various formats
+                if (tool.name === 'Read' && (args.file_path || args.path || args.filename)) {
+                  const filePath = args.file_path || args.path || args.filename;
+                  try {
+                    const fs = await import('fs/promises');
+                    const content = await fs.readFile(filePath, 'utf-8');
+                    logger.debug(`Read file ${filePath}, content length: ${content.length}`);
+                    return content;
+                  } catch (error) {
+                    logger.error(`Failed to read file ${filePath}:`, error);
+                    return `Error reading file ${filePath}: ${error}`;
+                  }
+                } else if (tool.name === 'Write' && args.file_path && args.content) {
+                  try {
+                    const fs = await import('fs/promises');
+                    await fs.writeFile(args.file_path, args.content, 'utf-8');
+                    logger.debug(
+                      `Wrote file ${args.file_path}, content length: ${args.content.length}`
+                    );
+                    return `File ${args.file_path} written successfully`;
+                  } catch (error) {
+                    logger.error(`Failed to write file ${args.file_path}:`, error);
+                    return `Error writing file ${args.file_path}: ${error}`;
+                  }
+                } else if (tool.name === 'LS' && args.path) {
+                  try {
+                    const fs = await import('fs/promises');
+                    const files = await fs.readdir(args.path);
+                    return files.join('\n');
+                  } catch (error) {
+                    logger.error(`Failed to list directory ${args.path}:`, error);
+                    return `Error listing directory ${args.path}: ${error}`;
+                  }
+                } else if (tool.name === 'Bash' && args.command) {
+                  try {
+                    const { exec } = await import('child_process');
+                    const { promisify } = await import('util');
+                    const execAsync = promisify(exec);
+                    const { stdout, stderr } = await execAsync(args.command);
+                    return stdout || stderr || 'Command executed successfully';
+                  } catch (error: any) {
+                    logger.error(`Failed to execute command ${args.command}:`, error);
+                    return `Error executing command: ${error.message}`;
+                  }
+                } else if (tool.name === 'get_weather' && args.location) {
                   return `The weather in ${args.location} is sunny and 72°F.`;
-                } else if (tool.name === 'Read' && args.file_path) {
-                  return `[Simulated content of ${args.file_path}]\n# Example file content\nline 1\nline 2`;
                 }
 
-                return `[Tool ${tool.name} executed with args: ${JSON.stringify(args)}]`;
+                // For tools we don't actually execute, return a placeholder
+                return `[Tool ${tool.name} would be executed with args: ${JSON.stringify(args)}]`;
               },
             };
           }
@@ -487,6 +547,8 @@ export const POST: APIRoute = async ({ request }) => {
           streamTextOptions.tools = tools;
           // Enable tool use by default when tools are provided
           streamTextOptions.toolChoice = 'auto';
+          // Allow multiple steps so the model can respond after tool calls
+          streamTextOptions.maxSteps = 5;
         }
 
         result = streamText(streamTextOptions);
@@ -521,6 +583,9 @@ export const POST: APIRoute = async ({ request }) => {
           let inputTokens = 0;
           let outputTokens = 0;
 
+          // Detect model family for handling model-specific behaviors
+          const streamModelFamily = detectModelFamily(finalModelName);
+
           try {
             // Send message_start event first
             const messageStart = {
@@ -543,12 +608,16 @@ export const POST: APIRoute = async ({ request }) => {
             const reader = result.fullStream.getReader();
             logger.debug('Starting stream reader loop');
             let chunkCount = 0;
+            let shouldStopProcessing = false; // Flag to stop processing for Qwen after tool results
             try {
               while (true) {
                 const { done, value: chunk } = await reader.read();
                 chunkCount++;
-                if (done) {
-                  logger.debug(`Stream ended after ${chunkCount} chunks`);
+                if (done || shouldStopProcessing) {
+                  logger.debug(`Stream ended after ${chunkCount} chunks`, {
+                    done,
+                    shouldStopProcessing,
+                  });
                   break;
                 }
                 logger.debug(`Processing chunk ${chunkCount}`, { type: chunk.type });
@@ -689,13 +758,110 @@ export const POST: APIRoute = async ({ request }) => {
                   }
 
                   case 'tool-result': {
+                    const toolResult =
+                      (chunk as any).output || (chunk as any).result || (chunk as any).content;
+                    const toolCallId = (chunk as any).toolCallId;
+
                     logger.debug('Tool result received', {
-                      toolCallId: (chunk as any).toolCallId,
-                      result: (chunk as any).result,
+                      toolCallId,
+                      resultLength: toolResult?.length,
+                      resultPreview: toolResult?.substring?.(0, 100), // Log first 100 chars
+                      chunkKeys: Object.keys(chunk),
+                      modelFamily: streamModelFamily,
                     });
 
-                    // Don't add tool results to accumulated content
-                    // The model will incorporate them into its response text
+                    // For Qwen models, we need to handle tool results specially
+                    // They don't properly integrate tool results, so we inject them directly
+                    if (streamModelFamily === 'qwen' && toolResult) {
+                      // Clear any hallucinated content that might have been accumulated
+                      // Qwen tends to hallucinate tool results before they arrive
+                      if (!hasStarted) {
+                        const contentBlockStart = {
+                          type: 'content_block_start',
+                          index: 0,
+                          content_block: { type: 'text', text: '' },
+                        };
+                        controller.enqueue(
+                          encoder.encode(
+                            `event: content_block_start\ndata: ${JSON.stringify(contentBlockStart)}\n\n`
+                          )
+                        );
+                        hasStarted = true;
+                      }
+
+                      // Format the tool result properly based on tool name
+                      const toolCall = toolCallsMap.get(toolCallId);
+                      let formattedResult = toolResult;
+
+                      if (toolCall?.name === 'Read') {
+                        // For Read tool, just return the raw file content
+                        formattedResult = toolResult;
+                      } else if (toolCall?.name === 'LS') {
+                        // For LS tool, return raw listing
+                        formattedResult = toolResult;
+                      } else if (toolCall?.name === 'Bash') {
+                        // For Bash tool, return raw output
+                        formattedResult = toolResult;
+                      } else {
+                        // For other tools, add context
+                        formattedResult = `Tool ${toolCall?.name} result:\n${toolResult}`;
+                      }
+
+                      // Send the actual tool result as the response
+                      accumulatedContent = formattedResult; // Replace accumulated content with actual result
+
+                      logger.debug('Sending tool result to client', {
+                        toolName: toolCall?.name,
+                        resultLength: formattedResult.length,
+                        resultPreview: formattedResult.substring(0, 50) + '...',
+                      });
+
+                      const data = {
+                        type: 'content_block_delta',
+                        index: 0,
+                        delta: {
+                          type: 'text_delta',
+                          text: formattedResult,
+                        },
+                      };
+                      controller.enqueue(
+                        encoder.encode(
+                          `event: content_block_delta\ndata: ${JSON.stringify(data)}\n\n`
+                        )
+                      );
+
+                      // Immediately finish the response for Qwen after tool result
+                      // to prevent further hallucination
+                      const contentBlockStop = { type: 'content_block_stop', index: 0 };
+                      controller.enqueue(
+                        encoder.encode(
+                          `event: content_block_stop\ndata: ${JSON.stringify(contentBlockStop)}\n\n`
+                        )
+                      );
+
+                      const messageDelta = {
+                        type: 'message_delta',
+                        delta: { stop_reason: 'end_turn', stop_sequence: null },
+                        usage: { output_tokens: outputTokens || 0 },
+                      };
+                      controller.enqueue(
+                        encoder.encode(
+                          `event: message_delta\ndata: ${JSON.stringify(messageDelta)}\n\n`
+                        )
+                      );
+
+                      const messageStop = { type: 'message_stop' };
+                      controller.enqueue(
+                        encoder.encode(
+                          `event: message_stop\ndata: ${JSON.stringify(messageStop)}\n\n`
+                        )
+                      );
+
+                      // Set flag to break out of the while loop to stop processing further chunks
+                      // for Qwen models after sending tool results
+                      shouldStopProcessing = true;
+                      break;
+                    }
                     break;
                   }
 
