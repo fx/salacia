@@ -310,24 +310,51 @@ export const POST: APIRoute = async ({ request }) => {
           }
         }
 
-        // Convert messages
+        // Convert messages and handle tool use blocks
         for (const message of requestData!.messages) {
           let content: string;
+          let toolUseBlocks: any[] = [];
 
           if (typeof message.content === 'string') {
             content = message.content;
           } else if (Array.isArray(message.content)) {
-            content = message.content
-              .filter(
-                block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
-              )
+            // Separate text and tool use blocks
+            const textBlocks = message.content.filter(
+              block => block.type === 'text' && 'text' in block && typeof block.text === 'string'
+            );
+            content = textBlocks
               .map(block => (block as { type: 'text'; text: string }).text)
               .join('\n');
+
+            // Collect tool use blocks for conversion
+            toolUseBlocks = message.content.filter(
+              block => block.type === 'tool_use' || block.type === 'tool_result'
+            );
           } else {
             content = '';
           }
 
           const role = message.role as 'system' | 'user' | 'assistant';
+
+          // For now, append tool use information to the text content
+          // This is a temporary solution until we properly handle tool calls
+          if (toolUseBlocks.length > 0) {
+            const toolInfo = toolUseBlocks
+              .map(block => {
+                if (block.type === 'tool_use') {
+                  return `[Tool Use: ${block.name}(${JSON.stringify(block.input)})]`;
+                } else if (block.type === 'tool_result') {
+                  return `[Tool Result: ${block.content}]`;
+                }
+                return '';
+              })
+              .join('\n');
+
+            if (toolInfo) {
+              content = content ? `${content}\n${toolInfo}` : toolInfo;
+            }
+          }
+
           messages.push({ role, content });
         }
 
@@ -343,19 +370,48 @@ export const POST: APIRoute = async ({ request }) => {
           }
         });
 
+        // Convert Anthropic tools to AI SDK format if present
+        let tools: any = undefined;
+        if (requestData!.tools && requestData!.tools.length > 0) {
+          tools = {};
+          for (const tool of requestData!.tools) {
+            tools[tool.name] = {
+              description: tool.description,
+              parameters: tool.input_schema,
+              execute: async (args: any) => {
+                // This is a placeholder - actual tool execution would happen here
+                logger.debug(`Tool ${tool.name} called with args:`, args);
+                return `[Tool ${tool.name} executed with args: ${JSON.stringify(args)}]`;
+              },
+            };
+          }
+        }
+
         // Use AI SDK's streamText method
         const { streamText } = await import('ai');
         logger.debug('Calling AI SDK streamText with model', {
           modelType: typeof model,
           provider: provider.type,
+          hasTools: !!tools,
+          toolCount: requestData!.tools?.length || 0,
         });
-        result = streamText({
+
+        const streamTextOptions: any = {
           model: model as any, // Type assertion needed due to SDK version differences
           messages: prompt,
           ...(requestData!.max_tokens && { maxTokens: requestData!.max_tokens }),
           ...(requestData!.temperature && { temperature: requestData!.temperature }),
           ...(requestData!.top_p && { topP: requestData!.top_p }),
-        });
+        };
+
+        // Add tools if present
+        if (tools) {
+          streamTextOptions.tools = tools;
+          // Enable tool use by default when tools are provided
+          streamTextOptions.toolChoice = 'auto';
+        }
+
+        result = streamText(streamTextOptions);
         logger.debug('AI SDK streamText returned', { hasFullStream: !!result.fullStream });
       }
 
@@ -451,6 +507,66 @@ export const POST: APIRoute = async ({ request }) => {
                         `event: content_block_delta\ndata: ${JSON.stringify(data)}\n\n`
                       )
                     );
+                    break;
+                  }
+
+                  case 'tool-call': {
+                    logger.debug('Tool call chunk received', {
+                      toolCallId: (chunk as any).toolCallId,
+                      toolName: (chunk as any).toolName,
+                      args: (chunk as any).args,
+                    });
+
+                    // Send tool use content block for Anthropic format
+                    const toolUseBlock = {
+                      type: 'content_block_start',
+                      index: hasStarted ? 1 : 0,
+                      content_block: {
+                        type: 'tool_use',
+                        id: (chunk as any).toolCallId || `tool_${Date.now()}`,
+                        name: (chunk as any).toolName || 'unknown_tool',
+                        input: (chunk as any).args || {},
+                      },
+                    };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: content_block_start\ndata: ${JSON.stringify(toolUseBlock)}\n\n`
+                      )
+                    );
+
+                    // Send the tool use completion
+                    const toolUseStop = { type: 'content_block_stop', index: hasStarted ? 1 : 0 };
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: content_block_stop\ndata: ${JSON.stringify(toolUseStop)}\n\n`
+                      )
+                    );
+
+                    // Track tool call in response
+                    accumulatedContent += `\n[Tool: ${(chunk as any).toolName}(${JSON.stringify((chunk as any).args)})]`;
+                    hasStarted = true;
+                    break;
+                  }
+
+                  case 'tool-call-delta': {
+                    // For streaming tool calls, we could accumulate and send updates
+                    // For now, we'll wait for the complete tool-call chunk
+                    logger.debug('Tool call delta received', { chunk });
+                    break;
+                  }
+
+                  case 'tool-result': {
+                    logger.debug('Tool result received', {
+                      toolCallId: (chunk as any).toolCallId,
+                      result: (chunk as any).result,
+                    });
+
+                    // Add tool result to accumulated content
+                    const resultText =
+                      typeof (chunk as any).result === 'string'
+                        ? (chunk as any).result
+                        : JSON.stringify((chunk as any).result);
+                    accumulatedContent += `\n[Tool Result: ${resultText}]`;
                     break;
                   }
 
@@ -555,8 +671,12 @@ export const POST: APIRoute = async ({ request }) => {
                     break;
                   }
 
-                  // Ignore other chunk types like OpenCode does
+                  // Log unknown chunk types for debugging
                   default:
+                    logger.debug('Unknown chunk type received', {
+                      type: chunk.type,
+                      chunk: JSON.stringify(chunk).substring(0, 200),
+                    });
                     break;
                 }
               }
