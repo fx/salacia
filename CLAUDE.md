@@ -120,7 +120,21 @@ See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pat
   ]);
   ```
 
-#### 4. Frontend UI
+#### 4. Provider Manager Runtime Validation
+
+- `src/lib/ai/provider-manager.ts` - Update `validTypes` array in `createClient()`:
+  ```typescript
+  const validTypes: AIProviderType[] = [
+    'openai',
+    'anthropic',
+    'groq',
+    'ollama',
+    'deepinfra',
+    'newprovider',
+  ];
+  ```
+
+#### 5. Frontend UI
 
 - `src/components/ProviderForm.tsx` - Add to `providerTypes` array:
   ```typescript
@@ -134,7 +148,7 @@ See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pat
   ];
   ```
 
-#### 5. Testing
+#### 6. Testing
 
 - Create comprehensive test file: `src/test/lib/ai/provider-factory-{provider}.test.ts`
 - Test coverage should include:
@@ -145,7 +159,7 @@ See `src/lib/ai/providers/anthropic/client.ts` for the custom implementation pat
   - Available models list
   - Error handling
 
-#### 6. Development Server Note
+#### 7. Development Server Note
 
 **IMPORTANT**: After making changes, the Astro dev server may need a restart to pick up schema changes:
 

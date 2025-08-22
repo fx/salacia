@@ -104,7 +104,7 @@ export class ProviderManager {
    */
   static async createClient(provider: AiProvider) {
     // Validate provider type at runtime
-    const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq', 'ollama'];
+    const validTypes: AIProviderType[] = ['openai', 'anthropic', 'groq', 'ollama', 'deepinfra'];
     if (!validTypes.includes(provider.type as AIProviderType)) {
       throw new Error(`Invalid provider type: ${provider.type}`);
     }
