@@ -82,6 +82,7 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
     { value: 'anthropic', label: 'Anthropic' },
     { value: 'groq', label: 'Groq' },
     { value: 'ollama', label: 'Ollama' },
+    { value: 'deepinfra', label: 'DeepInfra' },
   ];
 
   // Populate form data when editing
@@ -511,17 +512,16 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
               value={formData.apiKey}
               onChange={e => handleChange('apiKey', e.target.value)}
               placeholder={
-                formData.type === 'ollama' 
+                formData.type === 'ollama'
                   ? 'Enter API key if required (optional for local Ollama)'
                   : 'Enter your API key'
               }
               required={formData.type !== 'ollama'}
             />
             <small>
-              {formData.type === 'ollama' 
+              {formData.type === 'ollama'
                 ? 'Optional authentication key (not needed for local installations)'
-                : 'Your authentication key for this provider'
-              }
+                : 'Your authentication key for this provider'}
             </small>
           </div>
         )}
@@ -629,16 +629,15 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
             value={formData.baseUrl}
             onChange={e => handleChange('baseUrl', e.target.value)}
             placeholder={
-              formData.type === 'ollama' 
-                ? 'e.g., http://localhost:11434' 
+              formData.type === 'ollama'
+                ? 'e.g., http://localhost:11434'
                 : 'e.g., https://api.openai.com/v1'
             }
           />
           <small>
-            {formData.type === 'ollama' 
+            {formData.type === 'ollama'
               ? 'Ollama server URL (default: http://localhost:11434)'
-              : 'Optional custom API endpoint URL'
-            }
+              : 'Optional custom API endpoint URL'}
           </small>
         </div>
 
@@ -678,10 +677,9 @@ export function ProviderForm({ provider, onSubmit, onCancel }: ProviderFormProps
             />
           )}
           <small>
-            {formData.type === 'ollama' 
+            {formData.type === 'ollama'
               ? 'Comma-separated list of available models (use Discover to auto-detect)'
-              : 'Comma-separated list of available models'
-            }
+              : 'Comma-separated list of available models'}
           </small>
         </div>
 
